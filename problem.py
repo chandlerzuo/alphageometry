@@ -49,6 +49,9 @@ def isint(x: str) -> bool:
 class Construction:
   """One predicate."""
 
+  def __repr__(self) -> str:
+    return self.txt()
+
   @classmethod
   def from_txt(cls, data: str) -> Construction:
     data = data.split(' ')
@@ -343,6 +346,9 @@ class Definition:
         basics=levels,
         numerics=[Construction.from_txt(c) for c in numerics],
     )
+
+  def __repr__(self) -> str:
+    return repr(self.construction)
 
   def __init__(
       self,
