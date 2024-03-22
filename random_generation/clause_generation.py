@@ -1,6 +1,5 @@
 import random
 import string
-from generate_random_proofs import load_definitions_and_rules
 
 
 class ClauseGenerator:
@@ -89,6 +88,7 @@ class ClauseGenerator:
 
 
 if __name__ == "__main__":
+    from generate_random_proofs import load_definitions_and_rules
     defs_path = '../defs.txt'
     rules_path = '../rules.txt'
 

@@ -5,6 +5,7 @@ import ddar
 from alphageometry import write_solution
 import graph as gh
 import problem as pr
+from clause_generation import ClauseGenerator
 
 
 def load_definitions_and_rules(defs_path, rules_path):
@@ -29,6 +30,12 @@ def main():
 
     # A goal less starting point of the search
     txt = 'a b c = triangle a b c; d = midpoint d a b; e = midpoint e b c; f = midpoint f c a; g = on_line g d c, on_line g e a'
+
+    # cg = ClauseGenerator(definitions)
+    # txt = cg.generate_clauses(3)
+    #
+    # print(txt)
+
     p = pr.Problem.from_txt(txt)
     g, _ = gh.Graph.build_problem(p, definitions)
 
