@@ -6,6 +6,21 @@ from alphageometry import write_solution
 import graph as gh
 import problem as pr
 from clause_generation import ClauseGenerator
+import signal
+
+
+class TimeoutException(Exception):
+    """Custom exception to indicate a timeout."""
+    pass
+
+
+def signal_handler(signum, frame):
+    """Signal handler that raises a TimeoutException."""
+    raise TimeoutException("Operation timed out due to signal 14 (SIGALRM)")
+
+
+# Register the signal handler for SIGALRM
+signal.signal(signal.SIGALRM, signal_handler)
 
 
 def load_definitions_and_rules(defs_path, rules_path):
@@ -16,7 +31,7 @@ def load_definitions_and_rules(defs_path, rules_path):
 
 
 def main():
-    random.seed(20)
+    random.seed(17)
     # Example entities and conditions for illustration purposes
 
     defs_path = '../defs.txt'
@@ -32,13 +47,25 @@ def main():
     p = pr.Problem.from_txt(txt)
 
     print(f'Problem created, Building graph ...')
-    g, _ = gh.Graph.build_problem(p, definitions)
+    try:
+        # Set an alarm for 10 seconds
+        signal.alarm(10)
+
+        # Code block to execute with timeout
+        g, _ = gh.Graph.build_problem(p, definitions)
+
+        # Disable the alarm
+        signal.alarm(0)
+    except TimeoutException as e:
+        print("Graph couldn't bre create in reasonable time. Perhaps problem with the premises. Exiting ...")
+        raise e
 
     print(f'Solving ...')
 
     ddar.solve(g, rules, p, max_level=1000)
 
     # Randomly select a cache node to be the goal. #TODO: Is this right can we do better? Consider coverage!
+    # random.seed(4)
     cache_node = random.choice(list((g.cache.keys())))
     goal = pr.Construction(cache_node[0], list(cache_node[1:]))
     write_solution(g, p, goal=goal, out_file='')
