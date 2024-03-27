@@ -6,8 +6,8 @@ class ClauseGenerator:
     def __init__(self, defs):
         self.defs = defs
         self.defined_points = []
-        # self.clause_relations = list(defs.keys()) # this is the full set we can't deal with it yet
-        self.clause_relations = ['angle_bisector', 'angle_mirror']
+        self.clause_relations = list(defs.keys()) # this is the full set we can't deal with it yet
+        # self.clause_relations = ['angle_bisector', 'angle_mirror', 'circle', 'circumcenter', 'midpoint', 'triangle']
 
     def generate_point(self):
         """
@@ -50,12 +50,12 @@ class ClauseGenerator:
             clause_txt = f'{clause_relation} {" ".join(arg_vars)}'
         return clause_txt
 
-    def choose_random_defined_points(self):
-        if not self.defined_points:  # Check if the list is empty
+    def choose_random_defined_points(self, minimum_pts, max_pts):
+        if not self.defined_points or minimum_pts < 1:  # Check if the list is empty
             return []  # Return an empty list or handle the scenario as needed
 
         # Choose a random number of points to select, from 1 up to the length of the list
-        n = random.randint(1, len(self.defined_points))
+        n = random.randint(minimum_pts, min(max_pts, len(self.defined_points)))
 
         # Randomly select 'n' points from the list
         chosen_defined_pts = random.sample(self.defined_points, n)
@@ -69,17 +69,21 @@ class ClauseGenerator:
         clauses = []
         for i in range(n):
             # choose a random definition key as the first clause
-            clause_relation = random.choice(self.clause_relations)
-            needs_defined_points = len(self.defs[clause_relation].args)
+            suitable_clause = False
+            while not suitable_clause:
+                clause_relation = random.choice(self.clause_relations)
+                needs_defined_points = len(self.defs[clause_relation].args)
+                defines_points = len(self.defs[clause_relation].points)
+                if needs_defined_points <= len(self.defined_points):
+                    suitable_clause = True
 
-            chosen_defined_pts = self.choose_random_defined_points()
-            num_pts_to_def = needs_defined_points - len(chosen_defined_pts)
+            chosen_defined_pts = random.sample(self.defined_points, needs_defined_points)
             # Generate names of points that are needed for the clause
             will_be_defined_pts = []
-            while num_pts_to_def > 0:
+            while defines_points > 0:
                 will_be_defined_pts.append(self.generate_new_point())
                 self.defined_points.append(will_be_defined_pts[-1])
-                num_pts_to_def -= 1
+                defines_points -= 1
 
             clause = self.get_text_clause(clause_relation, chosen_defined_pts, will_be_defined_pts)
             clauses.append(clause)
@@ -88,6 +92,7 @@ class ClauseGenerator:
 
 
 if __name__ == "__main__":
+    # random.seed(2)
     from generate_random_proofs import load_definitions_and_rules
     defs_path = '../defs.txt'
     rules_path = '../rules.txt'
@@ -95,6 +100,6 @@ if __name__ == "__main__":
     # Load definitions and rules
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
     cg = ClauseGenerator(definitions)
-    print(cg.get_text_clause('angle_bisector', ['x', 'y'], ['b', 'c']))
+    # print(cg.get_text_clause('angle_bisector', ['x', 'y'], ['b', 'c']))
 
-    print(cg.generate_clauses(3))
+    print(cg.generate_clauses(5))

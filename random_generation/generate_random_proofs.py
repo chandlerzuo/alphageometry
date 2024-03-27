@@ -16,7 +16,7 @@ def load_definitions_and_rules(defs_path, rules_path):
 
 
 def main():
-    random.seed(0)
+    random.seed(20)
     # Example entities and conditions for illustration purposes
 
     defs_path = '../defs.txt'
@@ -24,20 +24,17 @@ def main():
 
     # Load definitions and rules
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
+    cg = ClauseGenerator(definitions)
+    txt = cg.generate_clauses(5)
 
-    txt = 'a b c = triangle a b c; x = circle x a b c ? perp a b c x'
-    # txt = 'a b c = triangle a b c; d = midpoint d a b; e = midpoint e b c; f = midpoint f c a; g = on_line g d c, on_line g e a ? coll f b g'
-
-    # A goal less starting point of the search
-    txt = 'a b c = triangle a b c; d = midpoint d a b; e = midpoint e b c; f = midpoint f c a; g = on_line g d c, on_line g e a'
-
-    # cg = ClauseGenerator(definitions)
-    # txt = cg.generate_clauses(3)
-    #
-    # print(txt)
+    print(txt)
 
     p = pr.Problem.from_txt(txt)
+
+    print(f'Problem created, Building graph ...')
     g, _ = gh.Graph.build_problem(p, definitions)
+
+    print(f'Solving ...')
 
     ddar.solve(g, rules, p, max_level=1000)
 

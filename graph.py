@@ -514,6 +514,7 @@ class Graph:
       except DepCheckFailError:
         continue
       except (PointTooCloseError, PointTooFarError):
+        break #todo: Partha: I think this is to makesure the problem drawing looks nice. So breaking is not bad.
         continue
 
       if not pr.goal:
