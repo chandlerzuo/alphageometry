@@ -1,3 +1,13 @@
+# Random proof generation
+1. `cd random_proof_generation`
+2. Now you can simply run `python generate_random_proof.py` to generate a random proof.
+
+The proof will be printed on the console.
+
+## TODO: improvements
+When we produce a premise consisting of 5 clauses, in about 35% of the cases random proof generation fails! We either 
+get stuck in an eternal loop or self inconsistency occurs, or we sample clauses that require objects defined that we 
+don't define. This would be nice to avoid.
 
 # Solving Olympiad Geometry without Human Demonstrations
 
