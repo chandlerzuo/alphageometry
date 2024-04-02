@@ -17,7 +17,7 @@
 
 Please refer to README.md for detailed instructions.
 """
-
+import copy
 import traceback
 
 from absl import app
@@ -80,7 +80,7 @@ DEFINITIONS = None  # contains definitions of construction actions
 RULES = None  # contains rules of deductions
 
 
-def natural_language_statement(logical_statement: pr.Dependency) -> str:
+def natural_language_statement(logical_statement: pr.Dependency, return_nl_also:bool) -> str:
   """Convert logical_statement to natural language.
 
   Args:
@@ -91,12 +91,14 @@ def natural_language_statement(logical_statement: pr.Dependency) -> str:
   """
   names = [a.name.upper() for a in logical_statement.args]
   names = [(n[0] + '_' + n[1:]) if len(n) > 1 else n for n in names]
-  return pt.pretty_nl(logical_statement.name, names)
+  if return_nl_also:
+    return pt.pretty_nl(logical_statement.name, names)
+  else:
+    return logical_statement.name + ' ' + ' '.join(names)
 
 
 def proof_step_string(
-    proof_step: pr.Dependency, refs: dict[tuple[str, ...], int], last_step: bool
-) -> str:
+    proof_step: pr.Dependency, refs: dict[tuple[str, ...], int], last_step: bool, return_nl_also:bool) -> (str, str):
   """Translate proof to natural language.
 
   Args:
@@ -109,26 +111,46 @@ def proof_step_string(
   """
   premises, [conclusion] = proof_step
 
-  premises_nl = ' & '.join(
-      [
-          natural_language_statement(p) + ' [{:02}]'.format(refs[p.hashed()])
-          for p in premises
-      ]
+  premises_nl = ''
+
+  if return_nl_also:
+    premises_nl = ' & '.join(
+        [
+            natural_language_statement(p, return_nl_also) + ' [{:02}]'.format(refs[p.hashed()])
+            for p in premises
+        ]
+    )
+
+  premises_fl = ' & '.join(
+    [
+      natural_language_statement(p, return_nl_also=False) + ' [{:02}]'.format(refs[p.hashed()])
+      for p in premises
+    ]
   )
 
   if not premises:
     premises_nl = 'similarly'
+    premises_fl = 'similarly'
 
   refs[conclusion.hashed()] = len(refs)
 
-  conclusion_nl = natural_language_statement(conclusion)
+  conclusion_nl = ''
+  if return_nl_also:
+    conclusion_nl = natural_language_statement(conclusion, return_nl_also=return_nl_also)
+    if not last_step:
+      conclusion_nl += ' [{:02}]'.format(refs[conclusion.hashed()])
+
+  conclusion_fl = natural_language_statement(conclusion, return_nl_also=False)
   if not last_step:
-    conclusion_nl += ' [{:02}]'.format(refs[conclusion.hashed()])
+    conclusion_fl += ' [{:02}]'.format(refs[conclusion.hashed()])
 
-  return f'{premises_nl} \u21d2 {conclusion_nl}'
+  conclusion_fl = f'{premises_fl} \u21d2 {conclusion_fl}'
+  conclusion_nl = f'{premises_nl} \u21d2 {conclusion_nl}'
+
+  return conclusion_fl, conclusion_nl
 
 
-def write_solution(g: gh.Graph, p: pr.Problem, out_file: str, goal=None) -> None:
+def write_solution(g: gh.Graph, p: pr.Problem, out_file: str, goal=None, return_nl_also=True) -> None:
   """Output the solution to out_file.
 
   Args:
@@ -143,28 +165,38 @@ def write_solution(g: gh.Graph, p: pr.Problem, out_file: str, goal=None) -> None
       g, goal, merge_trivials=False
   )
 
-  solution = '\n=========================='
-  solution += '\n * From theorem premises:\n'
+  solution_nl = '\n=========================='
+  solution_nl += '\n * From theorem premises:\n'
   premises_nl = []
   for premises, [points] in setup:
-    solution += ' '.join([p.name.upper() for p in points]) + ' '
+    solution_nl += ' '.join([p.name.upper() for p in points]) + ' '
     if not premises:
       continue
     premises_nl += [
-        natural_language_statement(p) + ' [{:02}]'.format(refs[p.hashed()])
+        natural_language_statement(p, return_nl_also) + ' [{:02}]'.format(refs[p.hashed()])
         for p in premises
     ]
-  solution += ': Points\n' + '\n'.join(premises_nl)
+  solution_nl += ': Points\n' + '\n'.join(premises_nl)
 
-  solution += '\n\n * Auxiliary Constructions:\n'
+  solution_nl += '\n\n * Auxiliary Constructions:\n'
+  solution = copy.deepcopy(solution_nl)
+
   aux_premises_nl = []
+  aux_premises = []
   for premises, [points] in aux:
-    solution += ' '.join([p.name.upper() for p in points]) + ' '
-    aux_premises_nl += [
-        natural_language_statement(p) + ' [{:02}]'.format(refs[p.hashed()])
-        for p in premises
-    ]
-  solution += ': Points\n' + '\n'.join(aux_premises_nl)
+    solution_nl += ' '.join([p.name.upper() for p in points]) + ' '
+    if return_nl_also:
+      aux_premises_nl += [
+          natural_language_statement(p, return_nl_also) + ' [{:02}]'.format(refs[p.hashed()])
+          for p in premises
+      ]
+    else:
+      aux_premises += [
+          natural_language_statement(p, return_nl_also=False) + ' [{:02}]'.format(refs[p.hashed()])
+          for p in premises
+      ]
+  solution_nl += ': Points\n' + '\n'.join(aux_premises_nl)
+  solution += ': Points\n' + '\n'.join(aux_premises)
 
   # some special case where the deduction rule has a well known name.
   r2name = {
@@ -182,20 +214,23 @@ def write_solution(g: gh.Graph, p: pr.Problem, out_file: str, goal=None) -> None
       'a02': '(Angle chase)',
   }
 
-  solution += '\n\n * Proof steps:\n'
+  solution_nl += '\n\n * Proof steps:\n'
   for i, step in enumerate(proof_steps):
     _, [con] = step
-    nl = proof_step_string(step, refs, last_step=i == len(proof_steps) - 1)
+    fl, nl = proof_step_string(step, refs, last_step=i == len(proof_steps) - 1, return_nl_also=return_nl_also)
     rule_name = r2name.get(con.rule_name, '')
     nl = nl.replace('\u21d2', f'{rule_name}\u21d2 ')
-    solution += '{:03}. '.format(i + 1) + nl + '\n'
+    solution_nl += '{:03}. '.format(i + 1) + nl + '\n'
+    solution += '{:03}. '.format(i + 1) + fl + '\n'
 
-  solution += '==========================\n'
-  logging.info(solution)
+  solution_nl += '==========================\n'
+  logging.info(solution_nl)
+  if return_nl_also:
+    print(solution_nl)
   print(solution)
   if out_file:
     with open(out_file, 'w') as f:
-      f.write(solution)
+      f.write(solution_nl)
     logging.info('Solution written to %s.', out_file)
 
 #

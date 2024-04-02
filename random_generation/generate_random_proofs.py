@@ -31,7 +31,15 @@ def load_definitions_and_rules(defs_path, rules_path):
 
 
 def main():
-    random.seed(17)
+    seed = 22
+    import numpy as np
+    np.random.seed(seed)
+    random.seed(seed)
+    # import tensorflow as tf
+    # tf.random.set_seed(seed)
+    import jax
+    key = jax.random.PRNGKey(seed)
+
     # Example entities and conditions for illustration purposes
 
     defs_path = '../defs.txt'
@@ -40,7 +48,9 @@ def main():
     # Load definitions and rules
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
     cg = ClauseGenerator(definitions)
-    txt = cg.generate_clauses(5)
+    txt = cg.generate_clauses(2)
+    # txt = 'A B C D = rectangle A B C D'
+    txt = 'A B C = triangle A B C; o = circle o A B C' # #; A C D = triangle A C D, perp A D D C, para A B C D'
 
     print(txt)
 
@@ -68,7 +78,7 @@ def main():
     # random.seed(4)
     cache_node = random.choice(list((g.cache.keys())))
     goal = pr.Construction(cache_node[0], list(cache_node[1:]))
-    write_solution(g, p, goal=goal, out_file='')
+    write_solution(g, p, goal=goal, out_file='', return_nl_also=True)
 
 
 if __name__ == "__main__":
