@@ -1,8 +1,38 @@
+# From premise to problem generating text
+The primise printed is often in a simplefied domain as compared tot he problem text
+Moreover we do not know how to build graph given a premise text. 
+
+Example premise text
+```
+A B C D : Points
+cong D A D B [00]
+cong D B D C [01]
+```
+Corresponding problem text
+```
+'A B C = triangle A B C; D = circle A B C'
+```
+We have to come up with a way to go from premise where points and relationship 
+among them are defined.
+
+Using the folooing added rules we can ahe the fllowing equivalent statement
+```
+txt = 'A B C = triangle A B C; D = circle A B C'
+txt = 'a = free a; b = free b; c = free c; d = free d, equal_seg d a d b, equal_seg d b d c'
+```
+
+## Doc on the defs.txt
+1. `a = on_bline a b c` means point `a` is on the perpendicular bisector of segment `b c`
+2. `New Def` - `a = equal_seg a b c d` defines point `a` such that segment `a b` is equal to segment `c d`
+
 # Random proof generation
 1. `cd random_proof_generation`
 2. Now you can simply run `python generate_random_proof.py` to generate a random proof.
 
 The proof will be printed on the console.
+
+## printing natural looking lang
+use `prettier.py`
 
 ## TODO: improvements
 When we produce a premise consisting of 5 clauses, in about 35% of the cases random proof generation fails! We either 
