@@ -405,3 +405,9 @@ x : a b c
 a b c = ncoll a b c
 x : cyclic a b c x
 cyclic a b c
+
+equal_seg a b c d
+a : b c d
+ =
+a : cong a b c d
+free

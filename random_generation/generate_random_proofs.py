@@ -48,9 +48,14 @@ def main():
     # Load definitions and rules
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
     cg = ClauseGenerator(definitions)
-    txt = cg.generate_clauses(2)
-    # txt = 'A B C D = rectangle A B C D'
-    txt = 'A B C = triangle A B C; o = circle o A B C' # #; A C D = triangle A C D, perp A D D C, para A B C D'
+    txt = cg.generate_clauses(5)
+    # txt = 'A B C = triangle A B C; D = circle A B C'
+    # txt = 'a b c d = free_4pt a b c d, equal_seg d a d b, equal_seg d b d c'
+    # txt = 'a b c d = free_4pt a b c d'
+    # txt = 'a b c d = rectangle a b c d'
+    txt = 'B = free B; C = free C; A = free A; D = free D; A = equal_seg A B B C; D = equal_seg D A D B; D = equal_seg D B D C'
+    # txt = 'a b c d = free_4pt a b c d; d = on_pline b a c d'
+    # txt = 'a b c d = on_pline b a c d'
 
     print(txt)
 
@@ -59,13 +64,13 @@ def main():
     print(f'Problem created, Building graph ...')
     try:
         # Set an alarm for 10 seconds
-        signal.alarm(10)
+        # signal.alarm(10)
 
         # Code block to execute with timeout
         g, _ = gh.Graph.build_problem(p, definitions)
 
         # Disable the alarm
-        signal.alarm(0)
+        # signal.alarm(0)
     except TimeoutException as e:
         print("Graph couldn't bre create in reasonable time. Perhaps problem with the premises. Exiting ...")
         raise e
@@ -76,9 +81,9 @@ def main():
 
     # Randomly select a cache node to be the goal. #TODO: Is this right can we do better? Consider coverage!
     # random.seed(4)
-    cache_node = random.choice(list((g.cache.keys())))
-    goal = pr.Construction(cache_node[0], list(cache_node[1:]))
-    write_solution(g, p, goal=goal, out_file='', return_nl_also=True)
+    for cache_node in g.cache.keys():
+        goal = pr.Construction(cache_node[0], list(cache_node[1:]))
+        write_solution(g, p, goal=goal, out_file='', return_nl_also=False)
 
 
 if __name__ == "__main__":
