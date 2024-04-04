@@ -24,6 +24,7 @@ txt = 'a = free a; b = free b; c = free c; d = free d, equal_seg d a d b, equal_
 ## Doc on the defs.txt
 1. `a = on_bline a b c` means point `a` is on the perpendicular bisector of segment `b c`
 2. `New Def` - `a = equal_seg a b c d` defines point `a` such that segment `a b` is equal to segment `c d`
+3. What does the statement `a b c = diff a b, diff b c` mean? If understood check if `on_parallel_line` and `equal_seg` are correctly defined! I think it says `a`, `b`, `c` are different points.
 
 # Random proof generation
 1. `cd random_proof_generation`

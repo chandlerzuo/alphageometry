@@ -48,14 +48,15 @@ def main():
     # Load definitions and rules
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
     cg = ClauseGenerator(definitions)
-    txt = cg.generate_clauses(5)
+    # txt = cg.generate_clauses(5)
     # txt = 'A B C = triangle A B C; D = circle A B C'
     # txt = 'a b c d = free_4pt a b c d, equal_seg d a d b, equal_seg d b d c'
     # txt = 'a b c d = free_4pt a b c d'
     # txt = 'a b c d = rectangle a b c d'
-    txt = 'B = free B; C = free C; A = free A; D = free D; A = equal_seg A B B C; D = equal_seg D A D B; D = equal_seg D B D C'
-    # txt = 'a b c d = free_4pt a b c d; d = on_pline b a c d'
-    # txt = 'a b c d = on_pline b a c d'
+    # txt = 'B = free B; C = free C; A = free A; D = free D; A = equal_seg A B B C'
+    # txt = 'B = free B; C = free C; A = free A; D = free D; A = equal_seg A B B C; D = equal_seg D A D B; D = equal_seg D B D C'
+    # txt = 'B = free B; C = free C; A = free A; D = free D; E = free E; F = free F; A = eqangle3 A C B C A B'
+    txt = 'b = free b; c = free c; a = eq_triangle a b c'
 
     print(txt)
 
@@ -83,7 +84,7 @@ def main():
     # random.seed(4)
     for cache_node in g.cache.keys():
         goal = pr.Construction(cache_node[0], list(cache_node[1:]))
-        write_solution(g, p, goal=goal, out_file='', return_nl_also=False)
+        write_solution(g, p, goal=goal, out_file='', return_nl_also=True)
 
 
 if __name__ == "__main__":

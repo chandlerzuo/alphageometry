@@ -215,6 +215,7 @@ def write_solution(g: gh.Graph, p: pr.Problem, out_file: str, goal=None, return_
   }
 
   solution_nl += '\n\n * Proof steps:\n'
+  solution += '\n\n * Proof steps:\n'
   for i, step in enumerate(proof_steps):
     _, [con] = step
     fl, nl = proof_step_string(step, refs, last_step=i == len(proof_steps) - 1, return_nl_also=return_nl_also)

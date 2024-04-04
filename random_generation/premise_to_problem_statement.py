@@ -7,7 +7,8 @@ def transform_text(input_text):
     # Dictionary to hold equivalences between keywords
     equivalences = {
         "cong": "equal_seg",
-        # Add more equivalences here as needed
+        "perp": "on_tline",
+        "para": "on_pline"
     }
 
     # Split the input text into lines
@@ -49,6 +50,10 @@ B C A D: Points
 cong A B B C [00]
 cong D A D B [01]
 cong D B D C [02]
+perp A B B C [00]
+para A D B C [01]
+para A B C D [02]
+eqangle A C A B C A C B [00]
 """
 
     output_text = transform_text(input_text)
