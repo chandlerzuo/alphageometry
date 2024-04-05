@@ -62,12 +62,12 @@ def verbalize_clause(element_name, arguments):
     elif element_name == 'intersection_lt':
         # TODO(Partha, Felix): Mention XC is not parallel to ab for this to make sense and therefore ab can't be
         #  perpendicular to de. Augmentations?
-        return random.choice[f"{arguments[1]}{arguments[2]} anf {arguments[4]}{arguments[5]} are two non " \
+        return random.choice([f"{arguments[1]}{arguments[2]} and {arguments[4]}{arguments[5]} are two non " \
                              f"perpendicular lines. Line {arguments[0]}{arguments[3]} is perpendicular to " \
                              f"{arguments[4]}{arguments[5]} it intersects line" \
                              f" {arguments[1]}{arguments[2]} at {arguments[0]}. ",
                              f"The line perpendicular to {arguments[4]}{arguments[5]} intersects the " \
-                             f"line {arguments[1]}{arguments[2]} at {arguments[0]}. "]
+                             f"line {arguments[1]}{arguments[2]} at {arguments[0]}. "])
     elif element_name == 'intersection_pp':  # intersection of two pairs of parallel lines
         #TODO(Partha, Felix): The following is what I read from the defs! But what the hell is it trying to describe?
         # mustFix!
@@ -245,6 +245,7 @@ if __name__ == '__main__':
     # txt = 'a = intersection_cc x o w a'
     # txt = 'a = intersection_lp x a b c m n; I = intersection_pp I w k mq e F d; a = excenter2 x y z i a b c'
     txt = 'a = on_circle x o a'
+    txt = 'a = intersection_lt x a b c d e'
     # txt = 'Z x l = triangle Z x l; V = excenter V Z l x; R = on_bline R l V; ' \
     #       'Yj Tv I4 Tt = ninepoints Yj Tv I4 Tt R Z V; f OR G b = trapezoid f OR G b'
     print(get_nl_problem_statement(txt))
