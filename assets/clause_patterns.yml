@@ -1,7 +1,7 @@
 
 angle_bisector:
-  - "{0} is a point such that ∠{1}{2}{0} = ∠{0}{2}{2}. "
-  - "{0} is a point such that ∠{1}{2}{0} is equal to ∠{0}{2}{2}. "
+  - "{0} is a point such that ∠{1}{2}{0} = ∠{0}{2}{3}. "
+  - "{0} is a point such that ∠{1}{2}{0} is equal to ∠{0}{2}{3}. "
 angle_mirror:
     - "{0} is a point such that ∠{1}{2}{3} = ∠{3}{2}{0}. "
     - "{0} is a point such that ∠{1}{2}{3} is equal to ∠{3}{2}{0}. "

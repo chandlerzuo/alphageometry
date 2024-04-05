@@ -33,3 +33,13 @@ proof: "clauses ? goal" or "clauses" to prove clauses are true or lead to a cont
 clauses: "clause1; clause2; ..."
 clause: "point1 point2 ... = constructions" where point1, point2 are newly introduced points and constructions are constructions based on these points and existing points
 constructions: "construction1, construction2, ..." where construction1, construction2 are constructions which can also use the newly introduced points
+
+
+
+definition
+================
+construction: construction name
+rely: what it relies on: "rely1, rely2, .." where rely1 is "point1 point2 .. : construction1, construction2, .." or "construction1, construction2, .."
+deps: what construction it depends on, a set of clauses "clause1, clause2, .."
+basics: basic1; basic2; .. where basic1 is "point1 point2 .. : construction1, construction2, .." or "construction1, construction2, .."
+numerics: set of constructions "construction1, construction2, .."

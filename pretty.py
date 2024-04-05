@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Utilities for string manipulation in the DSL."""
+"""Utilities for string manipulation in the DSL (solver uses more cryptic language)."""
 
 MAP_SYMBOL = {
     'T': 'perp',
@@ -55,6 +55,7 @@ def _gcd(x: int, y: int) -> int:
 
 
 def simplify(n: int, d: int) -> tuple[int, int]:
+  """given fraction n/d, simplify to smallest possible integers"""
   g = _gcd(n, d)
   return (n // g, d // g)
 
@@ -80,6 +81,7 @@ def pretty2a(a: str, b: str, c: str, d: str) -> str:
 
 
 def pretty_angle(a: str, b: str, c: str, d: str) -> str:
+  """print angle formed by segments ab and cd, simplifying if they share an endpoint."""
   if b in (c, d):
     a, b = b, a
   if a == d:
@@ -89,6 +91,9 @@ def pretty_angle(a: str, b: str, c: str, d: str) -> str:
     return f'\u2220{b}{a}{d}'
   return f'\u2220({a}{b}-{c}{d})'
 
+def pretty_nl_from_str(s):
+  name, *args = s.split(" ")
+  return pretty_nl(name, args)
 
 def pretty_nl(name: str, args: list[str]) -> str:
   """Natural lang formatting a predicate."""
@@ -111,6 +116,7 @@ def pretty_nl(name: str, args: list[str]) -> str:
     x, a, b = args
     return f'{x} is midpoint of {a}{b}'
   if name in ['eqangle', 'eqangle6', '^']:
+    # equal angle
     a, b, c, d, e, f, g, h = args
     return f'{pretty_angle(a, b, c, d)} = {pretty_angle(e, f, g, h)}'
   if name in ['eqratio', 'eqratio6', '/']:
@@ -124,19 +130,21 @@ def pretty_nl(name: str, args: list[str]) -> str:
   if name in ['perp', 'T']:
     if len(args) == 2:  # this is algebraic derivation.
       ab, cd = args  # ab = 'd( ... )'
-      return f'{ab} \u27c2 {cd}'
+      return f'{ab} \u27c2 {cd}' # u27c2 is ⟂ (perpendicular)
     a, b, c, d = args
-    return f'{a}{b} \u27c2 {c}{d}'
+    return f'{a}{b} \u27c2 {c}{d}' # u27c2 is ⟂ (perpendicular)
   if name in ['para', 'P']:
     if len(args) == 2:  # this is algebraic derivation.
       ab, cd = args  # ab = 'd( ... )'
-      return f'{ab} \u2225 {cd}'
+      return f'{ab} \u2225 {cd}' # u2225 is ∥ (parallel)
     a, b, c, d = args
     return f'{a}{b} \u2225 {c}{d}'
   if name in ['simtri2', 'simtri', 'simtri*']:
+    # similar triangle
     a, b, c, x, y, z = args
     return f'\u0394{a}{b}{c} is similar to \u0394{x}{y}{z}'
   if name in ['contri2', 'contri', 'contri*']:
+    # congruent triangles: equal angles and equal lengths
     a, b, c, x, y, z = args
     return f'\u0394{a}{b}{c} is congruent to \u0394{x}{y}{z}'
   if name in ['circle', 'I']:
@@ -148,7 +156,11 @@ def pretty_nl(name: str, args: list[str]) -> str:
 
 
 def pretty(txt: str) -> str:
-  """Pretty formating a predicate string."""
+  """Pretty formating a predicate string.
+  
+  e.g.
+  >>> pretty('acompute Y a b c')
+  """
   if isinstance(txt, str):
     txt = txt.split(' ')
   name, *args = txt
