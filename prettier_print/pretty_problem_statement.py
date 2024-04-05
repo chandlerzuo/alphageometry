@@ -67,7 +67,7 @@ def verbalize_clause(element_name, arguments):
                              f"{arguments[4]}{arguments[5]} it intersects line" \
                              f" {arguments[1]}{arguments[2]} at {arguments[0]}. ",
                              f"The line perpendicular to {arguments[4]}{arguments[5]} intersects the " \
-                             f"line {arguments[1]}{arguments[2]} at {arguments[0]}. "])
+                             f"line {arguments[1]}{arguments[2]} at {arguments[0]}. ", ])
     elif element_name == 'intersection_pp':  # intersection of two pairs of parallel lines
         #TODO(Partha, Felix): The following is what I read from the defs! But what the hell is it trying to describe?
         # mustFix!
@@ -119,10 +119,10 @@ def verbalize_clause(element_name, arguments):
         return f"{arguments[0]} is on the line passing through {arguments[1]} and parallel to" \
                f" {arguments[2]}{arguments[3]}. "
     elif element_name == 'on_tline':  # on perpendicular line
-        return random.choice[f"{arguments[0]} is a point such that {arguments[0]}{arguments[1]} is perpendicular to " \
+        return random.choice([f"{arguments[0]} is a point such that {arguments[0]}{arguments[1]} is perpendicular to " \
                              f"{arguments[1]}{arguments[2]}. ",
                              f"{arguments[0]} lies on the perpendicular line to {arguments[2]}{arguments[3]} " \
-                             f"at {arguments[1]}. "]
+                             f"at {arguments[1]}. ", ])
     elif element_name == 'orthocenter':
         return f"{arguments[0]} is the orthocenter of triangle {arguments[1]}{arguments[2]}{arguments[3]}. "
     elif element_name == 'parallelogram':
@@ -188,21 +188,40 @@ def verbalize_clause(element_name, arguments):
                f"{arguments[2]}{arguments[3]} is tangent to the circle at {arguments[3]}. " \
                f"The line {arguments[0]}{arguments[5]} intersects {arguments[2]}{arguments[3]} at {arguments[1]}. "
     elif element_name == '3peq':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
+        raise Exception(f"Element name {element_name} not implemented.")
+    elif element_name == 'trisect':
+        raise Exception(f"Element name {element_name} not implemented.")
+    elif element_name == 'trisegment':
+        #TODO(Partha): Augment
+        return f"Line segment {arguments[2]}{arguments[3]} is a divided into three equal segments by the points " \
+               f"{arguments[0]} and {arguments[1]}. "
+    elif element_name == 'on_dia':
+        #TODO(Partha): Write better
+        return f"{arguments[1]}{arguments[2]} is the diameter of a circle. " \
+               f"{arguments[0]} is a point on the circumferance of the circle. "
+    elif element_name == 'ieq_triangle':
+        return f"{arguments[0]}{arguments[1]}{arguments[2]} is an equilateral triangle. "
+    elif element_name == 'on_opline':  # on the extended line or on the linesegment of ab?
+        #TODO(partha): Disambiguate and make better
+        return random.choice([f"{arguments[0]}, {arguments[1]}, {arguments[2]} are colinear. ",
+                              f"{arguments[0]} lies on the line {arguments[1]}{arguments[2]}. "])
+    elif element_name == 'cc_tangent0':
+        raise Exception(f"Element name {element_name} not implemented.")
+    elif element_name == 'cc_tangent': # tangent to two circlles
+        raise Exception(f"Element name {element_name} not implemented.")
+    elif element_name == 'eqangle3': # tangent to two circlles
+        return random.choice([f"angle {arguments[1]}{arguments[0]}{arguments[2]} is equal to "
+                             f"angle {arguments[4]}{arguments[3]}{arguments[5]}",
+                             f"∠{arguments[1]}{arguments[0]}{arguments[2]} = "
+                             f"∠{arguments[4]}{arguments[3]}{arguments[5]}", ])
+    elif element_name == 'tangent':  # tangent to a circlle
+        #TODO(Partha, Felixm Max): Why did they define two tangents?
+        return f"{arguments[2]}{arguments[0]} is the tangent to the circle centered at {arguments[3]} and passing" \
+               f" through {arguments[4]} at {arguments[0]} and {arguments[2]}{arguments[1]} is tangent to the " \
+               f"same circle at {arguments[1]}"
+    elif element_name == 'on_circum':
+        return f"{arguments[0]} is a point on te circumcircle of the triangle {arguments[1]}{arguments[2]}{arguments[3]}"
+
     # Add more templates for other geometric elements as needed
     else:
         return '' #TODO(Partha): Remove this later!
