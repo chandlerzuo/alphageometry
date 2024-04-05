@@ -1,0 +1,35 @@
+perp A B C D, perp C D E F, ncoll A B E => para A B E F
+means:
+perp A B C D: This means that line AB is perpendicular to line CD.
+perp C D E F: This means that line CD is perpendicular to line EF.
+ncoll A B E: This means that points A, B, and E are not collinear, i.e., they do not lie on the same line.
+=> para A B E F: This means that if the above conditions are met, then line AB is parallel to line EF.
+
+
+gin: github index display
+gdown: gdrive downloader
+
+
+distance(point, circle): deviation from circumference, distance(point, line): distance to line
+Line greater_than: greater slope, equal: equal slope, 
+
+sample_within
+
+
+numericals: geometry classes (Point, Line etc.) and methods like intersection, plotting with plt
+rules: premise/constraints -> new constraint
+defs: to introduce new points
+
+"a b c = triangle a b c"
+means
+a b c lie on a triangle, introducing new arbitrary points a, b, c
+
+on_tline g1 a b c: on tangent line; the line through points b, c is a tangent to the circle g1 at point a
+incenter2 d e f i a b c: inner circle; circle with center i inscribing triangle a b c, touching sides at d e f
+perp a h b c: segment ah is perpendicular to segment bc
+
+translate: translate arbitrary point names to alphabetically increasing ones to have similar names as in training
+proof: "clauses ? goal" or "clauses" to prove clauses are true or lead to a contradiction
+clauses: "clause1; clause2; ..."
+clause: "point1 point2 ... = constructions" where point1, point2 are newly introduced points and constructions are constructions based on these points and existing points
+constructions: "construction1, construction2, ..." where construction1, construction2 are constructions which can also use the newly introduced points

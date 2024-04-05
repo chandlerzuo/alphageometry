@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+venv3/
+meliad_lib/
+ag_ckpt_vocab/
+
+.idea/
+
 # Distribution / packaging
 .Python
 build/

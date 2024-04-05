@@ -54,6 +54,7 @@ class Construction:
     data = data.split(' ')
     return Construction(data[0], data[1:])
 
+  # args: points the construction relies on
   def __init__(self, name: str, args: list[str]):
     self.name = name
     self.args = args
@@ -94,6 +95,8 @@ class Clause:
 
     self.constructions = constructions
 
+  # mapping: mapping from original point names to new (alphabetically ordered) points
+  # uses existing mapping and updates mapping if new points are added
   def translate(self, mapping: dict[str, str]) -> Clause:
     points0 = []
     for p in self.points:
@@ -207,6 +210,9 @@ class Problem:
     p.mapping = mapping
     return p
 
+  def __repr__(self):
+    return self.txt()
+  
   def txt(self) -> str:
     return (
         '; '.join([c.txt() for c in self.clauses]) + ' ? ' + self.goal.txt()
