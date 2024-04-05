@@ -9,7 +9,7 @@ replacement_dict = {
     '⇒': ['implies', 'therefore', 'hence', '. This implies that', 'which means that'],
     '\\Delta': ['triangle', '△'],
     '∥': ['parallel to', 'is parallel to'],
-    ':': [' isto ', ' over ', ' divided by ', ' to '],
+    ':': [' is to ', ' over ', ' divided by ', ' to '],
     '∠': ['angle ', '∠'],
     '⟂': ['perpendicular to', 'is perpendicular to'],
 }
