@@ -1,0 +1,140 @@
+
+angle_bisector:
+  - "{0} is a point such that ∠{1}{2}{0} = ∠{0}{2}{2}. "
+  - "{0} is a point such that ∠{1}{2}{0} is equal to ∠{0}{2}{2}. "
+angle_mirror:
+    - "{0} is a point such that ∠{1}{2}{3} = ∠{3}{2}{0}. "
+    - "{0} is a point such that ∠{1}{2}{3} is equal to ∠{3}{2}{0}. "
+circle:
+    - "{0} is the centre of the circle that passes through {1}, {2}, {3}. "
+circumcenter:
+    - "{0} is the centre of the circumcenter of the triangle {1}{2}{3}. "
+eq_quadrangle:
+    - "{0}{1}{2}{3} is a quadrilateral with {0}{3} = {1}{2}. "
+eq_trapezoid:
+    - "{0}{1}{2}{3} is an isosceles trapezoid with {3}{0} = {1}{2}. "
+eq_triangle:
+    - "{0}{1}{2} is an equilateral triangle. "
+eqangle2:
+    - "{0} is a point such that ∠{2}{1}{0} = ∠{0}{3}{2}. "
+eqdia_quadrangle:
+    - "{0}{1}{2}{3} is a quadrilateral whose diagonals are equal. "
+eqdistance:
+    - "{0} is a point such that {0}{1} = {2}{3}. "
+foot:
+    - "{0} is the foot of the perpendicular dropped on to {2}{3} from {1}. "
+free:
+    - "{0} is a point. "
+incenter:
+    - "{0} is is the incentre of triangle {1}{2}{3}. "
+incenter2: # TODO(Partha): opportunity to augment! Symantic!  Also use respectively!
+    - "{3} is is the incentre of triangle {4}{5}{6}. The incircle touches the arm {4}{5} at {2}, the arm {5}{6} at {0} and the arm {6}{4} at {1}. "
+excenter: # TODO(Partha): opportunity to augment! Symantic!
+    - "{0} is the excentre of triangle triangle {1}{2}{3} opposite to the angle {2}{1}{3}. "
+excenter2: # TODO(Partha): opportunity to augment! Symantic! Also use respectively!
+    - "{3} is the excentre of triangle {4}{5}{6} opposite to the angle {5}{4}{6}. The excircle touches the arm {4}{5} at {2}, the arm {5}{6} at {0} and the arm {6}{4} at {1}. "
+centroid: # TODO(Partha): opportunity to augment! Symantic! permuting the points of the arms.
+    - "{4}{5}{6} is a triangle. {3} is the centroid of the triangle and {0}, {1}, {2} are the midpoints of the sides {5}{6}, {4}{6}, {5}{4} respectively. "
+ninepoints: # TODO(Partha): opportunity to augment! Symantic! permuting the points of the arms.
+    - "{4}{5}{6} is a triangle. {0}, {1}, {2} are the midpoints of the sides {5}{6}, {4}{6}, {5}{4} respectively. {3} is the centre of the circumcircle of the triangle {0}{1}{2}."
+intersection_cc: # TODO(Partha): opportunity to augment! Symantic! just describe in text
+    - "{0}{1}{2}{3} is a quadrilateral where {1}{3} = {1}{0} and {2}{3} = {2}{0}. "
+intersection_lc: # TODO(Partha): Understood better?
+    - "{1}{2}{3} is a triangle. The circle drawn with the centre at {2} and passing through {3} intersects the (possibly extended) line {1}{3} again at point {0}. "
+intersection_ll: # TODO(Partha, Felix): Mention they are not parallel?
+    - "Line {1}{2} and line {3}{4} intersect each other at {0}. "
+intersection_lp: # intersection between line and a pair of parallel lines
+    - "{4}{5} and {1}{2}  are two non parallel lines. {0} lies on {1}{2} but not on {4}{5} such that {3}{0} is parallel to {4}{5}. "
+intersection_lt: # TODO(Partha, Felix): Mention XC is not parallel to ab for this to make sense and therefore ab can't be
+    - "{1}{2} and {4}{5} are two non perpendicular lines. Line {0}{3} is perpendicular to {4}{5} it intersects line {1}{2} at {0}. "
+    - "The line perpendicular to {4}{5} intersects the line {1}{2} at {0}. "
+intersection_pp:  #TODO(Partha, Felix): The following is what I read from the defs! But what the hell is it trying to describe?
+    - "Line {0}{1} and line {2}{3} are parallel. Line {4}{0} and line {5}{6} are parallel. {0} is the intersection point. "
+intersection_tt:  # TODO(Partha, Felix): This can be augmented nicely
+    - "{2}{3} and {5}{6} are two non parallel lines. {0}{1} and {0}{4} are perpendicular lines to the aforementioned lines respectively. The Perpendicular lines intersect at {0}. "
+iso_triangle:  # TODO(Partha): Also add the angle equal description
+    - "{0}{1}{2} is an isosceles triangle with base {1}{2}. "
+    - "{0}{1}{2} is an isosceles triangle with {0}{1} = {0}{2}. "
+lc_tangent:  # TODO(Partha, Felix): Write this better
+    - "{0}{1} is the tangent to the circle centered on {1}{2} (possibly extended) and passing through {1}. "
+    - "{0}{1} is perpendicular to {1}{2}"
+midpoint:
+    - "{0} is the midpoint of {1}{2}. "
+mirror: # TODO(Partha, Felix): This is a bit confusing! Fix it! i mean how would it appear in geometry problems?
+    - "{0} is the mirror image of {1} in {2}. "
+nsquare:  #TODO(Felix): Do you see a better way of saying it? Lets keep all we can think of! Look at p square
+    - "{0}{1}{2} is an isosceles right angle triangle with ∠{0}{1}{2} being the right angle. "
+on_aline:  # on same angle line
+    - "{0} is a point such that ∠{0}{1}{2} = ∠{3}{4}{5}. "
+on_aline2:
+    - "{0} is a point such that ∠{1}{0}{2} = ∠{3}{4}{5}. "
+on_bline:
+    - "{0} lies on the perpendicular bisector of {1}{2}. "
+on_circle:
+    - "{0} lies on the circle centered are {1} with radios {1}{2}. "
+on_line:
+    - "{0} lies on line {1}{2}. "
+on_pline:  # on parallel line
+    - "{0} is on the line passing through {1} and parallel to {2}{3}. "
+on_tline:  # on perpendicular line
+    - "{0} is a point such that {0}{1} is perpendicular to {1}{2}. "
+    - "{0} lies on the perpendicular line to {2}{3} at {1}. "
+orthocenter:
+    - "{0} is the orthocenter of triangle {1}{2}{3}. "
+parallelogram:
+    - "{0}{1}{2}{4} is a parallelogram. "
+pentagon:
+    - "{0}{1}{2}{3}{4} is a pentagon. "
+psquare:  # from the definitions it is same as nsquare This troubling!
+    # TODO(Felix): Do you see a better way of saying it? Lets keep all we can think of! same as nsquare This troubling!
+    - "{0}{1}{2} is an isosceles right angle triangle with ∠{0}{1}{2} being the right angle. "
+quadrangle:
+    - "{0}{1}{2}{3} is a quadrangle. "
+    - "{0}{1}{2}{3} is a quadrilateral."
+r_trapezoid:
+  #TODO(Partha): Augment with different def of perp
+    - "{0}{1}{2}{3} is a right angle trapezoid. With {0}{1} ⊥ {0}{3}."
+r_triangle:
+    # TODO(Partha): Augment with different def of perp
+    - "{0}{1}{2} is a triangle. With ∠{1}{0}{2} being a right angle."
+rectangle:
+    - "{0}{1}{2}{3} is a rectangle. "
+reflect: # perhaps we don't have to augment it a lot as this seems to be a construction element
+    - "{0} is the reflection of {1} on {2}{3}. "
+risos:
+    #TODO(Partha): Augment with different def of perp
+    - "{0}{1}{2} is a right angle isosceles triangle. With ∠{1}{0}{2} as the right angle."
+s_angle:  # Assign that an angle is a constant degree
+    # TODO(Partha): This won't be sampled correctly in the clause creator. FIX this there!
+    - "∠{0}{1}{2} is {2} degree. "
+shift:
+    #TODO(Partha, Felix): This is not understood yet! Fix this!
+    - "{0}{1}{2} is a triangle. "
+square:  # strange redefinition in isquare  # Attention!
+    - "{0}{1}{2}{3} is a square. "
+isquare:  # strange redefinition in square  # Attention!
+    - "{0}{1}{2}{3} is a square. "
+trapezoid:
+    - "{0}{1}{2}{3} is a trapezoid. "
+triangle:
+    - "{0}{1}{2} is a triangle. "
+triangle12:  # Strange cache! # Attention!
+    # TODO(Partha): Write more naturally! And this happens so often that there is a separate definition fo this?!
+    - "{0}{1}{2} is a triangle. With {0}{1} : {0}{2} = 1 : 2. "
+2l1c:  # Acircle touching two lines and another circle
+    # TODO(Partha, Felix): Verify and Augment.
+    - "{4}{6} is a line {5}{6} is another line. A circle centered at {7} passes through {4} and touches {5}. A circle centered at {3} touches {4}{6} at {0}, {5}{7} at {1} and the circle centered at {7} at {2} respectively. "
+e5128:
+    # TODO(Partha, Felix): Verify and Augment. Attention! Might be WRONG!
+    # Did not write the equal angles!
+    - "{3}{0}{5} are points on a circle centered at {4}. {2}{3} is tangent to the circle at {3}. The line {0}{5} intersects {2}{3} at {1}. "
+
+
+
+
+
+
+
+
+
+
