@@ -59,77 +59,135 @@ def verbalize_clause(element_name, arguments):
         return f"Line {arguments[1]}{arguments[2]} and line {arguments[3]}{arguments[4]} intersect each other at {arguments[0]}. "
     elif element_name == 'intersection_lp':  # intersection between line and a pair of parallel lines
         return f"{arguments[4]}{arguments[5]} and {arguments[1]}{arguments[2]}  are two non parallel lines. {arguments[0]} lies on {arguments[1]}{arguments[2]} but not on {arguments[4]}{arguments[5]} such that {arguments[3]}{arguments[0]} is parallel to {arguments[4]}{arguments[5]}. "
-    elif element_name == 'intersection_ltk':
+    elif element_name == 'intersection_lt':
+        # TODO(Partha, Felix): Mention XC is not parallel to ab for this to make sense and therefore ab can't be
+        #  perpendicular to de. Augmentations?
+        return random.choice[f"{arguments[1]}{arguments[2]} anf {arguments[4]}{arguments[5]} are two non " \
+                             f"perpendicular lines. Line {arguments[0]}{arguments[3]} is perpendicular to " \
+                             f"{arguments[4]}{arguments[5]} it intersects line" \
+                             f" {arguments[1]}{arguments[2]} at {arguments[0]}. ",
+                             f"The line perpendicular to {arguments[4]}{arguments[5]} intersects the " \
+                             f"line {arguments[1]}{arguments[2]} at {arguments[0]}. "]
+    elif element_name == 'intersection_pp':  # intersection of two pairs of parallel lines
+        #TODO(Partha, Felix): The following is what I read from the defs! But what the hell is it trying to describe?
+        # mustFix!
+        return f"Line {arguments[0]}{arguments[1]} and line {arguments[2]}{arguments[3]} are parallel. " \
+               f"Line {arguments[4]}{arguments[0]} and line {arguments[5]}{arguments[6]} are parallel. " \
+               f"{arguments[0]} is the intersection point. "
+    elif element_name == 'intersection_tt':  # intersection between two perpendicular lines
+        # TODO(Partha, Felix): This can be augmented nicely
+        return f"{arguments[2]}{arguments[3]} and {arguments[5]}{arguments[6]} are two non parallel lines. " \
+               f"{arguments[0]}{arguments[1]} and {arguments[0]}{arguments[4]} are perpendicular lines to the " \
+               f"aforementioned lines respectively. The Perpendicular lines intersect at {arguments[0]}. "
+    elif element_name == 'iso_triangle':  # isosceles triangle
+        # TODO(Partha): Also add the angle equal description
+        return random.choice[f"{arguments[0]}{arguments[1]}{arguments[2]} is an isosceles triangle with base" \
+                             f" {arguments[1]}{arguments[2]}. ",
+                             f"{arguments[0]}{arguments[1]}{arguments[2]} is an isosceles triangle with" \
+                             f" {arguments[0]}{arguments[1]} = {arguments[0]}{arguments[2]}. "]
+    elif element_name == 'lc_tangent':  # line circle tangent
+        # TODO(Partha, Felix): Write this better
+        return random.choice[f"{arguments[0]}{arguments[1]} is the tangent to the circle centered on " \
+                             f"{arguments[1]}{arguments[2]} (possibly extended) and passing through {arguments[1]}. ",
+                             f"{arguments[0]}{arguments[1]} is perpendicular to {arguments[1]}{arguments[2]}"]
+    elif element_name == 'midpoint':
+        return f"{arguments[0]} is the midpoint of {arguments[1]}{arguments[2]}. "
+    elif element_name == 'mirror':
+        # TODO(Partha, Felix): This is a bit confusing! Fix it! i mean how would it appear in geometry problems?
+        return f"{arguments[0]} is the mirror image of {arguments[1]} in {arguments[2]}. "
+    elif element_name == 'nsquare':  # from the definitions it is same as psquare This troubling!
+        #TODO(Felix): Do you see a better way of saying it? Lets keep all we can think of! Look at p square
+        return f"{arguments[0]}{arguments[1]}{arguments[2]} is an isosceles right angle triangle with " \
+               f"∠{arguments[0]}{arguments[1]}{arguments[2]} being the right angle. "
+    elif element_name == 'on_aline':  # on same angle line
+        # Perhaps construction element and we don't need to template it nicely?
+        return f"{arguments[0]} is a point such that " \
+               f"∠{arguments[0]}{arguments[1]}{arguments[2]} = ∠{arguments[3]}{arguments[4]}{arguments[5]}. "
+    elif element_name == 'on_aline2':
+        # Perhaps construction element and we don't need to template it nicely?
+        return f"{arguments[0]} is a point such that " \
+               f"∠{arguments[1]}{arguments[0]}{arguments[2]} = ∠{arguments[3]}{arguments[4]}{arguments[5]}. "
+    elif element_name == 'on_bline':
+        return f"{arguments[0]} lies on the perpendicular bisector of {arguments[1]}{arguments[2]}. "
+    elif element_name == 'on_circle':
+        return f"{arguments[0]} lies on the circle centered are {arguments[1]} with radios " \
+               f"{arguments[1]}{arguments[2]}. "
+    elif element_name == 'on_line':
+        return f"{arguments[0]} lies on line {arguments[1]}{arguments[2]}. "
+    elif element_name == 'on_pline':  # on parallel line
+        #TODO(Partha): Shuffle line name points
+        return f"{arguments[0]} is on the line passing through {arguments[1]} and parallel to" \
+               f" {arguments[2]}{arguments[3]}. "
+    elif element_name == 'on_tline':  # on perpendicular line
+        return random.choice[f"{arguments[0]} is a point such that {arguments[0]}{arguments[1]} is perpendicular to " \
+                             f"{arguments[1]}{arguments[2]}. ",
+                             f"{arguments[0]} lies on the perpendicular line to {arguments[2]}{arguments[3]} " \
+                             f"at {arguments[1]}. "]
+    elif element_name == 'orthocenter':
+        return f"{arguments[0]} is the orthocenter of triangle {arguments[1]}{arguments[2]}{arguments[3]}. "
+    elif element_name == 'parallelogram':
+        return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[4]} is a parallelogram. "
+    elif element_name == 'pentagon':
+        return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]}{arguments[4]} is a pentagon. "
+    elif element_name == 'psquare':  # from the definitions it is same as nsquare This troubling!
+        # TODO(Felix): Do you see a better way of saying it? Lets keep all we can think of! same as nsquare This troubling!
+        return f"{arguments[0]}{arguments[1]}{arguments[2]} is an isosceles right angle triangle with " \
+               f"∠{arguments[0]}{arguments[1]}{arguments[2]} being the right angle. "
+    elif element_name == 'quadrangle':
+        return random.choice[f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a quadrangle. ",
+                             f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a quadrilateral."]
+    elif element_name == 'r_trapezoid':
+        #TODO(Partha): Augment with different def of perp
+        return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a right angle trapezoid. " \
+               f"With {arguments[0]}{arguments[1]} ⊥ {arguments[0]}{arguments[3]}."
+    elif element_name == 'r_triangle':
+        # TODO(Partha): Augment with different def of perp
+        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. " \
+               f"With ∠{arguments[1]}{arguments[0]}{arguments[2]} being a right angle."
+    elif element_name == 'rectangle':
+        return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a rectangle. "
+    elif element_name == 'reflect':
+        # perhaps we don't have to augment it a lot as this seems to be a construction element
+        return f"{arguments[0]} is the reflection of {arguments[1]} on {arguments[2]}{arguments[3]}. "
+    elif element_name == 'risos':
+        #TODO(Partha): Augment with different def of perp
+        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a right angle isosceles triangle. " \
+               f"With ∠{arguments[1]}{arguments[0]}{arguments[2]} as the right angle."
+    elif element_name == 's_angle':  # Assign that an angle is a constant degree
+        # TODO(Partha): This won't be sampled correctly in the clause creator. FIX this there!
+        return f"∠{arguments[0]}{arguments[1]}{arguments[2]} is {arguments[2]} degree. "
+    elif element_name == 'segment':
+        return f"{arguments[0]}{arguments[1]} is a line segment. "
+    elif element_name == 'shift':
+        #TODO(Partha, Felix): This is not understood yet! Fix this!
+        raise Exception("Shift is not Understood yet!.")
         return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
+    elif element_name == 'square':  # strange redefinition in isquare  # Attention!
+        return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a square. "
+    elif element_name == 'isquare':  # strange redefinition in square  # Attention!
+        return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a square. "
+    elif element_name == 'trapezoid':
+        return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a trapezoid. "
     elif element_name == 'triangle':
         return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
-    elif element_name == 'triangle':
+    elif element_name == 'triangle12':  # Strange cache! # Attention!
+        # TODO(Partha): Write more naturally! And this happens so often that there is aseparate definition fo this?!
+        return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. " \
+               f"With {arguments[0]}{arguments[1]} : {arguments[0]}{arguments[2]} = 1 : 2. "
+    elif element_name == '2l1c':  # Acircle touching two lines and another circle
+        # TODO(Partha, Felix): Verify and Augment.
+        return f"{arguments[4]}{arguments[6]} is a line {arguments[5]}{arguments[6]} is another line. " \
+               f"A circle centered at {arguments[7]} passes through {arguments[4]} and touches {arguments[5]}. " \
+               f"A circle centered at {arguments[3]} touches {arguments[4]}{arguments[6]} at " \
+               f"{arguments[0]}, {arguments[5]}{arguments[7]} at {arguments[1]} and the circle centered " \
+               f"at {arguments[7]} at {arguments[2]} respectively. "
+    elif element_name == 'e5128':
+        # TODO(Partha, Felix): Verify and Augment. Attention! Might be WRONG!
+        # Did not write the equal angles!
+        return f"{arguments[3]}{arguments[0]}{arguments[5]} are points on a circle centered at {arguments[4]}. " \
+               f"{arguments[2]}{arguments[3]} is tangent to the circle at {arguments[3]}. " \
+               f"The line {arguments[0]}{arguments[5]} intersects {arguments[2]}{arguments[3]} at {arguments[1]}. "
+    elif element_name == '3peq':
         return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
     elif element_name == 'triangle':
         return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
@@ -185,7 +243,8 @@ if __name__ == '__main__':
     # txt = 'a = eqdistance x a b c; a = foot x a b c; a = incenter x a b c; c = incenter2 x y z i a b c'
     # txt = 'a = excenter2 x y z i a b c'
     # txt = 'a = intersection_cc x o w a'
-    txt = 'a = intersection_lp x a b c m n'
+    # txt = 'a = intersection_lp x a b c m n; I = intersection_pp I w k mq e F d; a = excenter2 x y z i a b c'
+    txt = 'a = on_circle x o a'
     # txt = 'Z x l = triangle Z x l; V = excenter V Z l x; R = on_bline R l V; ' \
     #       'Yj Tv I4 Tt = ninepoints Yj Tv I4 Tt R Z V; f OR G b = trapezoid f OR G b'
     print(get_nl_problem_statement(txt))

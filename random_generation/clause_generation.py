@@ -2,6 +2,8 @@ import random
 import string
 
 
+#TODO(Priya): IMPORTANT! 's_angle' will not be sampled correctly as the 4th argument must be a numerical FIX this!
+# 'triangle12'  also will not be generated right
 class ClauseGenerator:
     def __init__(self, defs):
         self.defs = defs
