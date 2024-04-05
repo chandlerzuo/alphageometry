@@ -8,6 +8,7 @@ meliad_lib/
 ag_ckpt_vocab/
 
 .idea/
+data/
 
 # Distribution / packaging
 .Python

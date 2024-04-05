@@ -18,6 +18,7 @@ if __name__ == "__main__":
 
     dataset_length = 20
     filename = '../../datasets/nl_fl_dataset.csv'
+    filename = '../data/nl_fl_dataset_2.csv'
     random.seed(17)
     defs_path = '../defs.txt'
     rules_path = '../rules.txt'
@@ -29,7 +30,7 @@ if __name__ == "__main__":
 
     # Write data to the CSV file
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=field_names, delimiter='#')
+        writer = csv.DictWriter(csvfile, fieldnames=field_names,)# delimiter='#')
         writer.writeheader()
         serial_num = 0
         for i in range(dataset_length):
