@@ -224,7 +224,6 @@ def verbalize_clause(element_name, arguments):
 
     # Add more templates for other geometric elements as needed
     else:
-        return '' #TODO(Partha): Remove this later!
         raise Exception(f"Element name {element_name} not recognized.")
 
 
