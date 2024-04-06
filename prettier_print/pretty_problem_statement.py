@@ -163,9 +163,11 @@ def verbalize_clause(element_name, arguments):
         return f"∠{arguments[0]}{arguments[1]}{arguments[2]} is {arguments[2]} degree. "
     elif element_name == 'segment':
         return f"{arguments[0]}{arguments[1]} is a line segment. "
-    elif element_name == 'shift':
-        #TODO(Partha, Felix): This is not understood yet! Fix this!
-        raise Exception("Shift is not Understood yet!.")
+    elif element_name == 'shift':  # simply shift a line segment
+        return random.choice([f"A line segment {arguments[0]}{arguments[1]} is parallelly shifted such that {arguments[0]} is now at {arguments[2]} and {arguments[1]} is now at {arguments[3]}",
+                              f"A line segment {arguments[2]}{arguments[3]} is parallelly shifted such that {arguments[2]} is now at {arguments[0]} and {arguments[3]} is now at {arguments[1]}",
+                              f"A line segment {arguments[3]}{arguments[1]} is parallelly shifted such that {arguments[3]} is now at {arguments[2]} and {arguments[1]} is now at {arguments[0]}",
+                              f"A line segment {arguments[2]}{arguments[0]} is parallelly shifted such that {arguments[2]} is now at {arguments[3]} and {arguments[0]} is now at {arguments[1]}",])
         return f"{arguments[0]}{arguments[1]}{arguments[2]} is a triangle. "
     elif element_name == 'square':  # strange redefinition in isquare  # Attention!
         return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a square. "
@@ -193,9 +195,16 @@ def verbalize_clause(element_name, arguments):
                f"{arguments[2]}{arguments[3]} is tangent to the circle at {arguments[3]}. " \
                f"The line {arguments[0]}{arguments[5]} intersects {arguments[2]}{arguments[3]} at {arguments[1]}. "
     elif element_name == '3peq':
-        raise Exception(f"Element name {element_name} not implemented.")
+        # Attention
+        #TODO(Felix, Partha, Max): Waht is this construction? ITs a strange something! also augment by calling z mipoint
+        return (f"{arguments[3]}, {arguments[4]}, {arguments[5]} are non collinear points. {arguments[0]}, "
+                f"{arguments[1]}, {arguments[2]} are points on the line {arguments[3]}{arguments[4]}, {arguments[3]}"
+                f"{arguments[5]} and {arguments[4]}{arguments[5]} resprectively, such that {arguments[2]}{arguments[1]} "
+                f"= {arguments[2]}{arguments[0]}")
     elif element_name == 'trisect':
-        raise Exception(f"Element name {element_name} not implemented.")
+        return (f"{arguments[0]} and {arguments[1]} are two points on the line {arguments[2]}{arguments[4]} "
+                f"such that ∠{arguments[2]}{arguments[3]}{arguments[0]} = ∠{arguments[0]}{arguments[3]}{arguments[1]} "
+                f"= ∠{arguments[1]}{arguments[3]}{arguments[4]}")
     elif element_name == 'trisegment':
         #TODO(Partha): Augment
         return f"Line segment {arguments[2]}{arguments[3]} is a divided into three equal segments by the points " \
@@ -210,10 +219,20 @@ def verbalize_clause(element_name, arguments):
         #TODO(partha): Disambiguate and make better
         return random.choice([f"{arguments[0]}, {arguments[1]}, {arguments[2]} are colinear. ",
                               f"{arguments[0]} lies on the line {arguments[1]}{arguments[2]}. "])
-    elif element_name == 'cc_tangent0':
-        raise Exception(f"Element name {element_name} not implemented.")
-    elif element_name == 'cc_tangent': # tangent to two circlles
-        raise Exception(f"Element name {element_name} not implemented.")
+    elif element_name == 'cc_tangent0':  # one of the two tangents to two circlles
+        #TODO(Partha): Phrase it better
+        return (f"Line {arguments[0]}{arguments[1]} is a common tangent to two circles centered at {arguments[2]} "
+                f"and at {arguments[4]}. The circles have radios {arguments[2]}{arguments[3]} and "
+                f"{arguments[4]}{arguments[5]} respectively. The tangent intersects the circles at {arguments[0]} "
+                f"and {arguments[1]} respectively. ")
+    elif element_name == 'cc_tangent':  # two tangents to two circlles
+        # TODO(Partha): Phrase it better
+        return (f"{arguments[0]}{arguments[1]} and {arguments[2]}{arguments[3]} are two common tangents to the "
+                f"circles centered at {arguments[4]} and {arguments[6]} with radius "
+                f"{arguments[4]}{arguments[5]} and {arguments[6]}{arguments[7]} respectively. Line xy intersects"
+                f" the circle at {arguments[4]} at {arguments[0]} and the circle at {arguments[6]} at {arguments[1]}"
+                f" while line {arguments[2]}{arguments[3]} intersects the circle at {arguments[4]} at {arguments[2]} "
+                f"and the circle at {arguments[6]} at {arguments[3]}")
     elif element_name == 'eqangle3': # tangent to two circlles
         return random.choice([f"angle {arguments[1]}{arguments[0]}{arguments[2]} is equal to "
                              f"angle {arguments[4]}{arguments[3]}{arguments[5]}",
@@ -263,7 +282,11 @@ def get_nl_clause(fl_clause):
 
 
 if __name__ == '__main__':
-    txt = 'x = angle_bisector x a b c'
+    # txt = 'x = cc_tangent x y z i o a w b'
+    # txt = 'x = trisect x y a b c'
+    # txt = 'x = 3peq x y z a b c'
+    txt = 'x = shift x b c d'
+    # txt = 'x = angle_bisector x a b c'
     # txt = 'Zz x l = triangle Zz x l; y = angle_bisector y Z x l; a b c = angle_mirror x a b c; c = circle x a b c; c = circumcenter x a b c'
     # txt = 'Zz x l = eq_quadrangle a b c d; a c = eq_trapezoid a b c d; a = eq_triangle a b c; a = eqangle2 x a b c; a = eqdia_quadrangle a b c d'
     # txt = 'a = eqdistance x a b c; a = foot x a b c; a = incenter x a b c; c = incenter2 x y z i a b c'
