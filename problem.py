@@ -18,7 +18,8 @@
 from __future__ import annotations
 
 from collections import defaultdict  # pylint: disable=g-importing-member
-from typing import Any
+import textwrap
+from typing import Any, Dict, List, Union
 
 import geometry as gm
 import pretty as pt
@@ -31,6 +32,7 @@ import pretty as pt
 
 
 def reshape(l: list[Any], n: int = 1) -> list[list[Any]]:
+  """split list into n lists [1,n+1,..], [2,n+2,..], ..."""
   assert len(l) % n == 0
   columns = [[] for i in range(n)]
   for i, x in enumerate(l):
@@ -44,6 +46,9 @@ def isint(x: str) -> bool:
     return True
   except:  # pylint: disable=bare-except
     return False
+  
+def list_to_str(lst, sep=", "):
+  return sep.join(map(str, lst))
 
 
 class Construction:
@@ -54,9 +59,10 @@ class Construction:
     data = data.split(' ')
     return Construction(data[0], data[1:])
 
+  # args: points the construction relies on
   def __init__(self, name: str, args: list[str]):
     self.name = name
-    self.args = args
+    self.args = args # args: points that construction depends on
 
   def translate(self, mapping: dict[str, str]) -> Construction:
     args = [a if isint(a) else mapping[a] for a in self.args]
@@ -64,7 +70,9 @@ class Construction:
 
   def txt(self) -> str:
     return ' '.join([self.name] + list(self.args))
-
+  
+  def __str__(self) -> str:
+    return f"""Construction_{self.name}({", ".join(self.args)})"""
 
 class Clause:
   """One construction (>= 1 predicate)."""
@@ -81,7 +89,7 @@ class Clause:
 
   def __init__(self, points: list[str], constructions: list[Construction]):
     self.points = []
-    self.nums = []
+    self.nums = [] # coordinates of points, None if unavailable for a given point
 
     for p in points:
       num = None
@@ -94,6 +102,8 @@ class Clause:
 
     self.constructions = constructions
 
+  # mapping: mapping from original point names to new (alphabetically ordered) points
+  # uses existing mapping and updates mapping if new points are added
   def translate(self, mapping: dict[str, str]) -> Clause:
     points0 = []
     for p in self.points:
@@ -116,6 +126,17 @@ class Clause:
         + ' = '
         + ', '.join(c.txt() for c in self.constructions)
     )
+    
+  def __str__(self) -> str:
+    constructions_str = "\n".join(f"- {constr}" for constr in self.constructions)
+    positions_str = f"""
+  positions: {self.nums}""" if any(self.nums) else ''
+  
+    return f"""Clause(
+  new_points: {list_to_str(self.points)}
+  constructions: 
+{textwrap.indent(constructions_str, " "*4)}{positions_str}
+)"""
 
 
 def _gcd(x: int, y: int) -> int:
@@ -125,6 +146,7 @@ def _gcd(x: int, y: int) -> int:
 
 
 def simplify(n: int, d: int) -> tuple[int, int]:
+  """given fraction n/d, simplify to smallest possible integers"""
   g = _gcd(n, d)
   return (n // g, d // g)
 
@@ -159,7 +181,14 @@ class Problem:
 
   @classmethod
   def from_txt(cls, data: str, translate: bool = True) -> Problem:
-    """Load a problem from a str object."""
+    """Load a problem from a str object.
+    
+    Of the form 
+      clauses
+      clauses ? goal    goal is a single construction
+    clauses are separated by '; '.
+    Each clause consists of multiple constructions separated by ', '
+    """
     url = ''
     if '\n' in data:
       url, data = data.split('\n')
@@ -207,6 +236,9 @@ class Problem:
     p.mapping = mapping
     return p
 
+  def __repr__(self):
+    return self.txt()
+  
   def txt(self) -> str:
     return (
         '; '.join([c.txt() for c in self.clauses]) + ' ? ' + self.goal.txt()
@@ -298,13 +330,16 @@ class Definition:
   """Definitions of construction statements."""
 
   @classmethod
-  def from_txt_file(cls, fname: str, to_dict: bool = False) -> Definition:
+  def from_txt_file(cls, fname: str, to_dict: bool = False) -> Union[List[Definition], Dict[str, Definition]]:
     with open(fname, 'r') as f:
       lines = f.read()
     return cls.from_string(lines, to_dict)
 
   @classmethod
-  def from_string(cls, string: str, to_dict: bool = False) -> Definition:
+  def from_string(cls, string: str, to_dict: bool = False) -> Union[List[Definition], Dict[str, Definition]]:
+    """
+    every six lines is one definition
+    """
     lines = string.split('\n')
     data = [cls.from_txt('\n'.join(group)) for group in reshape(lines, 6)]
     if to_dict:
@@ -355,7 +390,7 @@ class Definition:
     self.construction = construction
     self.rely = rely
     self.deps = deps
-    self.basics = basics
+    self.basics = basics # express construction in terms of basic constraints, e.g. circumcenter x a b c (circle around triangle abc has center o) is equivalent to segments oa=ob and ob=oc
     self.numerics = numerics
 
     args = set()
@@ -369,20 +404,36 @@ class Definition:
         self.args.append(p)
       else:
         self.points.append(p)
+        
+  def __str__(self):
+    basics_str = list_to_str((f"- points {list_to_str(points)} : {list_to_str(constrs)}" for (points, constrs) in self.basics), sep="\n")
+    return (f"""Definition(
+      for: {self.construction}
+      args: {list_to_str(self.args)}
+      new_points: {list_to_str(self.points)}
+      point_deps: {list_to_str((f"{p} depends on {list_to_str(points)}" for (p, points) in self.rely.items()), sep=";")}
+      implies: 
+{textwrap.indent(basics_str, " "*10)}
+      requires: 
+{textwrap.indent(str(self.deps), " "*10)}
+      numerics: {list_to_str(self.numerics)}
+)""")
 
 
 class Theorem:
   """Deduction rule."""
 
   @classmethod
-  def from_txt_file(cls, fname: str, to_dict: bool = False) -> Theorem:
+  def from_txt_file(cls, fname: str, to_dict: bool = False) -> Union[List[Theorem], Dict[str, Theorem]]:
     with open(fname, 'r') as f:
       theorems = f.read()
     return cls.from_string(theorems, to_dict)
 
   @classmethod
-  def from_string(cls, string: str, to_dict: bool = False) -> Theorem:
-    """Load deduction rule from a str object."""
+  def from_string(cls, string: str, to_dict: bool = False) -> Union[List[Theorem], Dict[str, Theorem]]:
+    """Load deduction rule from a str object.
+    split set of lines into a set of theorems
+    """
     theorems = string.split('\n')
     theorems = [l for l in theorems if l and not l.startswith('#')]
     theorems = [cls.from_txt(l) for l in theorems]
@@ -403,6 +454,7 @@ class Theorem:
 
   @classmethod
   def from_txt(cls, data: str) -> Theorem:
+    """split single line (one theorem) into premises and conclusion"""
     premises, conclusion = data.split(' => ')
     premises = premises.split(', ')
     conclusion = conclusion.split(', ')
@@ -453,6 +505,20 @@ class Theorem:
     c = self.conclusion[0]
     args = [mapping[a] for a in c.args]
     return c.name, args
+  
+  def __str__(self) -> str:
+    premises_str = list_to_str(self.premise)
+    conclusion_str = list_to_str(self.conclusion)
+    return f"""Theorem(
+      {premises_str}
+      => 
+      {conclusion_str}
+)"""
+#     premises_str = list_to_str((pt.pretty_nl_from_str(premise) for premise in self.premise), sep="\n")
+#     return f"""Theorem(
+# {textwrap.indent(premises_str, " "*2)}
+#   => {pt.pretty_nl_from_str(self.conclusion)}
+# )"""
 
 
 def why_eqratio(
@@ -1069,7 +1135,7 @@ def hashed(
 
 
 def hashed_txt(name: str, args: list[str]) -> tuple[str, ...]:
-  """Return a tuple unique to name and args upto arg permutation equivariant."""
+  """Return a tuple unique to name and args up to arg permutation equivariant."""
 
   if name in ['const', 'aconst', 'rconst']:
     a, b, c, d, y = args

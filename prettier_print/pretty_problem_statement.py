@@ -5,16 +5,17 @@ import random
 def verbalize_clause(element_name, arguments):
     if element_name == 'angle_bisector':
         return random.choice([
-            f"{arguments[0]} is a point such that ∠{arguments[1]}{arguments[2]}{arguments[0]} = ∠{arguments[0]}{arguments[2]}{arguments[2]}. ",
-            f"{arguments[0]} is a point such that ∠{arguments[1]}{arguments[2]}{arguments[0]} is equal to ∠{arguments[0]}{arguments[2]}{arguments[2]}. "])
+            f"{arguments[0]} is a point such that ∠{arguments[1]}{arguments[2]}{arguments[0]} = ∠{arguments[0]}{arguments[2]}{arguments[3]}. ",
+            f"{arguments[0]} is a point such that ∠{arguments[1]}{arguments[2]}{arguments[0]} is equal to ∠{arguments[0]}{arguments[2]}{arguments[3]}. "])
     elif element_name == 'angle_mirror':
         return random.choice([
             f"{arguments[0]} is a point such that ∠{arguments[1]}{arguments[2]}{arguments[3]} = ∠{arguments[3]}{arguments[2]}{arguments[0]}. ",
             f"{arguments[0]} is a point such that ∠{arguments[1]}{arguments[2]}{arguments[3]} is equal to ∠{arguments[3]}{arguments[2]}{arguments[0]}. "])
-    elif element_name == 'circle':
-        return f"{arguments[0]} is the centre of the circle that passes through {arguments[1]}, {arguments[2]}, {arguments[3]}. "
-    elif element_name == 'circumcenter':
-        return f"{arguments[0]} is the centre of the circumcenter of the triangle {arguments[1]}{arguments[2]}{arguments[3]}. "
+    elif element_name in ['circle', 'circumcenter']:
+        return random.choice([
+            f"{arguments[0]} is the centre of the circle that passes through {arguments[1]}, {arguments[2]}, {arguments[3]}. ",
+            f"{arguments[0]} is the centre of the circumcenter of the triangle {arguments[1]}{arguments[2]}{arguments[3]}. "
+        ])
     elif element_name == 'eq_quadrangle':
         return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a quadrilateral with {arguments[0]}{arguments[3]} = {arguments[1]}{arguments[2]}. "
     elif element_name == 'eq_trapezoid':
@@ -22,7 +23,11 @@ def verbalize_clause(element_name, arguments):
     elif element_name == 'eq_triangle':
         return f"{arguments[0]}{arguments[1]}{arguments[2]} is an equilateral triangle. "
     elif element_name == 'eqangle2':
-        return f"{arguments[0]} is a point such that ∠{arguments[2]}{arguments[1]}{arguments[0]} = ∠{arguments[0]}{arguments[3]}{arguments[2]}. "
+        return random.choice([
+            f"{arguments[0]} is a point such that ∠{arguments[2]}{arguments[1]}{arguments[0]} = ∠{arguments[0]}{arguments[3]}{arguments[2]}. ",
+            f"{arguments[0]} is the mirror point of {arguments[2]} around the line {arguments[1]}{arguments[3]}. ",
+            
+        ])
     elif element_name == 'eqdia_quadrangle':
         return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a quadrilateral whose diagonals are equal. "
     elif element_name == 'eqdistance':
@@ -228,6 +233,8 @@ def verbalize_clause(element_name, arguments):
 
 
 def get_nl_problem_statement(fl_problem):
+    """split several clauses by ";", then join their nl statements with " "
+    """
     # for now assuming that the problem statement doesn't have a goal
     clauses_fl = fl_problem.split(';')
     nl_problem = ''
@@ -238,6 +245,7 @@ def get_nl_problem_statement(fl_problem):
 
 
 def get_nl_clause(fl_clause):
+    """split a single fl_clause and convert to nl_clause"""
     # Split the string by the equal sign
     parts = fl_clause.split('=')
 
@@ -262,8 +270,16 @@ if __name__ == '__main__':
     # txt = 'a = excenter2 x y z i a b c'
     # txt = 'a = intersection_cc x o w a'
     # txt = 'a = intersection_lp x a b c m n; I = intersection_pp I w k mq e F d; a = excenter2 x y z i a b c'
-    txt = 'a = on_circle x o a'
-    txt = 'a = intersection_lt x a b c d e'
+    # txt = 'a = on_circle x o a'
+    # txt = 'a = intersection_lt x a b c d e'
     # txt = 'Z x l = triangle Z x l; V = excenter V Z l x; R = on_bline R l V; ' \
     #       'Yj Tv I4 Tt = ninepoints Yj Tv I4 Tt R Z V; f OR G b = trapezoid f OR G b'
     print(get_nl_problem_statement(txt))
+    
+    print("#"*80)
+    with open("defs.txt", "r") as f:
+        for (i, line) in enumerate(f):
+            if i % 6 != 0: continue
+            line = line.strip()
+            name, *args = line.split(" ")
+            print(f"{line:30} --> {verbalize_clause(name, args)}")
