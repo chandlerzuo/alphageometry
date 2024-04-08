@@ -108,6 +108,8 @@ def pretty_nl(name: str, args: list[str]) -> str:
     return f'{pretty_angle(a, b, c, d)}'
   if name in ['coll', 'C']:
     return '' + ','.join(args) + ' are collinear'
+  if name == 'ncoll':
+    return '' + ','.join(args) + ' are not collinear'
   if name == 'collx':
     return '' + ','.join(list(set(args))) + ' are collinear'
   if name in ['cyclic', 'O']:
