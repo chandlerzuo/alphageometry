@@ -212,15 +212,22 @@ def verbalize_clause(element_name, arguments):
         #         f"= ∠{arguments[1]}{arguments[3]}{arguments[4]}")
         return f"{arguments[0]}, {arguments[1]} are the trisectors (in this order) on the segment {arguments[2]}{arguments[3]} of triangle {arguments[2]}{arguments[3]}{arguments[4]}. "
     elif element_name == 'trisegment':
+        #TODO(Partha): Augment
         # TODO(Partha): this is not unique, y=a and x=b is also possible, but I guess they don't mean this here
         return f"{arguments[0]}, {arguments[1]} split the segment {arguments[2]}{arguments[3]} into thirds (in this order). "
     elif element_name == 'on_dia':
+        # Thales circle
         return f"{arguments[0]}{arguments[1]}{arguments[2]} is an orthogonal triangle with 90 degree angle at x. "
+        # #TODO(Partha): Write better
+        # return f"{arguments[1]}{arguments[2]} is the diameter of a circle. " \
+        #        f"{arguments[0]} is a point on the circumferance of the circle. "
     elif element_name == 'ieq_triangle':
         return f"{arguments[2]} is the point such that {arguments[0]}{arguments[1]}{arguments[2]} form an equilateral triangle. "
         # return f"{arguments[0]}{arguments[1]}{arguments[2]} form an equilateral triangle. "
-    elif element_name == 'on_opline':
-        return f"{arguments[0]}, {arguments[1]}, {arguments[2]} lie on a line (collinear)."
+    elif element_name == 'on_opline':  # on the extended line or on the linesegment of ab?
+        #TODO(partha): Disambiguate and make better
+        return random.choice([f"{arguments[0]}, {arguments[1]}, {arguments[2]} are collinear. ",
+                              f"{arguments[0]} lies on the line {arguments[1]}{arguments[2]}. "])
     elif element_name == 'cc_tangent0':
         # #TODO(Partha): Phrase it better
         # return (f"Line {arguments[0]}{arguments[1]} is a common tangent to two circles centered at {arguments[2]} "
@@ -242,7 +249,8 @@ def verbalize_clause(element_name, arguments):
     elif element_name == 'tangent':
         return f"{arguments[0]}, {arguments[1]} are the touchpoints of the two tangents through {arguments[2]} to the circle centered at {arguments[3]} passing through {arguments[4]}. "
     elif element_name == 'on_circum':
-        return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a concyclic quadrilateral (all corners lie on a circle). " # opposite angles add up to 180 degrees
+        # return f"{arguments[0]}{arguments[1]}{arguments[2]}{arguments[3]} is a concyclic quadrilateral (all corners lie on a circle). " # opposite angles add up to 180 degrees
+        return f"{arguments[0]} is a point on the circumcircle of the triangle {arguments[1]}{arguments[2]}{arguments[3]}"
     # Add more templates for other geometric elements as needed
     else:
         raise Exception(f"Element name {element_name} not recognized.")
