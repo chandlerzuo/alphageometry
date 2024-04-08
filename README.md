@@ -1,3 +1,12 @@
+# This brnach is for
+This branch verbalizes randomly generate premise (problem txt) that can be used
+to create an alpha geometry problem. The generated problem txt is then used to
+generate a graph that is feed to the DDAR solver to generate some search branches. 
+Finally some of the explored nodes are set as goal to generate a problem txt that has 
+a goal. Sometimes goalless problem txts are also generated. These formal problems
+(premises) are then verbalized like narutal language text, which will be used
+to train a translation model.
+
 # From premise to problem generating text
 The primise printed is often in a simplefied domain as compared tot he problem text
 Moreover we do not know how to build graph given a premise text. 
