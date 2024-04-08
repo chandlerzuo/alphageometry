@@ -1,3 +1,13 @@
+# This brnach is for
+Apart form generating random set of clauses that can be used to generate a graph
+that can be passed to the DDAR solver, we are defining low level statemetns in
+the defs.txt such that a simplified premise can be converted to a problem text. 
+See the section below. Then if our translation model gives us a premise text we 
+can feed it into alpha geometry. This however deligates too much load onto the 
+translation module. Therefore we switched to branch nl_verbalization where we 
+template the formal problem statement to generate fromal problem statement 
+directly from natural language.
+
 # From premise to problem generating text
 The primise printed is often in a simplefied domain as compared tot he problem text
 Moreover we do not know how to build graph given a premise text. 
