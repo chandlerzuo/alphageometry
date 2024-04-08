@@ -9,26 +9,36 @@ class ClauseGenerator:
         self.defs = defs
         self.defined_points = []
         self.clause_relations = list(defs.keys()) # this is the full set we can't deal with it yet
+        # To limit to a a few concepts uncomment the following line
         # self.clause_relations = ['angle_bisector', 'angle_mirror', 'circle', 'circumcenter', 'midpoint', 'triangle']
+        self.point_counter = 0  # Start from 0
+        self.max_points = 26 * 10  # 26 letters, 10 cycles (0 to 9, inclusive)
 
     def generate_point(self):
         """
-        Generate a random point
+        Generate the next point in sequence: A, B, ..., Z, A1, B1, ..., Z9.
+        After Z9, raise an error.
         """
-        # points are 1 or two character names e.g. 'a', 'ab', 'A', 'AB' or a1
-        # Define the character pools
-        letters = string.ascii_letters  # a-z, A-Z
-        digits = string.digits  # 0-9
-        all_chars = letters + digits  # Pool for the second character
+        if self.point_counter >= self.max_points:
+            # If we've exhausted all possible names, raise an error
+            raise ValueError("All point names have been exhausted.")
 
-        # Start with a letter
-        result = random.choice(letters)
+        # Calculate the letter and number parts of the name
+        letter_part = string.ascii_uppercase[self.point_counter % 26]
+        number_part = self.point_counter // 26
 
-        # Optionally add a second character, which can be a letter or a digit
-        if random.choice([True, False]):  # Decide randomly whether to add a second character
-            result += random.choice(all_chars)
+        # Prepare the point name
+        if number_part == 0:
+            # For the first cycle (A-Z), we don't add a number part
+            point_name = letter_part
+        else:
+            # For subsequent cycles, add the number part (reduced by 1 to start from 0)
+            point_name = f"{letter_part}{number_part - 1}"
 
-        return result
+        # Increment the counter for the next call
+        self.point_counter += 1
+
+        return point_name
 
     def generate_new_point(self):
         while True:
