@@ -2,8 +2,6 @@ import random
 import string
 
 
-#TODO(Priya): IMPORTANT! 's_angle' will not be sampled correctly as the 4th argument must be a numerical FIX this!
-# 'triangle12'  also will not be generated right
 class ClauseGenerator:
     def __init__(self, defs):
         self.defs = defs
@@ -60,6 +58,10 @@ class ClauseGenerator:
             clause_txt = f'{" ".join(result_vars)} = {clause_relation} {" ".join(result_vars + arg_vars)}'
         else:
             clause_txt = f'{clause_relation} {" ".join(arg_vars)}'
+
+        #handle special cases
+        if clause_relation in ['s_angle', ]:
+            clause_txt += f' {random.choice(range(0, 180, 15))}'
         return clause_txt
 
     def choose_random_defined_points(self, minimum_pts, max_pts):
@@ -86,6 +88,9 @@ class ClauseGenerator:
                 clause_relation = random.choice(self.clause_relations)
                 needs_defined_points = len(self.defs[clause_relation].args)
                 defines_points = len(self.defs[clause_relation].points)
+                # handle special cases
+                if clause_relation in ['s_angle', ]:
+                    needs_defined_points -= 1
                 if needs_defined_points <= len(self.defined_points):
                     suitable_clause = True
 
