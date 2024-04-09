@@ -18,3 +18,6 @@ tensorflow-datasets==4.9.3
 jupyter
 pandas
 openai
+pytest
+omnibelt==0.8.4
+omniply==0.3.2

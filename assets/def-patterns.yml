@@ -1,0 +1,23 @@
+
+angle_bisector:
+  num_args: 4
+
+  atoms:
+    point: [0]
+    angle1: [1, 2, 0]
+    angle2: [0, 2, 3]
+    angle_full: [1, 2, 3]
+    angles: {type: conjunction, args: [angle1, angle2]}
+    eqangles: {type: equality, args: [angle1, angle2]}
+
+  templates:
+    - "{point} is the angle bisector of {angle_full}"
+    - "{point} bisects {angle_full}"
+
+    - "{point} bisects {angles}"
+    - "{point} is the angle bisector of {angles}"
+    - "{angles} are bisected by {point}"
+    - "{point} is a bisector such that {eqangles}"
+
+
+
