@@ -4,6 +4,23 @@ from graph import INTERSECT
 from reorder_lists import get_ordering_index
 
 
+def get_wrapped_points(all_points, start, num_points):
+    """
+    Gets points from the list starting from 'start', wrapping around if necessary,
+    to collect 'num_points' items.
+
+    :param all_points: List of all available points.
+    :param start: Starting index to pick points.
+    :param num_points: Number of points to pick.
+    :return: List of points as per specified conditions.
+    """
+    list_len = len(all_points)  # Length of your points list
+    # Use list comprehension and modulo to wrap around
+    wrapped_points = [all_points[(start + i) % list_len] for i in range(num_points)]
+    return wrapped_points
+
+
+
 class ClauseGenerator:
     def __init__(self, defs, clause_relations, is_comma_sep):
         self.defs = defs
@@ -92,17 +109,17 @@ class ClauseGenerator:
                 # choose a random definition key as the first clause
                 clause_relation, defines_points, needs_defined_points = self.choose_suitable_clause()
                 sub_clause_relation.append(clause_relation)
-                this_clause_must_define = max((0, defines_points - max([0, ] + sub_clause_defines_points)))
-                sub_clause_defines_points.append(random.choice(range(this_clause_must_define, defines_points + 1)))
+                # this_clause_must_define = max((0, defines_points - max([0, ] + sub_clause_defines_points)))
+                sub_clause_defines_points.append(random.choice(range(defines_points, defines_points + 1)))
                 sub_clause_needs_defined_points.append(needs_defined_points)
 
-            defines_points = sum(sub_clause_defines_points)
+            defines_points = random.randint(max(sub_clause_defines_points), sum(sub_clause_defines_points))
             all_will_be_defined_pts = self.get_points_that_this_clause_defines(defines_points)
 
             pts_defined_sp_far = 0
             for i in range(n):
-                pts_this_clause_defines = \
-                    all_will_be_defined_pts[pts_defined_sp_far:pts_defined_sp_far + sub_clause_defines_points[i]]
+                pts_this_clause_defines = get_wrapped_points(all_will_be_defined_pts, pts_defined_sp_far,
+                                                             sub_clause_defines_points[i])
                 pts_defined_sp_far += sub_clause_defines_points[i]
                 chosen_defined_pts = random.sample(self.defined_points, sub_clause_needs_defined_points[i])
                 clause = self.get_text_clause(sub_clause_relation[i], chosen_defined_pts, pts_this_clause_defines,
@@ -170,24 +187,32 @@ class CompoundClauseGen:
     def generate_clauses(self):
         clause_text = ''
         for clause_set in range(self.max_sets):
-            if clause_text != '':
-                clause_text += '; '
-            clause_text += self.cg_single_clause.generate_clauses(random.choice(range(1, self.max_single_clause + 1)))
-            point_counter, defined_points = self.cg_single_clause.get_pt_ctr_def_pts()
+            if clause_text == '' or random.random() < 0.5:  # 50% chance of comma separated clauses
+                if clause_text != '':
+                    clause_text += '; '
+                clause_text += self.cg_single_clause.generate_clauses(
+                    random.choice(range(1, self.max_single_clause + 1)))
+                point_counter, defined_points = self.cg_single_clause.get_pt_ctr_def_pts()
+
             if point_counter < 3:
                 continue
 
-            self.cg_comma_sep.set_pt_ctr_def_pts(point_counter, defined_points)
-            clause_text += '; ' + self.cg_comma_sep.generate_clauses(
-                random.choice(range(1, self.max_comma_sep_clause + 1)))
-            self.cg_single_clause.set_pt_ctr_def_pts(*self.cg_comma_sep.get_pt_ctr_def_pts())
+            if random.random() < 0.5:  # 50% chance of comma separated clauses
+                self.cg_comma_sep.set_pt_ctr_def_pts(point_counter, defined_points)
+                if not clause_text.endswith('; '):
+                    clause_text += '; '
+
+                clause_text += self.cg_comma_sep.generate_clauses(
+                    random.choice(range(1, self.max_comma_sep_clause + 1)))
+                self.cg_single_clause.set_pt_ctr_def_pts(*self.cg_comma_sep.get_pt_ctr_def_pts())
         self.reset()
         return clause_text
 
 
 if __name__ == "__main__":
     random.seed(3)
-    from generate_random_proofs import load_definitions_and_rules
+    from utils.loading_utils import load_definitions_and_rules
+
     defs_path = '../defs.txt'
     rules_path = '../rules.txt'
 
@@ -195,6 +220,6 @@ if __name__ == "__main__":
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
     cc_gen = CompoundClauseGen(definitions, 2, 3, 2)
 
-    for i in range(5):
+    for j in range(5):
         clause_text = cc_gen.generate_clauses()
         print(clause_text)

@@ -4,9 +4,10 @@ import random
 import ddar
 import graph as gh
 import problem as pr
-from clause_generation import ClauseGenerator
+from clause_generation import CompoundClauseGen
 import signal
-from generate_random_proofs import load_definitions_and_rules, TimeoutException
+from generate_random_proofs import TimeoutException
+from utils.loading_utils import load_definitions_and_rules
 from prettier_print.pretty_problem_statement import get_nl_problem_statement
 from pretty import pretty_nl
 from prettier_print.prettier_proof_statements import translate_step
@@ -16,7 +17,7 @@ import csv
 
 if __name__ == "__main__":
 
-    dataset_length = 20
+    dataset_length = 200
     filename = '../../datasets/nl_fl_dataset.csv'
     # filename = '../data/nl_fl_dataset_2.csv'
     random.seed(17)
@@ -35,10 +36,10 @@ if __name__ == "__main__":
         writer = csv.DictWriter(csvfile, fieldnames=field_names, delimiter='#')
         writer.writeheader()
         serial_num = 0
+        cc_gen = CompoundClauseGen(definitions, 2, 3, 2)
         for i in range(dataset_length):
             num_clauses = random.randint(3, 10)
-            cg = ClauseGenerator(definitions)
-            fl_statement = cg.generate_clauses(5)
+            fl_statement = cc_gen.generate_clauses()
 
             print(fl_statement)
 
@@ -59,13 +60,17 @@ if __name__ == "__main__":
                 # Disable the alarm
                 signal.alarm(0)
             except TimeoutException as e:
-                print("Graph couldn't bre create in reasonable time. Perhaps problem with the premises. Continuing ...")
+                print("Graph couldn't be create in reasonable time. Perhaps problem with the premises. Continuing ...")
                 continue
             except KeyError:
                 print("Key error while building graph. Continuing ...")
                 continue
             except ValueError:
                 print("Value error while building graph. Continuing ...")
+                continue
+            except AttributeError as e:
+                print(e)
+                # TODO(Partha, Max, Felix): This is a hack to avoid the AttributeError. We should fix this.
                 continue
 
             print(f'Solving ...')
