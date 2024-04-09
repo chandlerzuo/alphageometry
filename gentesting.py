@@ -65,6 +65,7 @@ circle b b c, circle c b c
     p = pr.Problem.from_txt(txt)
     print(f"Parsed problem: {p}")
     print("Res: " + p.setup_str_from_problem(definitions))
+    
     g, _ = gh.Graph.build_problem(p, definitions)
 
 

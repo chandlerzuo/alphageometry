@@ -106,18 +106,19 @@ class Graph:
         Measure: [],
         Value: [],
     }
-    self._name2point = {}
+    self._name2point = {} # extra list for nodes of type Point
     self._name2node = {}
 
-    self.rconst = {}  # contains all constant ratios
+    self.rconst = {}  # contains all constant ratios as fraction, e.g. 2:1
     self.aconst = {}  # contains all constant angles.
 
     self.halfpi, _ = self.get_or_create_const_ang(1, 2)
     self.vhalfpi = self.halfpi.val
 
-    self.atable = ar.AngleTable()
-    self.dtable = ar.DistanceTable()
-    self.rtable = ar.RatioTable()
+    # AR rules
+    self.atable = ar.AngleTable() # linear system operating on angles, may refer to aconst,
+    self.dtable = ar.DistanceTable() # linear system operating on distances (e.g. segment lengths)
+    self.rtable = ar.RatioTable() # linear system operating on ratios of lengths (e.g. AB:CD = EF:GH), may refer to rconst,
 
     # to quick access deps.
     self.cache = {}
@@ -127,15 +128,15 @@ class Graph:
 
   def copy(self) -> Graph:
     """Make a copy of self."""
-    p, definitions = self.build_def
+    pr, definitions = self.build_def
 
-    p = p.copy()
-    for clause in p.clauses:
+    pr = pr.copy()
+    for clause in pr.clauses:
       clause.nums = []
       for pname in clause.points:
         clause.nums.append(self._name2node[pname].num)
 
-    g, _ = Graph.build_problem(p, definitions, verbose=False, init_copy=False)
+    g, _ = Graph.build_problem(pr, definitions, verbose=False, init_copy=False)
 
     g.build_clauses = list(getattr(self, 'build_clauses', []))
     return g
@@ -143,21 +144,23 @@ class Graph:
   def _create_const_ang(self, n: int, d: int) -> None:
     n, d = ar.simplify(n, d)
     ang = self.aconst[(n, d)] = self.new_node(Angle, f'{n}pi/{d}')
-    ang.set_directions(None, None)
+    ang.set_directions(None, None) # constant angle, so no associated geometric objects
     self.connect_val(ang, deps=None)
 
   def _create_const_rat(self, n: int, d: int) -> None:
     n, d = ar.simplify(n, d)
     rat = self.rconst[(n, d)] = self.new_node(Ratio, f'{n}/{d}')
-    rat.set_lengths(None, None)
+    rat.set_lengths(None, None) # constant ratio, so no associated geometric objects
     self.connect_val(rat, deps=None)
 
   def get_or_create_const_ang(self, n: int, d: int) -> None:
+    """angle n*pi/d"""
     n, d = ar.simplify(n, d)
     if (n, d) not in self.aconst:
       self._create_const_ang(n, d)
     ang1 = self.aconst[(n, d)]
 
+    # create complementary angle pi - n*pi/d = (1-n/d)*pi, not 2*pi
     n, d = ar.simplify(d - n, d)
     if (n, d) not in self.aconst:
       self._create_const_ang(n, d)
@@ -165,11 +168,13 @@ class Graph:
     return ang1, ang2
 
   def get_or_create_const_rat(self, n: int, d: int) -> None:
+    """ratio n/d"""
     n, d = ar.simplify(n, d)
     if (n, d) not in self.rconst:
       self._create_const_rat(n, d)
     rat1 = self.rconst[(n, d)]
 
+    # create inverse ratio as well
     if (d, n) not in self.rconst:
       self._create_const_rat(d, n)  # pylint: disable=arguments-out-of-order
     rat2 = self.rconst[(d, n)]
@@ -196,7 +201,7 @@ class Graph:
       self.atable.add_para(ab, cd, dep)
 
     if name == 'perp':
-      ab, cd = dep.algebra
+      ab, cd = dep.algebra # two directions ab and cd
       self.atable.add_const_angle(ab, cd, 90, dep)
 
     if name == 'eqangle':
@@ -238,6 +243,7 @@ class Graph:
     nd, dn = self.get_or_create_const_rat(num, den)
 
     if num == den:
+      # ratio = 1, so ab=cd
       return self.add_cong([a, b, c, d], deps)
 
     ab = self._get_or_create_segment(a, b, deps=None)
@@ -490,7 +496,9 @@ class Graph:
       verbose: bool = True,
       init_copy: bool = True,
   ) -> tuple[Graph, list[Dependency]]:
-    """Build a problem into a gr.Graph object."""
+    """
+    Build a problem into a gr.Graph object and numerically verify that the claim is verified (if the pr.goal is set).
+    """
     check = False
     g = None
     added = None
@@ -514,7 +522,8 @@ class Graph:
       except DepCheckFailError:
         continue
       except (PointTooCloseError, PointTooFarError):
-        break #todo: Partha: I think this is to make sure the problem drawing looks nice. So breaking is not bad.
+        # break #todo: Partha: I think this is to make sure the problem drawing looks nice. So breaking is not bad. 
+        # Max: should still continue adding other points, so "continue"
         continue
 
       if not pr.goal:
@@ -545,12 +554,13 @@ class Graph:
     return result
 
   def names2nodes(self, pnames: list[str]) -> list[gm.Node]:
+    """get nodes with given names"""
     return [self._name2node[name] for name in pnames]
 
   def names2points(
       self, pnames: list[str], create_new_point: bool = False
   ) -> list[Point]:
-    """Return Point objects given names."""
+    """Return Point objects given names. possible create new points if points are inexistent"""
     result = []
     for name in pnames:
       if name not in self._name2node and not create_new_point:
@@ -564,7 +574,11 @@ class Graph:
     return result
 
   def names2points_or_int(self, pnames: list[str]) -> list[Point]:
-    """Return Point objects given names."""
+    """Return Point objects given names.
+    e.g., names2points_or_int([2, 2pi/3, 3/4, 'A', 'B'])
+    
+    automatically adds nodes for ratios and angular ratios (involving pi)
+    """
     result = []
     for name in pnames:
       if name.isdigit():
@@ -582,7 +596,8 @@ class Graph:
 
     return result
 
-  def get(self, pointname: str, default_fn: Callable[str, Point]) -> Point:
+  def get(self, pointname: str, default_fn: Callable[str, Point]=lambda: "undefined") -> Point:
+    """get a geometric object (point or other node); returns default_fn() if not found."""
     if pointname in self._name2point:
       return self._name2point[pointname]
     if pointname in self._name2node:
@@ -590,6 +605,7 @@ class Graph:
     return default_fn()
 
   def new_node(self, oftype: Type[gm.Node], name: str = '') -> gm.Node:
+    """add new node of type 'oftype' with name"""
     node = oftype(name, self)
 
     self.type2nodes[oftype].append(node)
@@ -653,25 +669,28 @@ class Graph:
 
       if node.name in self._name2node.values():
         self._name2node.pop(node.name)
+        # self._name2point.pop(node.name) #todo
 
   def connect(self, a: gm.Node, b: gm.Node, deps: Dependency) -> None:
+    """connect nodes a, b to their deps respectively, and associate a and b if one of them is a value node
+    """
     a.connect_to(b, deps)
     b.connect_to(a, deps)
 
   def connect_val(self, node: gm.Node, deps: Dependency) -> gm.Node:
-    """Connect a node into its value (equality) node."""
+    """Add value node for 'node', connect them and return the value node."""
     if node._val:
       return node._val
     name = None
     if isinstance(node, Line):
-      name = 'd(' + node.name + ')'
+      name = 'd(' + node.name + ')' # d = direction
     if isinstance(node, Angle):
-      name = 'm(' + node.name + ')'
+      name = 'm(' + node.name + ')' # m = measure
     if isinstance(node, Segment):
-      name = 'l(' + node.name + ')'
+      name = 'l(' + node.name + ')' # l = length
     if isinstance(node, Ratio):
-      name = 'r(' + node.name + ')'
-    v = self.new_node(gm.val_type(node), name)
+      name = 'r(' + node.name + ')' # r = ratio
+    v = self.new_node(gm.val_type(node), name) # value node
     self.connect(node, v, deps=deps)
     return v
 
@@ -982,6 +1001,9 @@ class Graph:
     return add
 
   def check_coll(self, points: list[Point]) -> bool:
+    """check whether all points are collinear"""
+    
+    # for each point, consider all lines through this point, 
     points = list(set(points))
     if len(points) < 3:
       return True
@@ -989,6 +1011,7 @@ class Graph:
     for p in points:
       for l in p.neighbors(Line):
         line2count[l] += 1
+    # todo: should check len(points)-1
     return any([count == len(points) for _, count in line2count.items()])
 
   def why_coll(self, args: tuple[Line, list[Point]]) -> list[Dependency]:
@@ -1074,7 +1097,7 @@ class Graph:
   def add_para(
       self, points: list[Point], deps: EmptyDependency
   ) -> list[Dependency]:
-    """Add a new predicate that 4 points (2 lines) are parallel."""
+    """Add a new predicate that 4 points a,b,c,d (2 lines) are parallel, ab parallel to cd."""
     a, b, c, d = points
     ab, why1 = self.get_line_thru_pair_why(a, b)
     cd, why2 = self.get_line_thru_pair_why(c, d)
@@ -2996,11 +3019,13 @@ class Graph:
       yield a, b, c, d, e, f, g, h  # now a==c, e==g
 
   def all_cyclics(self) -> Generator[tuple[Point, ...], None, None]:
+    """for all cyclic (circles), get all 4! orders of 4 points that define a cyclic quadrilateral (on a circle)."""
     for c in self.type2nodes[Circle]:
       for x, y, z, t in utils.perm4(c.neighbors(Point)):
         yield x, y, z, t
 
   def all_colls(self) -> Generator[tuple[Point, ...], None, None]:
+    """for all lines (defined by three points), get all 3! orders of 3 points that define a collinear set."""
     for l in self.type2nodes[Line]:
       for x, y, z in utils.perm3(l.neighbors(Point)):
         yield x, y, z
@@ -3048,11 +3073,11 @@ def create_consts_str(g: Graph, s: str) -> Union[Ratio, Angle]:
 
 def create_consts(g: Graph, p: gm.Node) -> Union[Ratio, Angle]:
   if isinstance(p, Angle):
-    n, d = p.name.split('pi/')
+    n, d = p.name.split('pi/') # e.g. 2pi/3
     n, d = int(n), int(d)
     p0, _ = g.get_or_create_const_ang(n, d)
   if isinstance(p, Ratio):
-    n, d = p.name.split('/')
+    n, d = p.name.split('/') # e.g. 2/3
     n, d = int(n), int(d)
     p0, _ = g.get_or_create_const_rat(n, d)
   return p0  # pylint: disable=undefined-variable
