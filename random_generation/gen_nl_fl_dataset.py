@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     dataset_length = 20
     filename = '../../datasets/nl_fl_dataset.csv'
-    filename = '../data/nl_fl_dataset_2.csv'
+    # filename = '../data/nl_fl_dataset_2.csv'
     random.seed(17)
     defs_path = '../defs.txt'
     rules_path = '../rules.txt'
@@ -30,7 +30,9 @@ if __name__ == "__main__":
 
     # Write data to the CSV file
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=field_names,)# delimiter='#')
+        # writer = csv.DictWriter(csvfile, fieldnames=field_names,)# delimiter='#')
+        # this is necessary for the inspect to work
+        writer = csv.DictWriter(csvfile, fieldnames=field_names, delimiter='#')
         writer.writeheader()
         serial_num = 0
         for i in range(dataset_length):
@@ -73,11 +75,15 @@ if __name__ == "__main__":
             # Randomly select a cache node to be the goal. #TODO: Is this right can we do better? Consider coverage!
             possible_goals = list(g.cache.keys())
             if len(possible_goals) > 0:
-                goal_fl = random.choice(possible_goals + [''])
+                goal_fl = random.choice(possible_goals)  # comment this line
+                # goal_fl = random.choice(possible_goals + [''])  # uncomment this line to get goal less problems
                 if goal_fl == '':
                     goal_nl = ''
                 else:
-                    goal_nl = translate_step(pretty_nl(goal_fl[0], goal_fl[1:]))
+                    pretty_goal = pretty_nl(goal_fl[0], goal_fl[1:])
+                    if pretty_goal is None:
+                        raise ValueError(f'Could not pretty print goal: {goal_fl}')
+                    goal_nl = translate_step(pretty_goal)
                     goal_fl = ' '.join(goal_fl)
                 # Now we know that the generated premises are not contradictory
                 nl_prob = get_nl_problem_statement(fl_statement)
