@@ -58,7 +58,7 @@ class ClauseGenerator:
             pos_new_pts_idx = get_ordering_index(self.defs[clause_relation].construction.args,
                                                  self.defs[clause_relation].points + self.defs[clause_relation].args)
             all_inp_pts = result_vars + arg_vars
-            all_inp_pts_reordered = [all_inp_pts[i] for i in pos_new_pts_idx]
+            all_inp_pts_reordered = [all_inp_pts[pos_new_pts_idx[i]] for i, _ in enumerate(all_inp_pts)]
             clause_txt = f'{" ".join(result_vars)} = {clause_relation} {" ".join(all_inp_pts_reordered)}'
         else:
             clause_txt = f'{clause_relation} {" ".join(arg_vars)}'

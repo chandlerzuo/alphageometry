@@ -31,7 +31,7 @@ def load_definitions_and_rules(defs_path, rules_path):
 
 
 def main():
-    random.seed(17)
+    random.seed(37)
     # Example entities and conditions for illustration purposes
 
     defs_path = '../defs.txt'
@@ -41,6 +41,9 @@ def main():
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
     cg = ClauseGenerator(definitions)
     txt = cg.generate_clauses(5)
+    # txt = 'A B = segment A B; C, D = square A B C D, on_bline C A B'
+    # txt = 'A B = segment A B; C = free C; D = circle C A B, on_bline D A B'
+    # txt = 'A B C = triangle A B C; D = parallelogram B C A D; E = on_pline E A D C; F = shift F D C E; G = psquare G F D'
 
     print(txt)
 
