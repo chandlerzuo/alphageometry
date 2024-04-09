@@ -5,7 +5,7 @@ import ddar
 from alphageometry import write_solution
 import graph as gh
 import problem as pr
-from clause_generation import ClauseGenerator
+from clause_generation import CompoundClauseGen
 import signal
 
 
@@ -31,7 +31,7 @@ def load_definitions_and_rules(defs_path, rules_path):
 
 
 def main():
-    random.seed(37)
+    random.seed(7)
     # Example entities and conditions for illustration purposes
 
     defs_path = '../defs.txt'
@@ -39,11 +39,10 @@ def main():
 
     # Load definitions and rules
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
-    cg = ClauseGenerator(definitions)
-    txt = cg.generate_clauses(5)
-    # txt = 'A B = segment A B; C, D = square A B C D, on_bline C A B'
-    # txt = 'A B = segment A B; C = free C; D = circle C A B, on_bline D A B'
-    # txt = 'A B C = triangle A B C; D = parallelogram B C A D; E = on_pline E A D C; F = shift F D C E; G = psquare G F D'
+    definitions, rules = load_definitions_and_rules(defs_path, rules_path)
+    cc_gen = CompoundClauseGen(definitions, 2, 3, 2)
+    txt = cc_gen.generate_clauses()
+    # txt = 'A B C D = quadrangle A B C D; E F G H = incenter2 E F G H B C D; I = on_tline I B A D; J = angle_mirror J G C A, on_opline E G; K L M N = excenter2 K L M N A J G; O P Q R = r_trapezoid O P Q R; S T = on_pline S A C D, angle_bisector T R B G'
 
     print(txt)
 

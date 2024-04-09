@@ -1,16 +1,26 @@
 import random
 import string
+from graph import INTERSECT
 from reorder_lists import get_ordering_index
 
+
 class ClauseGenerator:
-    def __init__(self, defs):
+    def __init__(self, defs, clause_relations, is_comma_sep):
         self.defs = defs
         self.defined_points = []
-        self.clause_relations = list(defs.keys()) # this is the full set we can't deal with it yet
+        self.is_comma_sep = is_comma_sep
+        self.clause_relations = clause_relations  # list(defs.keys()) or graph.INTERSECT # this is the full set we can't deal with it yet
         # To limit to a few concepts uncomment the following line
         # self.clause_relations = ['triangle', 'parallelogram',]
         self.point_counter = 0  # Start from 0
         self.max_points = 26 * 10  # 26 letters, 10 cycles (0 to 9, inclusive)
+
+    def get_pt_ctr_def_pts(self):
+        return self.point_counter, self.defined_points
+
+    def set_pt_ctr_def_pts(self, point_counter, defined_points):
+        self.point_counter = point_counter
+        self.defined_points = defined_points
 
     def generate_point(self):
         """
@@ -50,77 +60,141 @@ class ClauseGenerator:
         """
         return random.sample(self.defined_points, n)
 
-    def get_text_clause(self, clause_relation, arg_vars, result_vars):
+    def get_text_clause(self, clause_relation, arg_vars, result_vars, all_will_be_defined_pts, result_vars_in_eq):
         """
         Make a canonical clause for a given relation
         """
-        if result_vars:
-            pos_new_pts_idx = get_ordering_index(self.defs[clause_relation].construction.args,
-                                                 self.defs[clause_relation].points + self.defs[clause_relation].args)
-            all_inp_pts = result_vars + arg_vars
-            all_inp_pts_reordered = [all_inp_pts[pos_new_pts_idx[i]] for i, _ in enumerate(all_inp_pts)]
-            clause_txt = f'{" ".join(result_vars)} = {clause_relation} {" ".join(all_inp_pts_reordered)}'
-        else:
-            clause_txt = f'{clause_relation} {" ".join(arg_vars)}'
+        pos_new_pts_idx = get_ordering_index(self.defs[clause_relation].construction.args,
+                                             self.defs[clause_relation].points + self.defs[clause_relation].args)
+        all_inp_pts = result_vars + arg_vars
+        all_inp_pts_reordered = [all_inp_pts[pos_new_pts_idx[i]] for i, _ in enumerate(all_inp_pts)]
 
-        #handle special cases
+        if result_vars_in_eq:
+            clause_txt = f'{" ".join(all_will_be_defined_pts)} = {clause_relation} {" ".join(all_inp_pts_reordered)}'
+        else:
+            clause_txt = f'{clause_relation} {" ".join(all_inp_pts_reordered)}'
+
+        # handle special cases
         if clause_relation in ['s_angle', ]:
             clause_txt += f' {random.choice(range(0, 180, 15))}'
         return clause_txt
-
-    def choose_random_defined_points(self, minimum_pts, max_pts):
-        if not self.defined_points or minimum_pts < 1:  # Check if the list is empty
-            return []  # Return an empty list or handle the scenario as needed
-
-        # Choose a random number of points to select, from 1 up to the length of the list
-        n = random.randint(minimum_pts, min(max_pts, len(self.defined_points)))
-
-        # Randomly select 'n' points from the list
-        chosen_defined_pts = random.sample(self.defined_points, n)
-
-        return chosen_defined_pts
 
     def generate_clauses(self, n):
         """
         Generate n random clauses with all points defined
         """
         clauses = []
-        for i in range(n):
-            # choose a random definition key as the first clause
-            suitable_clause = False
-            while not suitable_clause:
-                clause_relation = random.choice(self.clause_relations)
-                needs_defined_points = len(self.defs[clause_relation].args)
-                defines_points = len(self.defs[clause_relation].points)
-                # handle special cases
-                if clause_relation in ['s_angle', ]:
-                    needs_defined_points -= 1
-                if needs_defined_points <= len(self.defined_points):
-                    suitable_clause = True
+        if self.is_comma_sep:
+            sub_clause_relation = []
+            sub_clause_defines_points = []
+            sub_clause_needs_defined_points = []
+            for i in range(n):
+                # choose a random definition key as the first clause
+                clause_relation, defines_points, needs_defined_points = self.choose_suitable_clause()
+                sub_clause_relation.append(clause_relation)
+                this_clause_must_define = max((0, defines_points - max([0, ] + sub_clause_defines_points)))
+                sub_clause_defines_points.append(random.choice(range(this_clause_must_define, defines_points + 1)))
+                sub_clause_needs_defined_points.append(needs_defined_points)
 
-            chosen_defined_pts = random.sample(self.defined_points, needs_defined_points)
-            # Generate names of points that are needed for the clause
-            will_be_defined_pts = []
-            while defines_points > 0:
-                will_be_defined_pts.append(self.generate_new_point())
-                self.defined_points.append(will_be_defined_pts[-1])
-                defines_points -= 1
+            defines_points = sum(sub_clause_defines_points)
+            all_will_be_defined_pts = self.get_points_that_this_clause_defines(defines_points)
 
-            clause = self.get_text_clause(clause_relation, chosen_defined_pts, will_be_defined_pts)
-            clauses.append(clause)
+            pts_defined_sp_far = 0
+            for i in range(n):
+                pts_this_clause_defines = \
+                    all_will_be_defined_pts[pts_defined_sp_far:pts_defined_sp_far + sub_clause_defines_points[i]]
+                pts_defined_sp_far += sub_clause_defines_points[i]
+                chosen_defined_pts = random.sample(self.defined_points, sub_clause_needs_defined_points[i])
+                clause = self.get_text_clause(sub_clause_relation[i], chosen_defined_pts, pts_this_clause_defines,
+                                              all_will_be_defined_pts, result_vars_in_eq=(i == 0))
+                clauses.append(clause)
 
-        return '; '.join(clauses)
+            self.add_newly_defined_pts(all_will_be_defined_pts)
+            return ', '.join(clauses)
+        else:
+            for i in range(n):
+                # choose a random definition key as the first clause
+                clause_relation, defines_points, needs_defined_points = self.choose_suitable_clause()
+
+                chosen_defined_pts = random.sample(self.defined_points, needs_defined_points)
+                # Generate names of points that are needed for the clause
+                will_be_defined_pts = self.get_points_that_this_clause_defines(defines_points)
+
+                clause = self.get_text_clause(clause_relation, chosen_defined_pts, will_be_defined_pts,
+                                              all_will_be_defined_pts=will_be_defined_pts, result_vars_in_eq=True)
+                clauses.append(clause)
+                self.add_newly_defined_pts(will_be_defined_pts)
+
+            return '; '.join(clauses)
+
+    def get_points_that_this_clause_defines(self, defines_points):
+        will_be_defined_pts = []
+        while defines_points > 0:
+            will_be_defined_pts.append(self.generate_new_point())
+            defines_points -= 1
+        return will_be_defined_pts
+
+    def add_newly_defined_pts(self, defined_pts):
+        self.defined_points += defined_pts
+
+    def choose_suitable_clause(self):
+        suitable_clause = False
+        while not suitable_clause:
+            clause_relation = random.choice(self.clause_relations)
+            needs_defined_points = len(self.defs[clause_relation].args)
+            defines_points = len(self.defs[clause_relation].points)
+            # handle special cases
+            if clause_relation in ['s_angle', ]:
+                needs_defined_points -= 1
+            if needs_defined_points <= len(self.defined_points):
+                suitable_clause = True
+        return clause_relation, defines_points, needs_defined_points
+
+    def reset(self):
+        self.defined_points = []
+        self.point_counter = 0
+
+
+class CompoundClauseGen:
+    def __init__(self, definitions, max_comma_sep_clause, max_single_clause, max_sets):
+        self.max_comma_sep_clause = max_comma_sep_clause
+        self.max_single_clause = max_single_clause
+        self.max_sets = max_sets
+        self.cg_comma_sep = ClauseGenerator(definitions, INTERSECT, is_comma_sep=True)
+        self.cg_single_clause = ClauseGenerator(definitions, list(definitions.keys()), is_comma_sep=False)
+
+    def reset(self):
+        self.cg_comma_sep.reset()
+        self.cg_single_clause.reset()
+
+    def generate_clauses(self):
+        clause_text = ''
+        for clause_set in range(self.max_sets):
+            if clause_text != '':
+                clause_text += '; '
+            clause_text += self.cg_single_clause.generate_clauses(random.choice(range(1, self.max_single_clause + 1)))
+            point_counter, defined_points = self.cg_single_clause.get_pt_ctr_def_pts()
+            if point_counter < 3:
+                continue
+
+            self.cg_comma_sep.set_pt_ctr_def_pts(point_counter, defined_points)
+            clause_text += '; ' + self.cg_comma_sep.generate_clauses(
+                random.choice(range(1, self.max_comma_sep_clause + 1)))
+            self.cg_single_clause.set_pt_ctr_def_pts(*self.cg_comma_sep.get_pt_ctr_def_pts())
+        self.reset()
+        return clause_text
 
 
 if __name__ == "__main__":
-    # random.seed(2)
+    random.seed(3)
     from generate_random_proofs import load_definitions_and_rules
     defs_path = '../defs.txt'
     rules_path = '../rules.txt'
 
     # Load definitions and rules
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
-    cg = ClauseGenerator(definitions)
-    # print(cg.get_text_clause('angle_bisector', ['x', 'y'], ['b', 'c']))
+    cc_gen = CompoundClauseGen(definitions, 2, 3, 2)
 
-    print(cg.generate_clauses(5))
+    for i in range(5):
+        clause_text = cc_gen.generate_clauses()
+        print(clause_text)
