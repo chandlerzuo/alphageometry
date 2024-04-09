@@ -13,7 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Implementing Algebraic Reasoning (AR)."""
+"""Implementing Algebraic Reasoning (AR).
+"""
 
 from collections import defaultdict  # pylint: disable=g-importing-member
 from fractions import Fraction as frac  # pylint: disable=g-importing-member
@@ -48,8 +49,10 @@ TOL = 1e-15
 
 
 def get_quotient(v: float) -> tuple[int, int]:
+  """represent float v as a fraction n/d."""
   n = v
   d = 1
+  # compute i*v until it is close to an integer.
   while abs(n - round(n)) > TOL:
     d += 1
     n += v
@@ -62,15 +65,18 @@ def get_quotient(v: float) -> tuple[int, int]:
 
 
 def fix_v(v: float) -> float:
+  """get the closest fraction n/d representation of v."""
   n, d = get_quotient(v)
   return n / d
 
 
 def fix(e: dict[str, float]) -> dict[str, float]:
+  """for each float fraction in dict, convert to the closest fraction."""
   return {k: fix_v(v) for k, v in e.items()}
 
 
 def frac_string(f: frac) -> str:
+  """get string representation of f as a fraction"""
   n, d = get_quotient(f)
   return f'{n}/{d}'
 
@@ -80,14 +86,17 @@ def hashed(e: dict[str, float]) -> tuple[tuple[str, float], ...]:
 
 
 def is_zero(e: dict[str, float]) -> bool:
+  """whether all values in dict are zero"""
   return len(strip(e)) == 0  # pylint: disable=g-explicit-length-test
 
 
 def strip(e: dict[str, float]) -> dict[str, float]:
+  """remove keys with value 0."""
   return {v: c for v, c in e.items() if c != 0}
 
 
 def plus(e1: dict[str, float], e2: dict[str, float]) -> dict[str, float]:
+  """add values per key in both dicts, default of 0 for each dict; finally drop zero values"""
   e = dict(e1)
   for v, c in e2.items():
     if v in e:
@@ -98,6 +107,7 @@ def plus(e1: dict[str, float], e2: dict[str, float]) -> dict[str, float]:
 
 
 def plus_all(*es: list[dict[str, float]]) -> dict[str, float]:
+  """add values per key in all dicts, default of 0 for each dict; finally drop zero values"""
   result = {}
   for e in es:
     result = plus(result, e)
@@ -105,15 +115,17 @@ def plus_all(*es: list[dict[str, float]]) -> dict[str, float]:
 
 
 def mult(e: dict[str, float], m: float) -> dict[str, float]:
+  """multiply all values in dict by m."""
   return {v: m * c for v, c in e.items()}
 
 
 def minus(e1: dict[str, float], e2: dict[str, float]) -> dict[str, float]:
+  """subtract; e1[i] - e2[i] for all keys i"""
   return plus(e1, mult(e2, -1))
 
 
 def div(e1: dict[str, float], e2: dict[str, float]) -> float:
-  """Divide e1 by e2."""
+  """Check the ratio in e1[i]/e2[i] between all non-zero values is the same; return the ratio"""
   e1 = strip(e1)
   e2 = strip(e2)
   if set(e1.keys()) != set(e2.keys()):
@@ -150,6 +162,9 @@ def recon(e: dict[str, float], const: str) -> tuple[str, dict[str, float]]:
 def replace(
     e: dict[str, float], v0: str, e0: dict[str, float]
 ) -> dict[str, float]:
+  """
+  ###replace v0 in e with e0, i.e. e[v0] = e0
+  """
   if v0 not in e:
     return e
   e = dict(e)
@@ -158,6 +173,10 @@ def replace(
 
 
 def comb2(elems: list[Any]) -> Generator[tuple[Any, Any], None, None]:
+  """
+  returns cartesian product ordered in a certain way
+  e.g. [2, 1, 4, 5] --> (2, 1), (2, 4), (2, 5), (1, 4), (1, 5), (4, 5)
+  """
   if len(elems) < 1:
     return
   for i, e1 in enumerate(elems[:-1]):
@@ -166,12 +185,14 @@ def comb2(elems: list[Any]) -> Generator[tuple[Any, Any], None, None]:
 
 
 def perm2(elems: list[Any]) -> Generator[tuple[Any, Any], None, None]:
+  """get all 2*(n choose 2) pairs, order in pair matters"""
   for e1, e2 in comb2(elems):
     yield e1, e2
     yield e2, e1
 
 
 def chain2(elems: list[Any]) -> Generator[tuple[Any, Any], None, None]:
+  """get each pair of adjacent elements (n-1 elements for list of length n)"""
   if len(elems) < 2:
     return
   for i, e1 in enumerate(elems[:-1]):
@@ -288,6 +309,10 @@ class Table:
     self.deps = []  # equal number of columns.
     self.A = np.zeros([0, 0])  # pylint: disable=invalid-name
     self.do_why = True
+    
+  def __repr__(self):
+    for v, e in self.v2e.items():
+      print(f"{v} = {e}")
 
   def add_free(self, v: str) -> None:
     self.v2e[v] = {v: frac(1)}
@@ -297,9 +322,14 @@ class Table:
       self.v2e[v] = replace(e, v0, e0)
 
   def add_expr(self, vc: list[tuple[str, float]]) -> bool:
-    """Add a new equality, represented by the list of tuples vc=[(v, c), ..]."""
+    """Add a new equality, represented by the list of tuples vc=[(v, c), ..].
+    e.g. [('d(ac)', 1), ('d(bd)', -1), ('pi', Fraction(-1, 2))] mapping variable name to coefficient, and the constant term.
+    """
     result = {}
     free = []
+    
+    # perform Gaussian elimination
+    
 
     for v, c in vc:
       c = frac(c)
@@ -612,6 +642,10 @@ class AngleTable(GeometricTable):
   def add_const_angle(
       self, d1: gm.Direction, d2: gm.Direction, ang: float, dep: pr.Dependency
   ) -> None:
+    """add a constant angle
+    
+    ang: angle in degrees between d1 and d2
+    """
     if ang and d2._obj.num > d1._obj.num:  # pylint: disable=protected-access
       d1, d2 = d2, d1
       ang = 180 - ang

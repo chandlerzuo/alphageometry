@@ -16,13 +16,13 @@
 """Implements geometric objects used in the graph representation."""
 from __future__ import annotations
 from collections import defaultdict  # pylint: disable=g-importing-member
-from typing import Any, Type
+from typing import Any, Generator, List, Tuple, Type
 
 # pylint: disable=protected-access
 
 
 class Node:
-  r"""Node in the proof state graph.
+  r"""Node in the proof state graph with neighbors, and equivalent points.
 
   Can be Point, Line, Circle, etc.
 
@@ -54,19 +54,37 @@ class Node:
     # Merge graph: history of merges with other nodes.
     # merge_graph = {self1: {self2: deps1, self3: deps2}}
 
-    self.rep_by = None  # represented by.
-    self.members = {self}
+    self.rep_by = None  # represented by, immediate only, call .rep() to walk up the full chain
+    self.members = {self} # equivalent nodes
 
-    self._val = None
+    self._val = None # value node corresponding to this node (e.g. length for a segment)
     self._obj = None
 
-    self.deps = []
+    self.deps = [] # dependent nodes
 
     # numerical representation.
-    self.num = None
+    self.num = None # e.g. (x, y) position of point (for visualization)
     self.change = set()  # what other nodes' num rely on this node?
+    
+  def __repr__(self) -> str:
+    args_str = f"{self.name}"
+    if len(self.members) > 1:
+      args_str += f"; rep={self.rep_by}, equiv: " + ", ".join([m.name for m in self.members])
+    if self.num is not None:
+      args_str += f"; num: {self.num}"
+    if self._val is not None:
+      args_str += f"; val: {self._val.name}"
+    if self._obj is not None:
+      args_str += f"; obj: {self._obj.name}"
+    if len(self.edge_graph) > 0:
+      args_str += f"; edges: {self.edge_graph}"
+    if len(self.merge_graph) > 0:
+      args_str += f"; merge: {self.merge_graph}"
+    return f"{self.__class__.__name__}({args_str})"
 
   def set_rep(self, node: Node) -> None:
+    """make 'node' the representative node of this node.
+    """
     if node == self:
       return
     self.rep_by = node
@@ -74,6 +92,8 @@ class Node:
     node.members.update(self.members)
 
   def rep(self) -> Node:
+    """Get representative node of this node (if nodes are found to be equal)
+    """
     x = self
     while x.rep_by:
       x = x.rep_by
@@ -89,7 +109,7 @@ class Node:
   def neighbors(
       self, oftype: Type[Node], return_set: bool = False, do_rep: bool = True
   ) -> list[Node]:
-    """Neighbors of this node in the proof state graph."""
+    """Neighbors of this node in the proof state graph (based on edge_graph)."""
     if do_rep:
       rep = self.rep()
     else:
@@ -110,6 +130,7 @@ class Node:
   def merge_edge_graph(
       self, new_edge_graph: dict[Node, dict[Node, list[Node]]]
   ) -> None:
+    """merge two graphs (their edge graphs)"""
     for x, xdict in new_edge_graph.items():
       if x in self.edge_graph:
         self.edge_graph[x].update(dict(xdict))
@@ -117,10 +138,12 @@ class Node:
         self.edge_graph[x] = dict(xdict)
 
   def merge(self, nodes: list[Node], deps: list[Any]) -> None:
+    """make self and each node in 'nodes' equivalent nodes"""
     for node in nodes:
       self.merge_one(node, deps)
 
   def merge_one(self, node: Node, deps: list[Any]) -> None:
+    """make self and node equivalent nodes"""
     node.rep().set_rep(self.rep())
 
     if node in self.merge_graph:
@@ -130,6 +153,7 @@ class Node:
     node.merge_graph[self] = deps
 
   def is_val(self, node: Node) -> bool:
+    """whether 'node' is the corresponding value node of self"""
     return (
         isinstance(self, Line)
         and isinstance(node, Direction)
@@ -160,9 +184,12 @@ class Node:
     return self._obj.rep()
 
   def equivs(self) -> set[Node]:
+    """get equivalent nodes"""
     return self.rep().members
 
   def connect_to(self, node: Node, deps: list[Any] = None) -> None:
+    """add deps as edges to self, and, if node is a value node, associate node to self
+    """
     rep = self.rep()
 
     if node in rep.edge_graph:
@@ -418,12 +445,14 @@ class Direction(Node):
 
 
 def get_lines_thru_all(*points: list[Point]) -> list[Line]:
+  """get lines that pass through all of the given points (at once)"""
   line2count = defaultdict(lambda: 0)
-  points = set(points)
+  points = set(points) # only unique points
   for p in points:
+    # get lines passing through p
     for l in p.neighbors(Line):
       line2count[l] += 1
-  return [l for l, count in line2count.items() if count == len(points)]
+  return [l for l, count in line2count.items() if count == len(points)] # only lines that pass through all points
 
 
 def line_of_and_why(
@@ -482,7 +511,7 @@ def name_map(struct: Any) -> Any:
 
 
 class Angle(Node):
-  """Node of type Angle."""
+  """Node of type Angle between two directions."""
 
   def new_val(self) -> Measure:
     return Measure()
@@ -519,6 +548,7 @@ class Ratio(Node):
   def lengths(self) -> tuple[Length, Length]:
     l1, l2 = self._l
     if l1 is None or l2 is None:
+      # actually both are None (I think)
       return l1, l2
     return l1.rep(), l2.rep()
 
@@ -529,7 +559,12 @@ class Value(Node):
 
 def all_angles(
     d1: Direction, d2: Direction, level: int = None
-) -> tuple[Angle, list[Direction], list[Direction]]:
+) -> Generator[Tuple[Angle, List[Direction], List[Direction]]]:
+  """
+  Find all angles between directions d1 and d2 (including their equivalent nodes up to level).
+  
+  Return (angle, d1s, d2s) where d1s and d2s are equivalent nodes of d1 and d2.
+  """
   level = level or float('inf')
   d1s = d1.equivs_upto(level)
   d2s = d2.equivs_upto(level)
@@ -542,11 +577,17 @@ def all_angles(
 
 def all_ratios(
     d1, d2, level=None
-) -> tuple[Angle, list[Direction], list[Direction]]:
+) -> Generator[Tuple[Angle, List[Direction], List[Direction]]]:
+  """
+  Find all ratios between d1 and d2 (including their equivalent nodes up to level).
+  
+  Return (angle, d1s, d2s) where d1s and d2s are equivalent nodes of d1 and d2.
+  """
   level = level or float('inf')
   d1s = d1.equivs_upto(level)
   d2s = d2.equivs_upto(level)
 
+  # get all ratio nodes connected to the representative of d1, then check if the other direction is in d2s
   for ang in d1.rep().neighbors(Ratio):
     d1_, d2_ = ang._l
     if d1_ in d1s and d2_ in d2s:
@@ -568,11 +609,18 @@ RANKING = {
 
 
 def val_type(x: Node) -> Type[Node]:
+  """
+  get value (type) to represent node, e.g.,
+  line -> direction
+  segment -> length
+  angle -> measure
+  ratio -> value
+  """
   if isinstance(x, Line):
-    return Direction
+    return Direction # to then represent angles between directions
   if isinstance(x, Segment):
-    return Length
+    return Length # to represent ratios of segment lengths
   if isinstance(x, Angle):
-    return Measure
+    return Measure # to represent angle measures
   if isinstance(x, Ratio):
     return Value

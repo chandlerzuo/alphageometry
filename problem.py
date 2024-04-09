@@ -72,7 +72,8 @@ class Construction:
     return ' '.join([self.name] + list(self.args))
   
   def __str__(self) -> str:
-    return f"""Construction_{self.name}({", ".join(self.args)})"""
+    return f"""Construction_{self.name}({", ".join(map(str, self.args))})"""
+  __repr__ = __str__
 
 class Clause:
   """One construction (>= 1 predicate)."""
@@ -137,6 +138,7 @@ class Clause:
   constructions: 
 {textwrap.indent(constructions_str, " "*4)}{positions_str}
 )"""
+  __repr__ = __str__
 
 
 def _gcd(x: int, y: int) -> int:
@@ -411,13 +413,14 @@ class Definition:
       for: {self.construction}
       args: {list_to_str(self.args)}
       new_points: {list_to_str(self.points)}
-      point_deps: {list_to_str((f"{p} depends on {list_to_str(points)}" for (p, points) in self.rely.items()), sep=";")}
+      point_deps: {list_to_str((f"{p} is def'd by {list_to_str(points)}" for (p, points) in self.rely.items()), sep=";")}
       implies: 
 {textwrap.indent(basics_str, " "*10)}
       requires: 
 {textwrap.indent(str(self.deps), " "*10)}
       numerics: {list_to_str(self.numerics)}
 )""")
+  __repr__ = __str__
 
 
 class Theorem:
@@ -519,6 +522,7 @@ class Theorem:
 # {textwrap.indent(premises_str, " "*2)}
 #   => {pt.pretty_nl_from_str(self.conclusion)}
 # )"""
+  __repr__ = __str__
 
 
 def why_eqratio(
@@ -528,7 +532,7 @@ def why_eqratio(
     d4: gm.Direction,
     level: int,
 ) -> list[Dependency]:
-  """Why two ratios are equal, returns a Dependency objects."""
+  """Why two ratios are equal, returns a list of dependency objects."""
   all12 = list(gm.all_ratios(d1, d2, level))
   all34 = list(gm.all_ratios(d3, d4, level))
 
@@ -752,6 +756,18 @@ class Dependency(Construction):
 
     self._stat = None
     self.trace = None
+    
+  def __str__(self) -> str:
+    return f"""Dependency(
+    rule_name={self.rule_name}
+    level={self.level}
+    why=
+{textwrap.indent(list_to_str(map(str, self.why)), 4*" ")}
+    stat={self._stat}
+    trace={self.trace}
+{textwrap.indent(super().__str__(), 4*" ")},
+    )"""
+  __repr__ = __str__
 
   def _find(self, dep_hashed: tuple[str, ...]) -> Dependency:
     for w in self.why:
@@ -1125,7 +1141,9 @@ class Dependency(Construction):
 def hashed(
     name: str, args: list[gm.Point], rename: bool = False
 ) -> tuple[str, ...]:
+  """hash construction, possibly renaming before"""
   if name == 's_angle':
+    # "s_angle a b c 50" means: angle <abc is 50 degrees, don't rename the number
     args = [p.name if not rename else p.new_name for p in args[:-1]] + [
         str(args[-1])
     ]
@@ -1196,4 +1214,4 @@ def hashed_txt(name: str, args: list[str]) -> tuple[str, ...]:
   if name in ['sameside', 's_angle']:
     return (name,) + tuple(args)
 
-  raise ValueError(f'Not recognize {name} to hash.')
+  raise ValueError(f"invalid construction name '{name}' to hash.")
