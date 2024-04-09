@@ -1,4 +1,7 @@
 import sys
+
+from utils.loading_utils import load_definitions_and_rules
+
 sys.path.append('..')
 import random
 import ddar
@@ -21,13 +24,6 @@ def signal_handler(signum, frame):
 
 # Register the signal handler for SIGALRM
 signal.signal(signal.SIGALRM, signal_handler)
-
-
-def load_definitions_and_rules(defs_path, rules_path):
-    """Load definitions and rules from text files."""
-    definitions = pr.Definition.from_txt_file(defs_path, to_dict=True)
-    rules = pr.Theorem.from_txt_file(rules_path, to_dict=True)
-    return definitions, rules
 
 
 def main():
@@ -62,7 +58,6 @@ def main():
         print("Graph couldn't bre create in reasonable time. Perhaps problem with the premises. Exiting ...")
         raise e
 
-    # Additionally draw this graph
     # Additionaly draw this generated problem
     gh.nm.draw(
         g.type2nodes[gh.Point],
