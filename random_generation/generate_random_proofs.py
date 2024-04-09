@@ -60,6 +60,14 @@ def main():
         print("Graph couldn't bre create in reasonable time. Perhaps problem with the premises. Exiting ...")
         raise e
 
+    # Additionally draw this graph
+    # Additionaly draw this generated problem
+    gh.nm.draw(
+        g.type2nodes[gh.Point],
+        g.type2nodes[gh.Line],
+        g.type2nodes[gh.Circle],
+        g.type2nodes[gh.Segment])
+
     print(f'Solving ...')
 
     ddar.solve(g, rules, p, max_level=1000)
