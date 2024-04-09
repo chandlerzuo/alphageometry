@@ -1,14 +1,14 @@
 import random
 import string
-
+from reorder_lists import get_ordering_index
 
 class ClauseGenerator:
     def __init__(self, defs):
         self.defs = defs
         self.defined_points = []
         self.clause_relations = list(defs.keys()) # this is the full set we can't deal with it yet
-        # To limit to a a few concepts uncomment the following line
-        # self.clause_relations = ['angle_bisector', 'angle_mirror', 'circle', 'circumcenter', 'midpoint', 'triangle']
+        # To limit to a few concepts uncomment the following line
+        # self.clause_relations = ['triangle', 'parallelogram',]
         self.point_counter = 0  # Start from 0
         self.max_points = 26 * 10  # 26 letters, 10 cycles (0 to 9, inclusive)
 
@@ -55,7 +55,11 @@ class ClauseGenerator:
         Make a canonical clause for a given relation
         """
         if result_vars:
-            clause_txt = f'{" ".join(result_vars)} = {clause_relation} {" ".join(result_vars + arg_vars)}'
+            pos_new_pts_idx = get_ordering_index(self.defs[clause_relation].construction.args,
+                                                 self.defs[clause_relation].points + self.defs[clause_relation].args)
+            all_inp_pts = result_vars + arg_vars
+            all_inp_pts_reordered = [all_inp_pts[i] for i in pos_new_pts_idx]
+            clause_txt = f'{" ".join(result_vars)} = {clause_relation} {" ".join(all_inp_pts_reordered)}'
         else:
             clause_txt = f'{clause_relation} {" ".join(arg_vars)}'
 
