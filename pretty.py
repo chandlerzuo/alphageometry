@@ -156,6 +156,10 @@ def pretty_nl(name: str, args: list[str]) -> str:
     a, b, c, d = args
     return f'{a} is the foot of {b} on {c}{d}'
 
+  # TODO(ALL): Are these correct? Where were they not here?
+  if name == 'npara':
+    a, b, c, d = args
+    return f'{a}{b} is not parallel to {c}{d}'
 
 def pretty(txt: str) -> str:
   """Pretty formating a predicate string.
