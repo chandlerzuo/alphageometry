@@ -1,5 +1,10 @@
 
-angle_bisector:
+
+#angle_bisector:
+#  - "{p0} is a point such that ∠{p1}{p2}{p0} = ∠{p0}{p2}{p3}. "
+#  - "{p0} is a point such that ∠{p1}{p2}{p0} is equal to ∠{p0}{p2}{p3}. "
+# Construct a point X on the angle bisector of ∠ABC
+angle_bisector: # X A B C
   num_args: 4
 
   atoms:
@@ -15,9 +20,35 @@ angle_bisector:
     - "{point} bisects {angle_full}"
 
     - "{point} bisects {angles}"
-    - "{point} is the angle bisector of {angles}"
+    - "{point} is on the bisector of {angles}"
+    - "{point} is on angle bisector of {angles}"
     - "{angles} are bisected by {point}"
     - "{point} is a bisector such that {eqangles}"
+
+#angle_mirror:
+#    - "{p0} is a point such that ∠{p1}{p2}{p3} = ∠{p3}{p2}{p0}. "
+#    - "{p0} is a point such that ∠{p1}{p2}{p3} is equal to ∠{p3}{p2}{p0}. "
+# Construct a point X such that BC is the bisector of ∠ABX
+angle_mirror: # X A B C
+  num_args: 4
+
+  atoms:
+    point: [0]
+    point_mirror: [1]
+    line: [2, 3]
+    angle1: [1, 2, 3]
+    angle2: [3, 2, 0]
+    angle_full: [1, 2, 0]
+    angles: {type: conjunction, args: [angle1, angle2]}
+    eqangles: {type: equality, args: [angle1, angle2]}
+
+  templates:
+    - "{point} is reflected across {line}"
+    - "{point} is the mirror image of {point_mirror} across {line}"
+
+    - "{line} is the bisector of {angle_full}"
+    - "{point} is a point such that {eqangles}"
+
 
 
 

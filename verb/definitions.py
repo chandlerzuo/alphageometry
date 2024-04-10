@@ -5,7 +5,7 @@ from omniply.core.genetics import GeneticGadget
 # from omniply.apps import Template, GadgetDecision, SimpleDecision, Controller, Combination, Permutation
 # from omniply.apps.decisions.abstract import CHOICE
 
-from .atoms import Point, Line, Angle
+from .atoms import Atom, Point, Line, Angle
 
 
 def from_formal(formal_statement: str):
@@ -33,11 +33,13 @@ class StatementGenerator(GadgetDecision):
 		super().__init__(choices=choices, choice_gizmo=choice_gizmo, **kwargs)
 
 
+from .common import ArgumentGenerator
+
 
 class Definition(ToolKit):
 	_registry = {}
 	@classmethod
-	def find(cls, name: str | 'Definition'):
+	def find(cls, name: Union[str, 'Definition']):
 		if isinstance(name, Definition):
 			return name
 		if name not in cls._registry:
@@ -54,22 +56,31 @@ class Definition(ToolKit):
 		name = data.pop('name', key)
 		return cls(name=name, **data)
 
+	def _populate_arguments(self, num_args: int, shuffle=True, **kwargs):
+		points = [Point(f'p{i}', [i]) for i in range(num_args)]
+		self.extend(points)
+		self.include(ArgumentGenerator(num_args, shuffle=shuffle, **kwargs))
 
-	@classmethod
-	def _populate_clause_template(cls, templates: str | Iterable[str] | Mapping[str, str], gizmo: str, **kwargs):
+
+	def _populate_clause_template(self, templates: str | Iterable[str] | Mapping[str, str], **kwargs):
+		gizmo = 'clause'
+
 		if isinstance(templates, str):
 			templates = {0: templates}
 		elif not isinstance(templates, Mapping) and isinstance(templates, Iterable):
-			templates = {i: template for i, template in templates}
-		assert templates is not None and len(templates), (f'No templates were specified for {cls.__name__} '
-														  f'(set {cls.__name__}._templates '
+			templates = {i: template for i, template in enumerate(templates)}
+		assert templates is not None and len(templates), (f'No templates were specified for {self.__name__} '
+														  f'(set {self.__name__}._templates '
 														  f'or pass `templates` as an argument).')
 
-		templates = {key: cls._Single_Template(template=template, gizmo=gizmo) for key, template in templates.items()}
+		templates = {key: self._Single_Template(template=template, gizmo=gizmo) for key, template in templates.items()}
 		if len(templates) == 1:
 			template = next(iter(templates.values()))
-			return template
-		return cls._Multi_Template(templates=templates, gizmo=gizmo, **kwargs)
+			clause_gadget = template
+		else:
+			clause_gadget = self._Multi_Template(templates, choice_gizmo='def_template', **kwargs)
+
+		self.include(clause_gadget)
 
 
 	_atom_prefixes = {
@@ -78,29 +89,33 @@ class Definition(ToolKit):
 		'angle': Angle,
 	}
 	def _populate_atoms(self, atoms: dict[str, Union[dict[str, Any], list[int]]] = None):
-		raise NotImplementedError
 
+		tools = []
 
-	_argument_prefix = 'arg'
-	def _populate_arguments(self, num_args: int):
+		for name, data in atoms.items():
+			if isinstance(data, (int, str, list)):
+				options = [key for key in self._atom_prefixes if name.startswith(key)]
+				assert len(options) == 1, f'unknown/ambiguous atom type inference for {name}: {options}'
+				atom_type = self._atom_prefixes[options[0]]
+				tools.append(atom_type(name, data))
+			else:
+				assert isinstance(data, dict) and 'type' in data and 'args' in data, \
+					f'invalid atom data for {name}: {data}'
+				atom_type = Atom.find(data['type'])
+				tools.append(atom_type(name, data['args']))
 
-		assert num_args <= 26, f'Cannot have more than 26 arguments for a definition: {num_args}'
+		self.extend(tools)
 
-
-
-
-		raise NotImplementedError
 
 	def __init__(self, name: str, num_args: int, *, templates: str | Iterable[str] | Mapping[str, str] = None,
-				atoms: dict[str, Union[dict[str, Any], list[int]]] = None,
-				clause_gadget: AbstractGadget = None, gizmo: str = 'clause', **kwargs):
-		if clause_gadget is None:
-			clause_gadget = self._create_default_clause_template(templates, gizmo=gizmo)
+				atoms: dict[str, Union[dict[str, Any], list[int]]] = None, **kwargs):
 		super().__init__(**kwargs)
 		self._name = name
 		self._num_args = num_args
-		self.include(clause_gadget)
-		# self.extend()
+		self._populate_arguments(num_args)
+		if atoms is not None:
+			self._populate_atoms(atoms)
+		self._populate_clause_template(templates)
 		self._registry[name] = self
 
 
@@ -114,22 +129,8 @@ class Definition(ToolKit):
 		return f'{self._name} {" ".join(ctx[parent] for parent in self.formal_argument_names())}'
 	@get_formal.parents
 	def formal_argument_names(self):
-		return [f'{self._argument_prefix}{i}' for i in range(self._num_args)]
+		return [f'arg{i}' for i in range(self._num_args)]
 
-
-
-class AngleBisector(Definition):
-	_num_args = 4
-
-	_atoms = {
-		'angle1': [1, 2, 0],
-		'angle2': [0, 2, 3],
-	}
-
-	_templates = [
-		"{p0} is a point such that ∠{p1}{p2}{p0} = ∠{p0}{p2}{p3}",
-		'{p0} bisects {angle1} and {angle2}'
-	]
 
 
 
