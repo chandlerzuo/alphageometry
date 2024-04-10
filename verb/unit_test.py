@@ -120,8 +120,11 @@ def test_definition():
 
 	my_def = Definition.from_data(key, data)
 
+	args = 'X A B C D'
+	manual_args = {f'arg{i}': a for i, a in enumerate(args.split())}
+
 	ctx = Controller(my_def)
-	ctx.include(DictGadget({'arg0': 'X', 'arg1': 'A', 'arg2': 'B', 'arg3': 'C', 'arg4': 'D'}))
+	ctx.include(DictGadget(manual_args))
 	ctx.include(DictGadget({'selection_id': 0, 'order_id': 0})) # use A, B, C ...
 	print(ctx['formal'])
 
