@@ -1,7 +1,7 @@
 from .imports import *
 
 from .common import ArgumentGenerator
-from .atoms import Point, Line, Angle
+from .rules import Point, Line, Angle
 
 
 
@@ -24,7 +24,7 @@ def test_arg_sampling():
 
 
 
-def test_atoms():
+def test_rules():
 
 	num_args = 5
 
@@ -50,7 +50,7 @@ def test_atoms():
 	assert ctx['p4'] == 'E'
 
 
-from .atoms import Conjunction
+from .rules import Conjunction
 
 
 def test_conjunction():
@@ -71,9 +71,9 @@ def test_conjunction():
 	print(len(cases))
 
 
-from .atoms import Atom
+from .rules import Rule
 
-def test_abstracting_atoms():
+def test_abstracting_rules():
 
 	num_args = 5
 
@@ -91,7 +91,7 @@ def test_abstracting_atoms():
 	ctx.include(Conjunction('conj', ['line1', 'angle2', 'arg0']))
 	ctx['conj_term'] = ' and '
 
-	assert Atom.set_abstraction() # toggles
+	assert Rule.set_abstraction() # toggles
 
 	assert ctx['line1'] == 'line {p0}{p2}'
 	assert ctx['conj'] == '{line1}, {angle2}, and {arg0}'
@@ -128,13 +128,14 @@ def test_definition():
 	ctx.include(DictGadget({'selection_id': 0, 'order_id': 0})) # use A, B, C ...
 	print(ctx['formal'])
 
+
 	random.seed(11)
 	for _ in range(10):
 		print(ctx['clause'])
 		ctx.clear_cache()
 
 	print()
-	Atom.set_abstraction()
+	Rule.set_abstraction()
 
 	random.seed(11)
 	for _ in range(10):
@@ -142,6 +143,48 @@ def test_definition():
 		ctx.clear_cache()
 
 
+
+
+
+def test_generate_all():
+	path = repo_root() / 'assets' / 'def-patterns.yml'
+	raw = yaml.safe_load(path.read_text())
+
+	print()
+
+	key, data = raw.popitem()
+
+	my_def = Definition.from_data(key, data)
+
+	args = 'X A B C D'
+	manual_args = {f'arg{i}': a for i, a in enumerate(args.split())}
+
+	ctx = Controller(my_def)
+	ctx.include(DictGadget(manual_args))
+	ctx.include(DictGadget({'selection_id': 0, 'order_id': 0}))  # use A, B, C ...
+	print(ctx['formal'])
+
+	# Conjunction.set_abstraction()
+	# Rule.set_abstraction()
+
+	clauses = []
+
+	cap = 100
+	for i, case in enumerate(ctx.consider()):
+		if i == cap:
+			clauses = None
+			break
+		clauses.append(case['clause'])
+
+	if clauses is None:
+		clauses = []
+		for _ in range(cap):
+			ctx.clear_cache()
+			clauses.append(ctx['clause'])
+
+	print(f'Generated {i} cases{"" if i < cap else " (but there are more possible)"}')
+
+	print('\n'.join(clauses))
 
 
 

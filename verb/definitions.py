@@ -5,7 +5,7 @@ from omniply.core.genetics import GeneticGadget
 # from omniply.apps import Template, GadgetDecision, SimpleDecision, Controller, Combination, Permutation
 # from omniply.apps.decisions.abstract import CHOICE
 
-from .atoms import Atom, Point, Line, Angle
+from .rules import Rule, Point, Line, Angle, Triangle, Circle, Quadrilateral
 
 
 def from_formal(formal_statement: str):
@@ -83,38 +83,41 @@ class Definition(ToolKit):
 		self.include(clause_gadget)
 
 
-	_atom_prefixes = {
+	_rule_prefixes = {
 		'point': Point,
 		'line': Line,
 		'angle': Angle,
+		'triangle': Triangle,
+		'circle': Circle,
+		'quad': Quadrilateral,
 	}
-	def _populate_atoms(self, atoms: dict[str, Union[dict[str, Any], list[int]]] = None):
+	def _populate_rules(self, rules: dict[str, Union[dict[str, Any], list[int]]] = None):
 
 		tools = []
 
-		for name, data in atoms.items():
+		for name, data in rules.items():
 			if isinstance(data, (int, str, list)):
-				options = [key for key in self._atom_prefixes if name.startswith(key)]
-				assert len(options) == 1, f'unknown/ambiguous atom type inference for {name}: {options}'
-				atom_type = self._atom_prefixes[options[0]]
-				tools.append(atom_type(name, data))
+				options = [key for key in self._rule_prefixes if name.startswith(key)]
+				assert len(options) == 1, f'unknown/ambiguous rule type inference for {name}: {options}'
+				rule_type = self._rule_prefixes[options[0]]
+				tools.append(rule_type(name, data))
 			else:
 				assert isinstance(data, dict) and 'type' in data and 'args' in data, \
-					f'invalid atom data for {name}: {data}'
-				atom_type = Atom.find(data['type'])
-				tools.append(atom_type(name, data['args']))
+					f'invalid rule data for {name}: {data}'
+				rule_type = Rule.find(data['type'])
+				tools.append(rule_type(name, data['args']))
 
 		self.extend(tools)
 
 
 	def __init__(self, name: str, num_args: int, *, templates: str | Iterable[str] | Mapping[str, str] = None,
-				atoms: dict[str, Union[dict[str, Any], list[int]]] = None, **kwargs):
+				rules: dict[str, Union[dict[str, Any], list[int]]] = None, **kwargs):
 		super().__init__(**kwargs)
 		self._name = name
 		self._num_args = num_args
 		self._populate_arguments(num_args)
-		if atoms is not None:
-			self._populate_atoms(atoms)
+		if rules is not None:
+			self._populate_rules(rules)
 		self._populate_clause_template(templates)
 		self._registry[name] = self
 

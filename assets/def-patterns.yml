@@ -7,23 +7,25 @@
 angle_bisector: # X A B C
   num_args: 4
 
-  atoms:
+  rules:
     point: [0]
     angle1: [1, 2, 0]
     angle2: [0, 2, 3]
     angle_full: [1, 2, 3]
+    bisector: {type: literal, args: ['bisector', 'angle bisector']}
+    the: {type: literal, args: ['the', 'a']}
     angles: {type: conjunction, args: [angle1, angle2]}
     eqangles: {type: equality, args: [angle1, angle2]}
 
   templates:
-    - "{point} is the angle bisector of {angle_full}"
+    - "{point} is {the} {bisector} of {angle_full}"
     - "{point} bisects {angle_full}"
 
     - "{point} bisects {angles}"
-    - "{point} is on the bisector of {angles}"
-    - "{point} is on angle bisector of {angles}"
     - "{angles} are bisected by {point}"
-    - "{point} is a bisector such that {eqangles}"
+
+    - "{point} is on {the} {bisector} of {angles}"
+    - "{point} is {the} {bisector} such that {eqangles}"
 
 #angle_mirror:
 #    - "{p0} is a point such that ∠{p1}{p2}{p3} = ∠{p3}{p2}{p0}. "
@@ -32,7 +34,7 @@ angle_bisector: # X A B C
 angle_mirror: # X A B C
   num_args: 4
 
-  atoms:
+  rules:
     point: [0]
     point_mirror: [1]
     line: [2, 3]
@@ -48,6 +50,66 @@ angle_mirror: # X A B C
 
     - "{line} is the bisector of {angle_full}"
     - "{point} is a point such that {eqangles}"
+
+#circle:
+#    - "{p0} is the centre of the circle that passes through {p1}, {p2}, {p3}. "
+# Construct a point X as the circumcenter of A, B, C
+circle: # X A B C
+  num_args: 4
+
+  rules:
+      point: [0]
+      triangle: [1, 2, 3]
+      circle: [0, 1, 2, 3]
+      points: {type: conjunction, args: [p1, p2, p3]}
+      corners: {type: ref, args: [points, triangle]}
+      passing: {type: literal, args: ['that passes through', 'passing through']}
+
+  templates:
+#      - "{point} is the circumcenter of {corners}"
+      - "{point} is the center of the circle {passing} {points}"
+      - "the center of the circle {passing} {points} is {point}"
+      - "{point} is the center of {circle}"
+
+#circumcenter:
+#    - "{p0} is the centre of the circumcenter of the triangle {p1}{p2}{p3}. "
+#
+circumcenter:
+    num_args: 4
+
+    rules:
+        point: [0]
+        triangle: [1, 2, 3]
+        points: {type: conjunction, args: [p1, p2, p3]}
+        corners: {type: ref, args: [points, triangle]}
+
+    templates:
+      - "{point} is the circumcenter of {corners}"
+
+#eq_quadrangle:
+#    - "{p0}{p1}{p2}{p3} is a quadrilateral with {p0}{p3} = {p1}{p2}. "
+# Construct quadrilateral ABCD such that AB = CD
+eq_quadrilateral: # A B C D
+  num_args: 4
+
+  rules:
+    quadrilateral: [0, 1, 2, 3]
+    line1: [0, 3]
+    line2: [1, 2]
+    corners: {type: conjunction, args: [p0, p1, p2, p3]}
+    eqsides: {type: equality, args: [line1, line2]}
+    where: {type: literal, args: ['with', 'such that', 'where']}
+    desc: {type: ref, args: [quadrilateral, corners]}
+
+  templates:
+    - "{desc} is a quadrilateral {where} {eqsides}"
+    - "{corners} forms a quadrilateral {where} {eqsides}"
+
+
+
+
+
+
 
 
 

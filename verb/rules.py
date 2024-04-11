@@ -1,7 +1,9 @@
+from omniply.apps.decisions.abstract import CHOICE
+
 from .imports import *
 
 
-class Atom(MultiGadgetBase):
+class Rule(MultiGadgetBase):
 	_kind_registry = Class_Registry()
 	@classmethod
 	def find(cls, kind: str):
@@ -75,7 +77,7 @@ class Atom(MultiGadgetBase):
 
 
 
-class AtomTemplate(Atom, Template):
+class RuleTemplate(Rule, Template):
 	def __init__(self, name: str, parts: list[str | int] = (), gizmo=None, **kwargs):
 		if gizmo is None:
 			gizmo = name
@@ -114,7 +116,7 @@ class AtomTemplate(Atom, Template):
 
 
 
-class Point(AtomTemplate, kind='point'):
+class Point(RuleTemplate, kind='point'):
 	_fixed_num_parts = 1
 	_part_key_fmt = 'arg{}'
 
@@ -124,63 +126,64 @@ class Point(AtomTemplate, kind='point'):
 
 
 
-class Line(AtomTemplate, kind='line'):
+class Line(RuleTemplate, kind='line'):
 	_fixed_num_parts = 2
 	_base_template = 'line {0}{1}'
 
 
-class Angle(AtomTemplate, kind='angle'):
+class Angle(RuleTemplate, kind='angle'):
 	_fixed_num_parts = 3
 	_base_template = '∠{0}{1}{2}'
 
 
-class Triangle(AtomTemplate, kind='triangle'):
+class Triangle(RuleTemplate, kind='triangle'):
 	_fixed_num_parts = 3
 	_base_template = 'triangle {0}{1}{2}'
 
 
-class Circle(AtomTemplate, kind='circle'):
+class Circle(RuleTemplate, kind='circle'):
 	_fixed_num_parts = 4
-	_base_template = 'circle {1}{2}{3} centered at {0}'
+	# _base_template = 'circle {1}{2}{3} centered at {0}'
+	_base_template = 'circle {0}{1}{2}{3}'
 
 
-class Quadrilateral(AtomTemplate, kind='quadrilateral'):
+class Quadrilateral(RuleTemplate, kind='quadrilateral'):
 	_fixed_num_parts = 4
 	_base_template = 'quadrilateral {0}{1}{2}{3}'
 
 
-class Trapezoid(AtomTemplate, kind='trapezoid'):
+class Trapezoid(RuleTemplate, kind='trapezoid'):
 	_fixed_num_parts = 4
 	_base_template = 'trapezoid {0}{1}{2}{3}'
 
 
-class Parallelogram(AtomTemplate, kind='parallelogram'):
+class Parallelogram(RuleTemplate, kind='parallelogram'):
 	_fixed_num_parts = 4
 	_base_template = 'parallelogram {0}{1}{2}{3}'
 
 
-class Rhombus(AtomTemplate, kind='rhombus'):
+class Rhombus(RuleTemplate, kind='rhombus'):
 	_fixed_num_parts = 4
 	_base_template = 'rhombus {0}{1}{2}{3}'
 
 
-class Rectangle(AtomTemplate, kind='rectangle'):
+class Rectangle(RuleTemplate, kind='rectangle'):
 	_fixed_num_parts = 4
 	_base_template = 'rectangle {0}{1}{2}{3}'
 
 
-class Square(AtomTemplate, kind='square'):
+class Square(RuleTemplate, kind='square'):
 	_fixed_num_parts = 4
 	_base_template = 'square {0}{1}{2}{3}'
 
 
 
-# Special (complex) atoms
+# Special (complex) rules
 
 from .common import Enumeration
 
 
-class ComplexAtom(Atom):
+class ComplexRule(Rule):
 	def _as_abstract(self, ctx: 'AbstractGame'):
 		ctx[f'{self.name}_order'] = 0
 		for key in self.parts:
@@ -189,7 +192,7 @@ class ComplexAtom(Atom):
 
 
 
-class Conjunction(ComplexAtom, ToolKit, kind='conjunction'):
+class Conjunction(ComplexRule, ToolKit, kind='conjunction'):
 	_term_options = [' and ', ' & ', None] # TODO: maybe split up to properly manage the oxford comma
 
 	def __init__(self, name: str, elements: list[str], **kwargs):
@@ -199,8 +202,13 @@ class Conjunction(ComplexAtom, ToolKit, kind='conjunction'):
 								 aggregator_gizmo=f'{name}_term', choice_gizmo=f'{name}_order'))
 
 
+	def _as_abstract(self, ctx: 'AbstractGame'):
+		ctx[f'{self.name}_term_choice'] = 0
+		return super()._as_abstract(ctx)
 
-class Equality(ComplexAtom, ToolKit, kind='equality'):
+
+
+class Equality(ComplexRule, ToolKit, kind='equality'):
 	def __init__(self, name: str, elements: list[str], **kwargs):
 		super().__init__(name, elements, **kwargs)
 
@@ -221,8 +229,13 @@ class Equality(ComplexAtom, ToolKit, kind='equality'):
 		self.include(GadgetDecision(options, choice_gizmo=f'{name}_fmt') if len(options) > 1 else options[0])
 
 
+	def _as_abstract(self, ctx: 'AbstractGame'):
+		ctx[f'{self.name}_fmt'] = 0
+		return super()._as_abstract(ctx)
 
-class Disjunction(ComplexAtom, Enumeration, kind='disjunction'):
+
+
+class Disjunction(ComplexRule, Enumeration, kind='disjunction'):
 	_aggregator = ' or '
 
 	def __init__(self, name: str, elements: list[str], **kwargs):
@@ -230,6 +243,39 @@ class Disjunction(ComplexAtom, Enumeration, kind='disjunction'):
 						 choice_gizmo=f'{name}_order', **kwargs)
 
 
+
+class LiteralRule(Rule, SimpleDecision, kind='literal'):
+	def __init__(self, name: str, options: list[str], **kwargs):
+		super().__init__(name, options, choices=options, gizmo=name, **kwargs)
+
+
+	def _as_abstract(self, ctx: 'AbstractGame'):
+		return # behavior unchanged
+
+
+
+class ReferenceRule(LiteralRule, kind='ref'):
+	def __init__(self, name: str, options: list[str], **kwargs):
+		super().__init__(name, options, **kwargs)
+
+
+	# def _as_abstract(self, ctx: 'AbstractGame'):
+	# 	return super()._commit(ctx, ctx[self.choice_gizmo], self.name)
+
+
+	def _commit(self, ctx: 'AbstractGame', choice: CHOICE, gizmo: str) -> Any:
+		return ctx.grab(super()._commit(ctx, choice, gizmo))
+
+
+class SubTemplates(Rule, GadgetDecision, kind='sub'):
+	_Template = Template
+	def __init__(self, name: str, templates: list[str], **kwargs):
+		gadgets = [self._Template(template) for template in templates]
+		super().__init__(name, templates, choices=gadgets, choice_gizmo=f'{name}_choice', **kwargs)
+
+
+	def _as_abstract(self, ctx: 'AbstractGame'):
+		return ctx[self.choice_gizmo]
 
 
 
