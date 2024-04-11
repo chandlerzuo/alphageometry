@@ -39,7 +39,7 @@ def plot(problem_txt):
 
 
 def main():
-    filename = '../../datasets/nl_fl_dataset.csv'
+    filename = '../data/nl_fl_dataset.csv'
     data = load_data_from_csv(filename)
     total_lines = len(data)
     current_line = random.randint(0, total_lines - 1)
