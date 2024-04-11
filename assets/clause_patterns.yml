@@ -1,34 +1,34 @@
 
-angle_bisector:
-  - "{p0} is a point such that ∠{p1}{p2}{p0} = ∠{p0}{p2}{p3}. "
-  - "{p0} is a point such that ∠{p1}{p2}{p0} is equal to ∠{p0}{p2}{p3}. "
-angle_mirror:
-    - "{p0} is a point such that ∠{p1}{p2}{p3} = ∠{p3}{p2}{p0}. "
-    - "{p0} is a point such that ∠{p1}{p2}{p3} is equal to ∠{p3}{p2}{p0}. "
-circle:
-    - "{p0} is the centre of the circle that passes through {p1}, {p2}, {p3}. "
-circumcenter:
-    - "{p0} is the centre of the circumcenter of the triangle {p1}{p2}{p3}. "
-eq_quadrangle:
-    - "{p0}{p1}{p2}{p3} is a quadrilateral with {p0}{p3} = {p1}{p2}. "
-eq_trapezoid:
-    - "{p0}{p1}{p2}{p3} is an isosceles trapezoid with {p3}{p0} = {p1}{p2}. "
-eq_triangle:
-    - "{p0}{p1}{p2} is an equilateral triangle. "
-eqangle2:
-    - "{p0} is a point such that ∠{p2}{p1}{p0} = ∠{p0}{p3}{p2}. "
-eqdia_quadrangle:
-    - "{p0}{p1}{p2}{p3} is a quadrilateral whose diagonals are equal. "
-eqdistance:
-    - "{p0} is a point such that {p0}{p1} = {p2}{p3}. "
-foot:
-    - "{p0} is the foot of the perpendicular dropped on to {p2}{p3} from {p1}. "
-free:
-    - "{p0} is a point. "
-incenter:
-    - "{p0} is is the incentre of triangle {p1}{p2}{p3}. "
-incenter2: # TODO(Partha): opportunity to augment! Symantic!  Also use respectively!
-    - "{p3} is is the incentre of triangle {p4}{p5}{p6}. The incircle touches the arm {p4}{p5} at {p2}, the arm {p5}{p6} at {p0} and the arm {p6}{p4} at {p1}. "
+#angle_bisector:
+#  - "{p0} is a point such that ∠{p1}{p2}{p0} = ∠{p0}{p2}{p3}. "
+#  - "{p0} is a point such that ∠{p1}{p2}{p0} is equal to ∠{p0}{p2}{p3}. "
+#angle_mirror:
+#    - "{p0} is a point such that ∠{p1}{p2}{p3} = ∠{p3}{p2}{p0}. "
+#    - "{p0} is a point such that ∠{p1}{p2}{p3} is equal to ∠{p3}{p2}{p0}. "
+#circle:
+#    - "{p0} is the centre of the circle that passes through {p1}, {p2}, {p3}. "
+#circumcenter:
+#    - "{p0} is the centre of the circumcenter of the triangle {p1}{p2}{p3}. "
+#eq_quadrangle:
+#    - "{p0}{p1}{p2}{p3} is a quadrilateral with {p0}{p3} = {p1}{p2}. "
+#eq_trapezoid:
+#    - "{p0}{p1}{p2}{p3} is an isosceles trapezoid with {p3}{p0} = {p1}{p2}. "
+#eq_triangle:
+#    - "{p0}{p1}{p2} is an equilateral triangle. "
+#eqangle2:
+#    - "{p0} is a point such that ∠{p2}{p1}{p0} = ∠{p0}{p3}{p2}. "
+#eqdia_quadrangle:
+#    - "{p0}{p1}{p2}{p3} is a quadrilateral whose diagonals are equal. "
+#eqdistance:
+#    - "{p0} is a point such that {p0}{p1} = {p2}{p3}. "
+#foot:
+#    - "{p0} is the foot of the perpendicular dropped on to {p2}{p3} from {p1}. "
+#free:
+#    - "{p0} is a point. "
+#incenter:
+#    - "{p0} is is the incentre of triangle {p1}{p2}{p3}. "
+#incenter2: # TODO(Partha): opportunity to augment! Symantic!  Also use respectively!
+#    - "{p3} is is the incentre of triangle {p4}{p5}{p6}. The incircle touches the arm {p4}{p5} at {p2}, the arm {p5}{p6} at {p0} and the arm {p6}{p4} at {p1}. "
 excenter: # TODO(Partha): opportunity to augment! Symantic!
     - "{p0} is the excentre of triangle triangle {p1}{p2}{p3} opposite to the angle {p2}{p1}{p3}. "
 excenter2: # TODO(Partha): opportunity to augment! Symantic! Also use respectively!

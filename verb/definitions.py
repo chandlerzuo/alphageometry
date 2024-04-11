@@ -5,7 +5,7 @@ from omniply.core.genetics import GeneticGadget
 # from omniply.apps import Template, GadgetDecision, SimpleDecision, Controller, Combination, Permutation
 # from omniply.apps.decisions.abstract import CHOICE
 
-from .rules import Rule, Point, Line, Angle, Triangle, Circle, Quadrilateral
+from .rules import Rule, Point, Line, Angle, Triangle, Circle, Quadrilateral, Trapezoid
 
 
 def from_formal(formal_statement: str):
@@ -90,6 +90,7 @@ class Definition(ToolKit):
 		'triangle': Triangle,
 		'circle': Circle,
 		'quad': Quadrilateral,
+		'trapezoid': Trapezoid,
 	}
 	def _populate_rules(self, rules: dict[str, Union[dict[str, Any], list[int]]] = None):
 

@@ -88,7 +88,7 @@ class Enumeration(Permutation): # GeneticGadget
 	_prefix: Optional[str] = None
 	_suffix: Optional[str] = None
 
-	def __init__(self, element_gizmos: Iterable[str], oxford: bool = False,
+	def __init__(self, element_gizmos: Iterable[str], oxford: bool = False, ordered: bool = False,
 				 aggregator_gizmo: str = None, aggregator: str = None,
 				 prefix_gizmo: str = None, prefix: str = None,
 				 suffix_gizmo: str = None, suffix: str = None,
@@ -97,6 +97,7 @@ class Enumeration(Permutation): # GeneticGadget
 		element_gizmos = tuple(element_gizmos)
 		# assert len(element_gizmos) > 1, f'Cannot enumerate {len(element_gizmos)} elements: {element_gizmos}'
 		super().__init__(N=len(element_gizmos), **kwargs)
+		self._ordered = False
 		if aggregator is not None:
 			self._aggregator = aggregator
 		self._aggregator_gizmo = aggregator_gizmo
@@ -111,6 +112,10 @@ class Enumeration(Permutation): # GeneticGadget
 		self._prefix_gizmo = prefix_gizmo
 		self._element_gizmos = element_gizmos
 		self._oxford = oxford
+
+
+	def _choose(self, ctx: 'AbstractGame') -> int:
+		return 0 if self._ordered else super()._choose(ctx)
 
 
 	def _genetic_information(self, gizmo: str):

@@ -195,10 +195,10 @@ class ComplexRule(Rule):
 class Conjunction(ComplexRule, ToolKit, kind='conjunction'):
 	_term_options = [' and ', ' & ', None] # TODO: maybe split up to properly manage the oxford comma
 
-	def __init__(self, name: str, elements: list[str], **kwargs):
+	def __init__(self, name: str, elements: list[str], ordered=False, **kwargs):
 		super().__init__(name, elements, **kwargs)
 		self.include(SimpleDecision(f'{name}_term', self._term_options))
-		self.include(Enumeration(elements, gizmo=name, oxford=True,
+		self.include(Enumeration(elements, gizmo=name, oxford=True, ordered=ordered,
 								 aggregator_gizmo=f'{name}_term', choice_gizmo=f'{name}_order'))
 
 
@@ -206,6 +206,16 @@ class Conjunction(ComplexRule, ToolKit, kind='conjunction'):
 		ctx[f'{self.name}_term_choice'] = 0
 		return super()._as_abstract(ctx)
 
+
+
+class OrderedConjunction(Conjunction, kind='ord-conjunction'):
+	def __init__(self, name: str, elements: list[str], **kwargs):
+		super().__init__(name, elements, ordered=True, **kwargs)
+
+
+
+	def _as_abstract(self, ctx: 'AbstractGame'):
+		return super()._as_abstract(ctx)
 
 
 class Equality(ComplexRule, ToolKit, kind='equality'):

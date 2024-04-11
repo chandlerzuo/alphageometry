@@ -96,7 +96,7 @@ eq_quadrilateral: # A B C D
     quadrilateral: [0, 1, 2, 3]
     line1: [0, 3]
     line2: [1, 2]
-    corners: {type: conjunction, args: [p0, p1, p2, p3]}
+    corners: {type: ord-conjunction, args: [p0, p1, p2, p3]}
     eqsides: {type: equality, args: [line1, line2]}
     where: {type: literal, args: ['with', 'such that', 'where']}
     desc: {type: ref, args: [quadrilateral, corners]}
@@ -105,7 +105,180 @@ eq_quadrilateral: # A B C D
     - "{desc} is a quadrilateral {where} {eqsides}"
     - "{corners} forms a quadrilateral {where} {eqsides}"
 
+#eq_trapezoid:
+#    - "{p0}{p1}{p2}{p3} is an isosceles trapezoid with {p3}{p0} = {p1}{p2}. "
+# Construct trapezoid ABCD such that AD = BC
+eq_trapezoid: # A B C D
+  num_args: 4
 
+  rules:
+    trapezoid: [0, 1, 2, 3]
+    line1: [0, 3]
+    line2: [1, 2]
+    corners: {type: ord-conjunction, args: [p0, p1, p2, p3]}
+    eqsides: {type: equality, args: [line1, line2]}
+    where: {type: literal, args: ['with', 'such that', 'where']}
+    desc: {type: ref, args: [trapezoid, corners]}
+
+  templates:
+    - "{desc} is a trapezoid {where} {eqsides}"
+    - "{corners} forms a trapezoid {where} {eqsides}"
+
+#eq_triangle:
+#    - "{p0}{p1}{p2} is an equilateral triangle. "
+# Construct an equilateral triangle ABC
+eq_triangle: # A B C
+  num_args: 3
+
+  rules:
+    triangle: [0, 1, 2]
+    points: {type: conjunction, args: [p0, p1, p2]}
+    line1: [0, 1]
+    line2: [1, 2]
+    line3: [2, 0]
+    eqsides: {type: equality, args: [line1, line2, line3]}
+    where: {type: literal, args: ['with', 'such that', 'where']}
+    desc: {type: ref, args: [triangle, points]}
+    sides: {type: literal, args: ['angles', 'sides']}
+    equilateral: {type: literal, args: ['equilateral', 'an equilateral', 'an equilateral triangle']}
+    prep: {type: literal, args: ['for', 'in']}
+    allof: {type: literal, args: ['all', 'each of the', 'the']}
+    equal: {type: literal, args: ['equal', 'congruent', 'equivalent']}
+
+  templates:
+    - "{desc} is {equilateral}"
+    - "{points} forms an equilateral triangle"
+    - "{prep} {triangle}, {allof} {sides} are {equal}"
+    - "{allof} {sides} of {triangle} are {equal}"
+    - "{prep} {triangle}, {eqsides}"
+    - "{eqsides} {prep} {triangle}"
+
+#eqangle2:
+#    - "{p0} is a point such that ∠{p2}{p1}{p0} = ∠{p0}{p3}{p2}. "
+# Construct a point X such that ∠BAX = ∠XCB
+eq_angle: # X A B C
+  num_args: 4
+
+  rules:
+    point: [0]
+    angle1: [2, 1, 0]
+    angle2: [0, 3, 2]
+    eqangles: {type: equality, args: [angle1, angle2]}
+    where: {type: literal, args: ['such that', 'where']}
+
+  templates:
+    - "{point} is a point {where} {eqangles}"
+
+#eqdia_quadrangle:
+#    - "{p0}{p1}{p2}{p3} is a quadrilateral whose diagonals are equal. "
+# Construct a quadrilateral ABCD such that AC = BD
+eqdia_quadangle: # A B C D
+  num_args: 4
+
+  rules:
+    quadrilateral: [0, 1, 2, 3]
+    line1: [0, 2]
+    line2: [1, 3]
+    corners: {type: ord-conjunction, args: [p0, p1, p2, p3]}
+    prep: {type: literal, args: ['for', 'in']}
+    equal: {type: literal, args: ['equal', 'congruent', 'equivalent']}
+    diags: {type: conjunction, args: [line1, line2]}
+    eqdiags: {type: equality, args: [line1, line2]}
+    where: {type: literal, args: ['such that', 'where']}
+    desc: {type: ref, args: [quadrilateral, corners]}
+
+  templates:
+    - "{prep} {quadrilateral}, {eqdiags}"
+    - "{desc} is a quadrilateral {where} {eqdiags}"
+    - "{corners} forms a quadrilateral {where} {eqdiags}"
+    - "{diags} are {equal} in {quadrilateral}"
+    - "the diagonals of {quadrilateral} are {equal}"
+    - "{quadrilateral} has {equal} diagonals"
+
+#eqdistance:
+#    - "{p0} is a point such that {p0}{p1} = {p2}{p3}. "
+# Construct a point X such that XA = BC
+eq_distance: # X A B C
+  num_args: 4
+
+  rules:
+    point: [0]
+    line1: [0, 1]
+    line2: [2, 3]
+    eqlines: {type: equality, args: [line1, line2]}
+    lines: {type: conjunction, args: [line1, line2]}
+    where: {type: literal, args: ['such that', 'where']}
+    equal: {type: literal, args: ['equal', 'congruent', 'equivalent']}
+
+  templates:
+    - "{point} is a point {where} {eqlines}"
+    - "{lines} are {equal}"
+    - "{eqlines}"
+
+#foot:
+#    - "{p0} is the foot of the perpendicular dropped on to {p2}{p3} from {p1}. "
+# Construct X as the foot of A on BC
+foot: # X A B C
+  num_args: 4
+
+  rules:
+    point: [0]
+    point_foot: [1]
+    line: [2, 3]
+    line_perp: [0, 1]
+    where: {type: literal, args: ['of the perpendicular dropped on to', 'from']}
+
+  templates:
+    - "{point} is the foot of {point_foot} on {line}"
+    - "{point} is on {line} and {line_perp} is perpendicular to {line}"
+    - "the foot of {point_foot} on {line} is {point}"
+
+#incenter:
+#    - "{p0} is is the incentre of triangle {p1}{p2}{p3}. "
+# Construct a point X as the incenter of ABC
+incenter: # X A B C
+  num_args: 4
+
+  rules:
+    point: [0]
+    triangle: [1, 2, 3]
+    points: {type: conjunction, args: [p1, p2, p3]}
+    desc: {type: ref, args: [points, triangle]}
+    the: {type: literal, args: ['the', 'the point of']}
+    meet: {type: literal, args: ['intersection of the angle bisectors', 'concurrence of the angle bisectors',
+                                 'meeting point of the angle bisectors']}
+    loc: {type: literal, args: ['is', 'is located at', 'is at']}
+
+  templates:
+    - "{point} {loc} the incenter of {desc}"
+    - "{triangle} has incenter {point}"
+    - "the incenter of {triangle} {loc} {point}"
+    - "{point} {loc} {the} {meet} of {triangle}"
+
+#incenter2: # TODO(Partha): opportunity to augment! Symantic!  Also use respectively!
+#    - "{p3} is is the incentre of triangle {p4}{p5}{p6}. The incircle touches the arm {p4}{p5} at {p2}, the arm {p5}{p6} at {p0} and the arm {p6}{p4} at {p1}. "
+incenter2: # X Y Z I A B C
+    num_args: 7
+
+    rules:
+        point: [3]
+        triangle: [4, 5, 6]
+        points: {type: ord-conjunction, args: [p4, p5, p6]}
+        desc: {type: ref, args: [points, triangle]}
+        the: {type: literal, args: ['the', 'the point of']}
+        meet: {type: literal, args: ['intersection of the angle bisectors', 'concurrence of the angle bisectors',
+                                     'meeting point of the angle bisectors']}
+        loc: {type: literal, args: ['is', 'is located at', 'is at']}
+        incircle: {type: literal, args: ['incircle', 'the incircle']}
+        touches: {type: literal, args: ['touches', 'intersects', 'meets']}
+        line1: [4, 5]
+        line2: [5, 6]
+        line3: [6, 4]
+        touchpoints: {type: ord-conjunction, args: [p0, p1, p2]}
+
+    templates:
+      - "{point} {loc} the incenter of {desc} with touchpoints {touchpoints}"
+      - "{triangle} has incenter {point} and touchpoints {touchpoints}"
 
 
 
