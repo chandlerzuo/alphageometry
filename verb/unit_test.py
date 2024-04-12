@@ -2,6 +2,14 @@ from .imports import *
 
 from .common import ArgumentGenerator
 from .rules import Point, Line, Angle
+from .rules import Conjunction
+from .rules import Rule
+
+from .common import repo_root
+import yaml
+
+from .definitions import Definition
+
 
 
 
@@ -50,7 +58,6 @@ def test_rules():
 	assert ctx['p4'] == 'E'
 
 
-from .rules import Conjunction
 
 
 def test_conjunction():
@@ -71,7 +78,6 @@ def test_conjunction():
 	print(len(cases))
 
 
-from .rules import Rule
 
 def test_abstracting_rules():
 
@@ -101,12 +107,6 @@ def test_abstracting_rules():
 	Conjunction.set_abstraction(False)
 
 	assert ctx['conj'] == 'line {p0}{p2}, ∠{p1}{p2}{p3}, and A'
-
-
-from .common import repo_root
-import yaml
-
-from .definitions import Definition
 
 
 def test_definition():
@@ -143,26 +143,28 @@ def test_definition():
 		ctx.clear_cache()
 
 
-
-
-
 def test_generate_all():
 	path = repo_root() / 'assets' / 'def-patterns.yml'
 	raw = yaml.safe_load(path.read_text())
 
 	print()
 
-	key, data = raw.popitem()
-
+	# key, data = raw.popitem()
+	key = 'circle'
+	data = raw[key]
 	my_def = Definition.from_data(key, data)
 
 	args = 'X A B C D'
 	manual_args = {f'arg{i}': a for i, a in enumerate(args.split())}
 
 	ctx = Controller(my_def)
-	ctx.include(DictGadget(manual_args))
-	ctx.include(DictGadget({'selection_id': 0, 'order_id': 0}))  # use A, B, C ...
-	print(ctx['formal'])
+	# ctx.include(DictGadget(manual_args))
+	ctx.include(DictGadget({
+		# 'selection_id': 0, # fixes the selection of letters that gets used
+		# 'order_id': 0, # fixes the order of letters that gets used
+		# 'arg0': 'A',
+	}))  # use A, B, C ...
+	# print(ctx['formal'])
 
 	# Conjunction.set_abstraction()
 	# Rule.set_abstraction()
@@ -174,17 +176,20 @@ def test_generate_all():
 		if i == cap:
 			clauses = None
 			break
-		clauses.append(case['clause'])
+		clauses.append([case['clause'], case['formal']])
 
 	if clauses is None:
 		clauses = []
 		for _ in range(cap):
 			ctx.clear_cache()
-			clauses.append(ctx['clause'])
+			# clauses.append(ctx['clause'])
+			clauses.append([ctx['clause'], ctx['formal']])
 
 	print(f'Generated {i} cases{"" if i < cap else " (but there are more possible)"}')
 
-	print('\n'.join(clauses))
+	from tabulate import tabulate
+	print(tabulate(clauses))
+	# print('\n'.join(map(lambda s:,clauses)))
 
 
 

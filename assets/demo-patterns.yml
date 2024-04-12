@@ -280,6 +280,185 @@ incenter: # X A B C
 #      - "{point} {loc} the incenter of {desc} with touchpoints {touchpoints}"
 #      - "{triangle} has incenter {point} and touchpoints {touchpoints}"
 
+incenter2:
+  num_args: 7
+  templates:
+    - "{p3} is the incenter of triangle {p4}{p5}{p6}. The incircle touches the arm {p4}{p5} at {p2}, the arm {p5}{p6} at {p0} and the arm {p6}{p4} at {p1}"
+excenter:
+  num_args: 4
+  templates:
+    - "{p0} is the excenter of triangle {p1}{p2}{p3} opposite to the angle {p2}{p1}{p3}"
+excenter2:
+  num_args: 7
+  templates:
+    - "{p3} is the excenter of triangle {p4}{p5}{p6} opposite to the angle {p5}{p4}{p6}. The excircle touches the arm {p4}{p5} at {p2}, the arm {p5}{p6} at {p0} and the arm {p6}{p4} at {p1}"
+centroid:
+  num_args: 7
+  templates:
+    - "{p4}{p5}{p6} is a triangle. {p3} is the centroid of the triangle and {p0}, {p1}, {p2} are the midpoints of the sides {p5}{p6}, {p4}{p6}, {p5}{p4} respectively"
+ninepoints:
+  num_args: 7
+  templates:
+    - "{p4}{p5}{p6} is a triangle. {p0}, {p1}, {p2} are the midpoints of the sides {p5}{p6}, {p4}{p6}, {p5}{p4} respectively. {p3} is the centre of the circumcircle of the triangle {p0}{p1}{p2}"
+intersection_cc:
+  num_args: 4
+  templates:
+    - "{p0}{p1}{p2}{p3} is a quadrilateral where {p1}{p3} = {p1}{p0} and {p2}{p3} = {p2}{p0}"
+intersection_lc:
+  num_args: 4
+  templates:
+    - "{p1}{p2}{p3} is a triangle. The circle drawn with the centre at {p2} and passing through {p3} intersects the (possibly extended) line {p1}{p3} again at point {p0}"
+intersection_ll:
+  num_args: 5
+  templates:
+    - "Line {p1}{p2} and line {p3}{p4} intersect each other at {p0}"
+intersection_lp:
+  num_args: 6
+  templates:
+    - "{p4}{p5} and {p1}{p2}  are two non parallel lines. {p0} lies on {p1}{p2} but not on {p4}{p5} such that {p3}{p0} is parallel to {p4}{p5}"
+intersection_lt:
+  num_args: 6
+  templates:
+    - "{p1}{p2} and {p4}{p5} are two non perpendicular lines. Line {p0}{p3} is perpendicular to {p4}{p5} it intersects line {p1}{p2} at {p0}"
+intersection_pp:
+  num_args: 7
+  templates:
+    - "Line {p0}{p1} and line {p2}{p3} are parallel. Line {p4}{p0} and line {p5}{p6} are parallel. {p0} is the intersection point"
+intersection_tt:
+  num_args: 7
+  templates:
+    - "{p2}{p3} and {p5}{p6} are two non parallel lines. {p0}{p1} and {p0}{p4} are perpendicular lines to the aforementioned lines respectively. The Perpendicular lines intersect at {p0}"
+iso_triangle:
+  num_args: 3
+  templates:
+    - "{p0}{p1}{p2} is an isosceles triangle with base {p1}{p2}"
+    - "{p0}{p1}{p2} is an isosceles triangle with {p0}{p1} = {p0}{p2}"
+lc_tangent:
+  num_args: 3
+  templates:
+    - "{p0}{p1} is the tangent to the circle centered on {p1}{p2} (possibly extended) and passing through {p1}"
+    - "{p0}{p1} is perpendicular to {p1}{p2}"
+midpoint:
+  num_args: 3
+  templates:
+    - "{p0} is the midpoint of {p1}{p2}"
+mirror:
+  num_args: 3
+  templates:
+    - "{p0} is the mirror image of {p1} in {p2}"
+nsquare:
+  num_args: 3
+  templates:
+    - "{p0}{p1}{p2} is an isosceles right angle triangle with ∠{p0}{p1}{p2} being the right angle"
+on_aline:
+  num_args: 6
+  templates:
+    - "{p0} is a point such that ∠{p0}{p1}{p2} = ∠{p3}{p4}{p5}"
+on_aline2:
+  num_args: 6
+  templates:
+    - "{p0} is a point such that ∠{p1}{p0}{p2} = ∠{p3}{p4}{p5}"
+on_bline:
+  num_args: 3
+  templates:
+    - "{p0} lies on the perpendicular bisector of {p1}{p2}"
+on_circle:
+  num_args: 3
+  templates:
+    - "{p0} lies on the circle centered are {p1} with radios {p1}{p2}"
+on_line:
+  num_args: 3
+  templates:
+    - "{p0} lies on line {p1}{p2}"
+
+on_pline:
+  num_args: 4
+  templates:
+    - "{p0} is on the line passing through {p1} and parallel to {p2}{p3}"
+on_tline:
+  num_args: 4
+  templates:
+    - "{p0} is a point such that {p0}{p1} is perpendicular to {p1}{p2}"
+    - "{p0} lies on the perpendicular line to {p2}{p3} at {p1}"
+orthocenter:
+  num_args: 4
+  templates:
+    - "{p0} is the orthocenter of triangle {p1}{p2}{p3}"
+parallelogram:
+  num_args: 4
+  templates:
+    - "{p0}{p1}{p2}{p3} is a parallelogram"
+pentagon:
+  num_args: 5
+  templates:
+    - "{p0}{p1}{p2}{p3}{p4} is a pentagon"
+psquare:
+  num_args: 3
+  templates:
+    - "{p0}{p1}{p2} is an isosceles right angle triangle with ∠{p0}{p1}{p2} being the right angle"
+quadangle:
+  num_args: 4
+  templates:
+    - "{p0}{p1}{p2}{p3} is a quadrangle"
+    - "{p0}{p1}{p2}{p3} is a quadrilateral"
+r_trapezoid:
+  num_args: 4
+  templates:
+    - "{p0}{p1}{p2}{p3} is a right angle trapezoid. With {p0}{p1} ⊥ {p0}{p3}"
+r_triangle:
+  num_args: 3
+  templates:
+    - "{p0}{p1}{p2} is a triangle. With ∠{p1}{p0}{p2} being a right angle"
+rectangle:
+  num_args: 4
+  templates:
+    - "{p0}{p1}{p2}{p3} is a rectangle"
+reflect:
+  num_args: 4
+  templates:
+    - "{p0} is the reflection of {p1} on {p2}{p3}"
+risos:
+  num_args: 3
+  templates:
+    - "{p0}{p1}{p2} is a right angle isosceles triangle. With ∠{p1}{p0}{p2} as the right angle"
+s_angle:
+  num_args: 3
+  templates:
+    - "∠{p0}{p1}{p2} is {p2} degree"
+shift:
+  num_args: 3
+  templates:
+    - "{p0}{p1}{p2} is a triangle"
+square:
+  num_args: 4
+  templates:
+    - "{p0}{p1}{p2}{p3} is a square"
+isquare:
+  num_args: 4
+  templates:
+    - "{p0}{p1}{p2}{p3} is a square"
+trapazoid:
+  num_args: 4
+  templates:
+    - "{p0}{p1}{p2}{p3} is a trapezoid"
+triangle:
+  num_args: 3
+  templates:
+    - "{p0}{p1}{p2} is a triangle"
+triangle12:
+  num_args: 3
+  templates:
+    - "{p0}{p1}{p2} is a triangle. With {p0}{p1} : {p0}{p2} = 1 : 2"
+2l1c:
+  num_args: 8
+  templates:
+    - "{p4}{p6} is a line {p5}{p6} is another line. A circle centered at {p7} passes through {p4} and touches {p5}. A circle centered at {p3} touches {p4}{p6} at {p0}, {p5}{p7} at {p1} and the circle centered at {p7} at {p2}"
+e5128:
+  num_args: 6
+  templates:
+    - "{p3}{p0}{p5} are points on a circle centered at {p4}. {p2}{p3} is tangent to the circle at {p3}. The line {p0}{p5} intersects {p2}{p3} at {p1}"
+
+
 
 
 

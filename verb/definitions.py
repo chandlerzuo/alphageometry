@@ -1,6 +1,8 @@
 from .imports import *
 
-from omnibelt import Class_Registry
+import yaml
+from pathlib import Path
+from omnibelt import Class_Registry, load_csv
 from omniply.core.genetics import GeneticGadget
 # from omniply.apps import Template, GadgetDecision, SimpleDecision, Controller, Combination, Permutation
 # from omniply.apps.decisions.abstract import CHOICE
@@ -22,8 +24,17 @@ def from_formal(formal_statement: str):
 
 
 class StatementGenerator(GadgetDecision):
+	@classmethod
+	def load_patterns(cls, path: Path) -> list['Definition']:
+		patterns = yaml.safe_load(path.read_text())
+		defs = []
+		for name, data in patterns.items():
+			defs.append(Definition.from_data(name, data))
+		return defs
+
+
 	def __init__(self, definitions: list['Definition'] | list[str] | str = None, *,
-				 choice_gizmo: str = 'def', **kwargs):
+				 choice_gizmo: str = 'definition', **kwargs):
 		if definitions is None:
 			definitions = list(Definition._registry.values())
 		elif isinstance(definitions, str):
