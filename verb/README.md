@@ -7,6 +7,12 @@
 
 Make sure to install all the dependencies mentioned in `requirements.in` (and especially that the bottom ones starting with `omni` are all installed with the correct versions).
 
+## Existing Data
+
+There are two demo files provided:
+- `samples-v1.csv` - a file with 100 samples using all the definitions, resulting in more repetition of templates
+- `samples-rich.csv` - a file with 100 samples using only the definitions that already have several of distinct verbalizations
+
 ## Running
 
 Then you should be able to run the demo script with:
