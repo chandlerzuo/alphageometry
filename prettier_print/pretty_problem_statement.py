@@ -312,7 +312,7 @@ if __name__ == '__main__':
     # txt = 'a = intersection_cc x o w a'
     # txt = 'a = intersection_lp x a b c m n; I = intersection_pp I w k mq e F d; a = excenter2 x y z i a b c'
     # txt = 'a = on_circle x o a'
-    # txt = 'a = intersection_lt x a b c d e'
+    txt = 'a = intersection_tt x a b c d e f'
     # txt = 'Z x l = triangle Z x l; V = excenter V Z l x; R = on_bline R l V; ' \
     #       'Yj Tv I4 Tt = ninepoints Yj Tv I4 Tt R Z V; f OR G b = trapezoid f OR G b'
     print(get_nl_problem_statement(txt))

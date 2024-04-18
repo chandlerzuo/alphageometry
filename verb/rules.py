@@ -147,6 +147,12 @@ class Circle(RuleTemplate, kind='circle'):
 	_base_template = 'circle {0}{1}{2}{3}'
 
 
+#TODO(felix): Can we write one circle class and the right one is choosen depending upont he number of arguments?
+class Circle_(RuleTemplate, kind='circle'):
+	_fixed_num_parts = 2
+	_base_template = 'circle centered at {0} with radius {0}{1}'
+
+
 class Quadrilateral(RuleTemplate, kind='quadrilateral'):
 	_fixed_num_parts = 4
 	_base_template = 'quadrilateral {0}{1}{2}{3}'

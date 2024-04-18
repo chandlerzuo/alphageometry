@@ -255,31 +255,273 @@ incenter: # X A B C
     - "the incenter of {triangle} {loc} {point}"
     - "{point} {loc} {the} {meet} of {triangle}"
 
-##incenter2: # TODO(Partha): opportunity to augment! Symantic!  Also use respectively!
-##    - "{p3} is is the incentre of triangle {p4}{p5}{p6}. The incircle touches the arm {p4}{p5} at {p2}, the arm {p5}{p6} at {p0} and the arm {p6}{p4} at {p1}. "
-#incenter2: # X Y Z I A B C
-#    num_args: 7
-#
-#    rules:
-#        point: [3]
-#        triangle: [4, 5, 6]
-#        points: {type: ord-conjunction, args: [p4, p5, p6]}
-#        desc: {type: ref, args: [points, triangle]}
-#        the: {type: literal, args: ['the', 'the point of']}
-#        meet: {type: literal, args: ['intersection of the angle bisectors', 'concurrence of the angle bisectors',
-#                                     'meeting point of the angle bisectors']}
-#        loc: {type: literal, args: ['is', 'is located at', 'is at']}
-#        incircle: {type: literal, args: ['incircle', 'the incircle']}
-#        touches: {type: literal, args: ['touches', 'intersects', 'meets']}
-#        line1: [4, 5]
-#        line2: [5, 6]
-#        line3: [6, 4]
-#        touchpoints: {type: ord-conjunction, args: [p0, p1, p2]}
-#
-#    templates:
-#      - "{point} {loc} the incenter of {desc} with touchpoints {touchpoints}"
-#      - "{triangle} has incenter {point} and touchpoints {touchpoints}"
+#incenter2: # TODO(Partha): opportunity to augment! Symantic!  Also use respectively!
+#    - "{p3} is is the incentre of triangle {p4}{p5}{p6}. The incircle touches the arm {p4}{p5} at {p2}, the arm {p5}{p6} at {p0} and the arm {p6}{p4} at {p1}. "
+incenter2: # X Y Z I A B C
+    num_args: 7
+
+    rules:
+        point: [3]
+        triangle: [4, 5, 6]
+        points: {type: ord-conjunction, args: [p4, p5, p6]}
+        desc: {type: ref, args: [points, triangle]}
+        the: {type: literal, args: ['the', 'the point of']}
+        meet: {type: literal, args: ['intersection of the angle bisectors', 'concurrence of the angle bisectors',
+                                     'meeting point of the angle bisectors']}
+        loc: {type: literal, args: ['is', 'is located at', 'is at']}
+        incircle: {type: literal, args: ['incircle', 'the incircle']}
+        touches: {type: literal, args: ['touches', 'intersects', 'meets']}
+        line1: [4, 5]
+        line2: [5, 6]
+        line3: [6, 4]
+        touchpoints: {type: ord-conjunction, args: [p0, p1, p2]}
+
+    templates:
+      - "{point} {loc} the incenter of {desc} with touchpoints {touchpoints}"
+      - "{triangle} has incenter {point} and touchpoints {touchpoints}"
+
+excenter: # x a b c
+    num_args: 4
+
+    rules:
+        point: [0]
+        triangle: [1, 2, 3]
+        points: {type: conjunction, args: [p1, p2, p3]}
+        desc: {type: ref, args: [points, triangle]}
+        the: {type: literal, args: ['the', 'the point of']}
+        meet: {type: literal, args: ['intersection of the exterior angle bisectors',
+                                     'concurrence of the exterior angle bisectors',
+                                     'meeting point of the exterior angle bisectors']}
+        loc: {type: literal, args: ['is', 'is located at', 'is at']}
+
+    templates:
+      - "{point} {loc} the excenter of {desc}"
+      - "{triangle} has excenter {point}"
+      - "the excenter of {triangle} {loc} {point}"
+      - "{point} {loc} {the} {meet} of {triangle}"
+
+excenter2: # X Y Z I A B C
+    num_args: 7
+
+    rules:
+        point: [3]
+        triangle: [4, 5, 6]
+        points: {type: ord-conjunction, args: [p4, p5, p6]}
+        desc: {type: ref, args: [points, triangle]}
+        the: {type: literal, args: ['the', 'the point of']}
+        meet: {type: literal, args: ['intersection of the exterior angle bisectors',
+                                     'concurrence of the exterior angle bisectors',
+                                     'meeting point of the exterior angle bisectors']}
+        loc: {type: literal, args: ['is', 'is located at', 'is at']}
+        incircle: {type: literal, args: ['incircle', 'the incircle']}
+        touches: {type: literal, args: ['touches', 'intersects', 'meets']}
+        line1: [4, 5]
+        line2: [5, 6]
+        line3: [6, 4]
+        touchpoints: {type: ord-conjunction, args: [p0, p1, p2]}
+
+    templates:
+      - "{point} {loc} the excenter of {desc} with touchpoints {touchpoints}"
+      - "{triangle} has excenter {point} and touchpoints {touchpoints}"
+
+centroid: # x y z i a b c
+    num_args: 7
+
+    rules:
+        point: [3]
+        triangle: [4, 5, 6]
+        points: {type: conjunction, args: [p4, p5, p6]}
+        desc: {type: ref, args: [points, triangle]}
+        the: {type: literal, args: ['the', 'the point of']}
+        meet: {type: literal, args: ['intersection of the medians', 'concurrence of the medians',
+                                     'meeting point of the medians']}
+        loc: {type: literal, args: ['is', 'is located at', 'is at']}
+
+    templates:
+      - "{point} {loc} the centroid of {desc}"
+      - "{triangle} has centroid {point}"
+      - "the centroid of {triangle} {loc} {point}"
+      - "{point} {loc} {the} {meet} of {triangle}"
+
+ninepoints: # x y z i a b c
+    num_args: 7
+
+    rules:
+        point: [3]
+        triangle: [4, 5, 6]
+        mid_pt1: [0]
+        mid_pt2: [1]
+        mid_pt3: [2]
+        line1: [4, 5]
+        line2: [5, 6]
+        line3: [6, 4]
+        points: {type: conjunction, args: [p4, p5, p6]}
+        desc: {type: ref, args: [points, triangle]}
+        the: {type: literal, args: ['the', 'the point of']}
+        loc: {type: literal, args: ['is', 'is located at', 'is at']}
+
+    templates:
+      - "{point} {loc} the centre of the nine-point circle of {desc}. the circle intersects the sides {line2}, {line3}, and {line1} at {mid_pt1}, {mid_pt2}, and {mid_pt3} respectively"
+      - "{triangle} has nine-point center {point} and the circle intersects the sides {line2}, {line3}, and {line1} at {mid_pt1}, {mid_pt2}, and {mid_pt3} respectively"
+      - "the nine-point center of {triangle} {loc} {point}. the circle intersects the sides {line2}, {line3}, and {line1} at {mid_pt1}, {mid_pt2}, and {mid_pt3} respectively"
+      - "{point} {loc} the centre of the nine-point circle of {desc}. the circle intersects the sides {line2}, {line3}, and {line1} at {mid_pt1}, {mid_pt2}, and {mid_pt3} respectively"
+      - "{triangle} has nine-point center {point} and the circle intersects the sides {line2}, at {mid_pt1}, {line3}, at {mid_pt2}, and {line1}, at {mid_pt3}"
+      - "the nine-point center of {triangle} {loc} {point}. the circle intersects the sides {line2}, at {mid_pt1}, {line3}, at {mid_pt2}, and {line1}, at {mid_pt3}"
+
+intersection_cc: # x o w a
+  num_args: 4
+
+  rules:
+    _circle1: [1, 3]
+    _circle2: [2, 3]
+    intersection: {type: literal, args: ['intersects', 'meets']}
+    where: {type: literal, args: ['at', 'at the points']}
+    points: {type: conjunction, args: [p0, p3]}
+
+  templates:
+    - "{_circle1} {intersection} {_circle2} {where} {points}"
+
+intersection_lc: # x a o b
+  num_args: 4
+
+  rules:
+    line: [1, 3]
+    _circle1: [2, 3]
+    intersection: {type: literal, args: ['intersects', 'meets']}
+    where: {type: literal, args: ['at', 'at the points']}
+    points: {type: conjunction, args: [p0, p3]}
+
+  templates:
+    - "{line} {intersection} {_circle1} {where} {points}"
+
+intersection_ll: # x a b c d
+    num_args: 5
+
+    rules:
+        line1: [1, 2]
+        line2: [3, 4]
+        intersection: {type: literal, args: ['intersects', 'meets']}
+        where: {type: literal, args: ['at', 'at the point']}
+        point: [0]
+
+    templates:
+        - "{line1} {intersection} {line2} {where} {point}"
+
+intersection_lp: # x a b c m n
+    num_args: 6
+
+    rules:
+        line1: [1, 2]  # a, b
+        line2: [4, 5]  # m, n
+        point1: [3]  # c
+        point2: [0]  # x
+        intersection: {type: literal, args: ['intersects', 'meets', 'crosses']}
+        where: {type: literal, args: ['at', 'at the point']}
+        
+    templates:
+        - "Parallel {line2} through {point1} {intersection} {line1} at {point2}"
+
+intersection_lt: # x a b c d e
+    num_args: 6
+
+    rules:
+        point: [0]
+        line1: [1, 2]  # a, b
+        line2: [4, 5]  # d, e
+        line3: [3, 0]  # c, x
+        intersection: {type: literal, args: ['intersects', 'meets', 'crosses']}
+        perpend: {type: literal, args: ['perpendicular', 'at right angle']}
+        where: {type: literal, args: ['at', 'at the point']}
+
+    templates:
+          - "{line1} not {perpendicular} to {line2}. {line3} {perpendicular} to {line2} {intersection} {line1} {where} {point}"
+
+intersection_pp: # x a b c d e f
+    num_args: 7
+
+    rules:
+        point: [0]
+        line1: [0, 1]  # x, a
+        line2: [2, 3]  # b, c
+        line3: [4, 0]  # d, x
+        line4: [5, 6]  # e, f
+        paarallel: {type: literal, args: ['parallel', ]}
+        parallel2: {type: literal, args: ['||', ]}
+        intersection: {type: literal, args: ['intersects', 'meets', 'crosses']}
+        where: {type: literal, args: ['at', 'at the point']}
+
+    templates:
+        - "{line1} and {line2} are {paarallel}. {line3} and {line4} are {paarallel}. {line1} {intersection} {line3} {where} {point}"
+        - "{line1} {parallel2} {line2}. {line3} {parallel2} {line4}. {line1} {intersection} {line3} {where} {point}"
+
+intersection_tt: # x a b c d e f
+    num_args: 7
+
+    rules:
+        point: [0]
+        line1: [2, 3] # b, c
+        line2: [5, 6] # e, f
+        line3: [1, 0] # a, x
+        line4: [4, 0] # d, x
+        paarallel: { type: literal, args: [ 'parallel', ] }
+        parallel2: { type: literal, args: [ '||', ] }
+        intersection: {type: literal, args: ['intersects', 'meets', 'crosses']}
+        perpend: {type: literal, args: ['perpendicular', 'at right angle']}
+        where: {type: literal, args: ['at', 'at the point']}
+
+    templates:
+        - "{line1} and {line2} are {paarallel}. {line3} {perpend} to {line1}. {line4} {perpend} to {line2}. {line3} {intersection} {line4} {where} {point}"
+        - "{line1} {parallel2} {line2}. {line3} {perpend} to {line1}. {line4} {perpend} to {line2}. {line3} {intersection} {line4} {where} {point}"
+        - "{line1} and {line2} are {paarallel}. {line3} {perpend} to {line1}. {line4} and {line3} are {perpend} to {line2} and {line1} respectively. They intersect at {point}"
+        - "{line1} {parallel2} {line2}. {line3} {perpend} to {line1}. {line4} and {line3} are {perpend} to {line2} and {line1} respectively. They intersect at {point}"
+
+iso_triangle: # a b c
+    num_args: 3
+
+    rules:
+        triangle: [0, 1, 2]
+        line1: [1, 2] # b, c
+        line2: [2, 0] # c, a
+        line3: [0, 1] # a, b
+        angle1: [ 1, 2, 0 ] # b, c, a
+        angle2: [ 0, 1, 2 ] # a, b, c
+        equal: {type: literal, args: ['equal to', 'congruent to', 'equivalent to', '=']}
+
+    templates:
+        - "{triangle} is an isosceles triangle with {line2} {equal} {line3}"
+        - "{triangle} is an isosceles triangle with {line1} as base"
+        - "{triangle} is an isosceles triangle with {angle1} {equal} {angle2}"
 
 
 
 
+
+segment: # a b
+  num_args: 2
+
+  rules:
+    line: [0, 1]
+    points: {type: conjunction, args: [p0, p1]}
+    desc: {type: ref, args: [points,]}
+    the: {type: literal, args: ['the', 'the segment']}
+    is: {type: literal, args: ['is', 'is the segment']}
+
+    templates:
+        - "{desc} is a segment of {line}"
+
+midpoint: # x y z
+    num_args: 3
+
+    rules:
+        point: [0]
+        segment1: {type: conjunction, args: [p0, p2]}
+        segment2: {type: conjunction, args: [p1, p0]}
+        line3: [1, 2]
+        midpoint: {type: literal, args: ['midpoint', 'the midpoint']}
+        length: {type: literal, args: ['length of', 'the length of', 'distance between', 'the distance between']}
+        where: {type: literal, args: ['such that', 'where']}
+        equal: {type: literal, args: ['equal', 'congruent', 'equivalent']}
+
+    templates:
+      - "{point} is the {midpoint} of {line3}"
+      - "{point} is a point {where} {length} {segment1} {equal} {length} {segment2}"

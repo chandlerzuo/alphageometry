@@ -38,6 +38,12 @@ def main():
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
     cc_gen = CompoundClauseGen(definitions, 2, 3, 2)
     txt = cc_gen.generate_clauses()
+    # txt = 'a b = segment a b; g1 = on_tline g1 a a b; g2 = on_tline g2 b b a; m = on_circle m g1 a, ' \
+    #       'on_circle m g2 b; n = on_circle n g1 a, on_circle n g2 b; c = on_pline c m a b, on_circle c g1 a; ' \
+    #       'd = on_pline d m a b, on_circle d g2 b; e = on_line e a c, on_line e b d; ' \
+    #       'p = on_line p a n, on_line p c d; ' \
+    #       'q = on_line q b n, on_line q c d'
+    txt = 'o = free o; w = free w; a = free a; m = free m; n = free n; f = free f; x = intersection_pp x o w a m n f'
     # txt = 'A B C D = quadrangle A B C D; E F G H = incenter2 E F G H B C D; I = on_tline I B A D; J = angle_mirror J G C A, on_opline E G; K L M N = excenter2 K L M N A J G; O P Q R = r_trapezoid O P Q R; S T = on_pline S A C D, angle_bisector T R B G'
 
     print(txt)
