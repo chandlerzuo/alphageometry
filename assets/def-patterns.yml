@@ -492,22 +492,18 @@ iso_triangle: # a b c
         - "{triangle} is an isosceles triangle with {line1} as base"
         - "{triangle} is an isosceles triangle with {angle1} {equal} {angle2}"
 
+lc_tangent: # x a o
+    num_args: 3
 
-
-
-
-segment: # a b
-  num_args: 2
-
-  rules:
-    line: [0, 1]
-    points: {type: conjunction, args: [p0, p1]}
-    desc: {type: ref, args: [points,]}
-    the: {type: literal, args: ['the', 'the segment']}
-    is: {type: literal, args: ['is', 'is the segment']}
+    rules:
+        point: [0]
+        line: [0, 1]  # x, a
+        _circle: [2, 1]  # centre o, radius oa
+        tangent: {type: literal, args: ['tangent', 'touching',]}
+        where: {type: literal, args: ['at', 'at the point']}
 
     templates:
-        - "{desc} is a segment of {line}"
+        - "{line} is {tangent} to {_circle} {where} {point}"
 
 midpoint: # x y z
     num_args: 3
@@ -525,3 +521,452 @@ midpoint: # x y z
     templates:
       - "{point} is the {midpoint} of {line3}"
       - "{point} is a point {where} {length} {segment1} {equal} {length} {segment2}"
+
+mirror: # x a b
+    num_args: 3
+
+    rules:
+        point: [0]
+        line: [1, 2] # a, b
+        segment1: { type: conjunction, args: [ p0, p2 ] } # x, b
+        segment2: { type: conjunction, args: [ p1, p2 ] } # a, b
+        equal: {type: literal, args: ['equal', 'congruent', ]}
+
+    templates:
+        - "{point} is on {line} such that {segment1} is {equal} to {segment2}"
+
+# TODO(Felix): is this a valid definition since it has no rules?
+nsquare: # x a b
+    num_args: 3
+
+    templates:
+        - "{p0}, {p1}, {p2} are three consecutive vertices of a square"
+
+on_aline: # x a b c d e
+    num_args: 6
+
+    rules:
+        point: [0]
+        angle1: [0, 1, 2] # ∠xab
+        angle2: [3, 4, 5] # ∠cde
+        equal: {type: literal, args: ['equal', 'congruent', 'equivalent']}
+    templates:
+        - "{point} is such that {angle1} is {equal} to {angle2}"
+
+on_aline2: # x a b c d e
+    num_args: 6
+
+    rules:
+        point: [0]
+        angle1: [1, 0, 2] # ∠axb
+        angle2: [3, 4, 5] # ∠cde
+        equal: {type: literal, args: ['equal', 'congruent', 'equivalent']}
+    templates:
+        - "{point} is such that {angle1} is {equal} to {angle2}"
+
+on_bline: # x a b
+    num_args: 3
+
+    rules:
+        point: [0]
+        line: [1, 2] # a, b
+
+    templates:
+        - "{point} is on perpendicular bisector of {line}"
+
+on_circle: # x o a
+    num_args: 3
+
+    rules:
+        point: [0]
+        _circle: [2, 1]
+        on: {type: literal, args: ['on', 'on the circumference of', 'on the circle']}
+
+    templates:
+        - "{point} is {on} {_circle}"
+
+on_line: # x a b
+    num_args: 3
+
+    rules:
+        point: [0]
+        line: [1, 2] # a, b
+
+    templates:
+        - "{point} is on {line}"
+
+on_pline: # x a b c
+    num_args: 4
+
+    rules:
+        point: [0]
+        line: [1, 2] # a, b
+        point2: [3] # c
+
+    templates:
+        - "{point} is on a line through {point2} and parallel to {line}"
+
+on_tline: # x a b c
+    num_args: 4
+
+    rules:
+        point: [0]
+        line: [1, 2] # a, b
+        point2: [3] # c
+        perpendicular: {type: literal, args: ['perpendicular', 'at right angle']}
+
+    templates:
+        - "{point} is on a line through {point2} and {perpendicular} to {line}"
+
+orthocenter: # x a b c
+    num_args: 4
+
+    rules:
+        point: [0]
+        triangle: [1, 2, 3]
+        points: {type: conjunction, args: [p1, p2, p3]}
+        desc: {type: ref, args: [points, triangle]}
+        the: {type: literal, args: ['the', 'the point of']}
+        meet: {type: literal, args: ['intersection of the altitudes', 'concurrence of the altitudes',
+                                     'meeting point of the altitudes']}
+        loc: {type: literal, args: ['is', 'is located at', 'is at']}
+
+    templates:
+      - "{point} {loc} the orthocenter of {desc}"
+      - "{triangle} has orthocenter {point}"
+      - "the orthocenter of {triangle} {loc} {point}"
+      - "{point} {loc} {the} {meet} of {triangle}"
+
+parallelogram: # a b c x
+    num_args: 4
+
+    rules:
+        point: [3]
+        parallel: {type: literal, args: ['||', 'parallel to', 'parallel with', 'is parallel to']}
+
+    templates:
+        - "{p0}{p1}{p2}{p3} is a parallelogram"
+        - "{P3} is such that {P0}{P1} {parallel} {P2}{P3} and {P0}{P3} {parallel} {P1}{P2}"
+
+pentagon: # a b c d e
+    num_args: 5
+
+    rules:
+        pentagon: {type: literal, args: ['pentagon', 'a pentagon']}
+
+    templates:
+        - "{p0}{p1}{p2}{p3}{p4} is a pentagon"
+
+# Todo(Felix, Max): Can you tell why this is same as n square?
+psquare: # x a b
+    num_args: 3
+
+    rules:
+        point: [0]
+        square: {type: literal, args: ['square', 'a square']}
+
+    templates:
+        - "{point}, {p1}, {p2} are three consecutive vertices of a square"
+
+quadrangle: # a b c d
+    num_args: 4
+
+    rules:
+        quadrangle: {type: literal, args: ['quadrangle', 'quadrilateral'}]
+
+    templates:
+        - "{p0}{p1}{p2}{p3} is a {quadrangle}"
+
+#TODO: Again is it valid not to have any rules?
+r_trapezoid: # a b c d
+    num_args: 4
+
+    rules:
+      perpendicular: {type: literal, args: ['perpendicular', 'at right angle', '⊥']}
+
+    templates:
+        - "{p0}{p1}{p2}{p3} is a right angle {trapezoid}, with {p0}{p1} {perpendicular} to {p0}{p3}"
+
+r_triangle: # a b c
+    num_args: 3
+
+    rules:
+        perpendicular: {type: literal, args: ['perpendicular', 'at right angle', '⊥']}
+
+    templates:
+        - "{p0}{p1}{p2} is a a right triangle, with {p0}{p1} {perpendicular} to {p0}{p2}"
+        - "{p0}{p1}{p2} is a a right triangle, with the rightangle ar {p0}"
+
+rectangle: # a b c d
+    num_args: 4
+
+    rules:
+        rectangle: {type: literal, args: ['rectangle']}
+
+    templates:
+        - "{p0}{p1}{p2}{p3} is a {rectangle}"
+
+reflect: # x a b c
+    num_args: 4
+
+    rules:
+        point: [0]
+        line: [2, 3] # b, c
+        point1: [1] # a
+        on: {type: literal, args: ['on', 'over']}
+
+    templates:
+        - "{point} is the reflection of {point1} {on} {line}"
+
+#TODO: Again is it valid not to have any rules?
+risos: # a b c
+    num_args: 3
+
+    templates:
+        - "{p0}{p1}{p2} is a right angle isosceles {triangle} withthe rightangle at {p0}"
+
+s_angle: # a b x y
+    num_args: 4
+
+    rules:
+        point: [2]
+        angle1: [0, 1, 2] # ∠abx
+        equal: {type: literal, args: ['equal', 'congruent', 'equivalent']}
+
+    templates:
+        - "{point} is such that ∠{p0}{p1}{p2} is {equal} to p3 degrees"
+
+segment: # a b
+  num_args: 2
+
+  rules:
+    line: [0, 1]
+    points: {type: conjunction, args: [p0, p1]}
+    desc: {type: ref, args: [points,]}
+    the: {type: literal, args: ['the', 'the segment']}
+    is: {type: literal, args: ['is', 'is the segment']}
+
+    templates:
+        - "{desc} is a segment of {line}"
+
+shift: # x b c d
+    num_args: 4
+
+    rules:
+        line1: [2, 3] # b, c
+        line2: [0, 1] # x, d
+
+    templates:
+        - "{line2} is the result of shifting {line1}"
+        - "{line2} si the shifted version of {line1}"
+
+square: # a b x y
+    num_args: 4
+
+    rules:
+        points: [2, 3] # x, y
+        line1: [0, 1] # a, b
+
+    templates:
+        - "{p0}{p1}{p2}{p3} is a {square}"
+        - "{points} are constructed such that {p0}{p1}{p2}{p3} forms a square"
+        - "given {line1}, construct {points} such that {p0}{p1}{p2}{p3} is a square"
+
+#TODO: Strange redefinition of the above!
+isquare: # a b c d
+    num_args: 4
+
+    rules:
+        points: [2, 3] # x, y
+        line1: [0, 1] # a, b
+
+    templates:
+        - "{p0}{p1}{p2}{p3} is a {square}"
+        - "{points} are constructed such that {p0}{p1}{p2}{p3} forms a square"
+        - "given {line1}, construct {points} such that {p0}{p1}{p2}{p3} is a square"
+
+trapezoid: # a b c d
+    num_args: 4
+
+    rules:
+        trapezoid: {type: literal, args: ['trapezoid']}
+
+    templates:
+        - "{p0}{p1}{p2}{p3} is a {trapezoid}"
+
+#TODO: Is this a redefinition? Do we need this?
+triangle: # a b c
+    num_args: 3
+
+    rules:
+        triangle: [0, 1, 2]
+
+    templates:
+        - "{p0}{p1}{p2} is a {triangle}"
+
+triangle12: # a b c
+    num_args: 3
+
+    rules:
+        triangle: [0, 1, 2]
+        side1: {type:conjunction, args: [p0, p1]}
+        side2: {type:conjunction, args: [p1, p2]}
+        double: {type: literal, args: ['double', 'twice', '1:2']}
+        half: {type: literal, args: ['half', '2:1']}
+
+    templates:
+        - "{p0}{p1}{p2} is a {triangle}, such that {side2} is {double} in length to that of {side1}"
+        - "{p0}{p1}{p2} is a {triangle}, such that {side1} is {half} in length to that of {side2}"
+
+2l1c: # x y z i a b c o
+    num_args: 8
+
+    rules:
+        line1: [4, 6] # a, c
+        line2: [5, 6] # b, c
+        _circle1: [7, 4] # centre o, radius oa
+
+    templates:
+        - "{line1} and {line2} are trangents to a circle centered at {p7} at point {p0} and {p1} respectively. 
+        The circle centered at {p7} touches {_circle1} at {p3}"
+
+e5128: # x y a b c d
+    num_args: 6
+
+    rules:
+      line1: [0, 5] # x, d
+      line2: [1, 2] # a, b
+      _circle: [3, 4] # centre c, radius cb
+
+    templates:
+        - "{line2} is a tangent to the circle centered at {p4} at point {p3}. {line1} is a chord of the circle. It intersects the tangent at point {p1}"
+        - "{_circle} has {line2} as a tangent at point {p3}. {line1} is a chord of the circle. It intersects the tangent at point {p1}"
+        - "{_circle} has {line1} as a chord. It intersects the tangent line {line2} at point {p1}"
+
+3peq: # x y z a b c
+    num_args: 6
+
+    rules:
+        line1: [3, 4] # a, b
+        line2: [4, 5] # b, c
+        line3: [5, 3] # c, a
+        line4: [0, 1] # x, y
+        triangle: [3, 4, 5] # a, b, c
+        equal: {type: literal, args: ['equal', 'congruent', 'equivalent']}
+
+    templates:
+        - "{line1} {line2} and {line3} are sides of {triangle}. {line4} intersects {line1} at {p1}, {line2} at {p2} and {line3} at {p0} such that {p0}{p1} is {equal} to {p1}{p2}"
+
+trisect: # x y a b c
+    num_args: 5
+
+    rules:
+        triangle: [2, 3, 4] # a, b, c
+        line1: [2, 4] # a, c
+        angle1: [2, 3, 0] # a, b, x
+        angle2: [0, 3, 1] # x, b, y
+        angle3: [1, 3, 4] # y, b, c
+        angle4: [2, 3, 4] # a, b, c
+
+    templates:
+        - "{p0} and {p1} two points on {line1} of {triangle} such that {angle1} is 1/3 of {angle4} and {angle2} is 1/3 of {angle4}"
+        - "{p0} and {p1} two points on {line1} of {triangle} such that {angle4} is trisected by {p0}{p4} and {p4}{p1}"
+
+trisegment: # x y a b
+    num_args: 4
+
+    rules:
+        line2: [2, 3] # a, b
+        equal: {type: literal, args: ['equal', 'congruent', 'equivalent']}
+
+    templates:
+        - "{line2} is trisected by {p2} and {p3}."
+        - "{p0} and {p1} are such points on {line2} that {p0}{p2} is {equal} to {p0}{p1} is {equal} to {p1}{p3}"
+
+on_dia: # x a b
+    num_args: 3
+
+    rules:
+        point: [0]
+        line: [1, 2] # a, b
+
+    templates:
+        - "{point} is on the circle which has {line} as diameter"
+        - "{point} is on the circumference of the circle that has {line} as diameter"
+
+ieq_triangle: # a b c
+    num_args: 3
+
+    rules:
+        triangle: [0, 1, 2]
+
+    templates:
+        - "{triangle} is an equilateral triangle"
+
+on_opline: # x a b
+    num_args: 3
+
+    rules:
+        point: [0]
+        line: [1, 2] # a, b
+    templates:
+        - "{point} is on the extended line {line}"
+
+cc_tangent0: # x y o a w b
+    num_args: 6
+
+    rules:
+        line1: [0, 1] # x, y
+        _circle: [2, 3] # centre o, radius oa
+        _circle2: [4, 5] # centre w, radius wb
+
+    templates:
+        - "{line1} is a tangent to the {_circle} at point {p0} and {_circle2} at point {p1}."
+        - "{line1} is a common tangent to the {_circle} and {_circle2} at points {p0} and {p1} respectively."
+
+cc_tangent: # x y z i o a w b
+    num_args: 8
+
+    rules:
+        line1: [0, 1] # x, y
+        line2: [2, 3] # z, i
+        _circle: [4, 5] # centre o, radius oa
+        _circle2: [6, 7] # centre w, radius wb
+
+    templates:
+        - "{line1} and {line2} are common tangents to {_circle} and {_circle2} at points {p0}, {p1} and {p2}, {p3} respectively."
+
+eqangle3: # x a b d e f
+    num_args: 6
+
+    rules:
+        angle1: [0, 1, 2] # ∠xab
+        angle2: [3, 4, 5] # ∠def
+        equal: {type: literal, args: ['equal', 'congruent', 'equivalent']}
+
+    templates:
+        - "{angle1} is {equal} to {angle2}"
+
+tangent: # x y a o b
+    num_args: 5
+
+    rules:
+        _circle: [3, 4] # centre o, radius ob
+        line1: [0, 2] # x, a
+        line2: [1, 2] # y, a
+
+    templates:
+        - "{line1} and {line2} are the two tangents to {_circle} at point {p0} and {p1} respectively."
+
+on_circum: # x a b c
+    num_args: 4
+
+    rules:
+        point: [0]
+        triangle: [1, 2, 3]
+        points: {type: conjunction, args: [p1, p2, p3]} # a, b, c
+        passing: {type: literal, args: ['that passes through', 'passing through']}
+
+    templates:
+        - "{point} is on the circumcircle of {triangle}"
+        - "{point} is on the circumferance of the circle {passing} {points}"

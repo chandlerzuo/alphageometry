@@ -188,9 +188,9 @@ def verbalize_clause(element_name, arguments):
     elif element_name == '2l1c':  # Acircle touching two lines and another circle
         # TODO(Partha, Felix): Verify and Augment.
         return f"{arguments[4]}{arguments[6]} is a line {arguments[5]}{arguments[6]} is another line. " \
-               f"A circle centered at {arguments[7]} passes through {arguments[4]} and touches {arguments[5]}. " \
+               f"A circle centered at {arguments[7]} and radius {arguments[7]}{arguments[4]} and passes through {arguments[5]}. " \
                f"A circle centered at {arguments[3]} touches {arguments[4]}{arguments[6]} at " \
-               f"{arguments[0]}, {arguments[5]}{arguments[7]} at {arguments[1]} and the circle centered " \
+               f"{arguments[0]}, {arguments[5]}{arguments[6]} at {arguments[1]} and the circle centered " \
                f"at {arguments[7]} at {arguments[2]} respectively. "
     elif element_name == 'e5128':
         # TODO(Partha, Felix): Verify and Augment. Attention! Might be WRONG!
@@ -312,7 +312,7 @@ if __name__ == '__main__':
     # txt = 'a = intersection_cc x o w a'
     # txt = 'a = intersection_lp x a b c m n; I = intersection_pp I w k mq e F d; a = excenter2 x y z i a b c'
     # txt = 'a = on_circle x o a'
-    txt = 'a = intersection_tt x a b c d e f'
+    txt = 'a = cc_tangent x y z i o a w b'
     # txt = 'Z x l = triangle Z x l; V = excenter V Z l x; R = on_bline R l V; ' \
     #       'Yj Tv I4 Tt = ninepoints Yj Tv I4 Tt R Z V; f OR G b = trapezoid f OR G b'
     print(get_nl_problem_statement(txt))
