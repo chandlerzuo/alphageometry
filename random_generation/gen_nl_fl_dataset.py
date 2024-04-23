@@ -1,3 +1,4 @@
+import multiprocessing
 import sys
 sys.path.append('..')
 import random
@@ -15,12 +16,12 @@ from utils.get_rand_gen_states import get_random_states
 
 import csv
 
-if __name__ == "__main__":
 
-    dataset_length = 200
-    filename = '../../datasets/nl_fl_dataset.csv'
+def main(run_id, interactive):
+    dataset_length = 20
+    filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
     # filename = '../data/nl_fl_dataset_2.csv'
-    random.seed(17)
+    random.seed(run_id)
     defs_path = '../defs.txt'
     rules_path = '../rules.txt'
 
@@ -41,7 +42,7 @@ if __name__ == "__main__":
             num_clauses = random.randint(3, 10)
             fl_statement = cc_gen.generate_clauses()
 
-            print(fl_statement)
+            if interactive: print(fl_statement)
 
             try:
                 p = pr.Problem.from_txt(fl_statement)
@@ -49,7 +50,7 @@ if __name__ == "__main__":
                 print(e)
                 continue
 
-            print(f'Problem created, Building graph ...')
+            if interactive: print(f'Problem created, Building graph ...')
             try:
                 # Set an alarm for 10 seconds
                 signal.alarm(10)
@@ -73,7 +74,7 @@ if __name__ == "__main__":
                 # TODO(Partha, Max, Felix): This is a hack to avoid the AttributeError. We should fix this.
                 continue
 
-            print(f'Solving ...')
+            if interactive: print(f'Solving ...')
 
             ddar.solve(g, rules, p, max_level=1)
 
@@ -98,3 +99,26 @@ if __name__ == "__main__":
                        'rnd_states': get_random_states()}
                 writer.writerow(row)
                 serial_num += 1
+
+
+def str_to_bool(value):
+    if value.lower() in ['true', 't', 'yes', '1']:
+        return True
+    elif value.lower() in ['false', 'f', 'no', '0', 'flase']:  # Including common typo
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Create problem fl - nl dataset')
+    parser.add_argument('--run_id', type=int, help='An integer positional argument')
+    parser.add_argument('--interactive', type=str_to_bool, help='A boolean value (true/false)')
+    args = parser.parse_args()
+
+    n_processes = 2
+
+    with multiprocessing.Pool(n_processes) as pool:
+        pool.starmap(main, [(args.run_id * n_processes + i, args.interactive) for i in range(n_processes)])
