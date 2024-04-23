@@ -677,7 +677,6 @@ quadrangle: # a b c d
     templates:
         - "{p0}{p1}{p2}{p3} is a {quadrangle}"
 
-#TODO: Again is it valid not to have any rules?
 r_trapezoid: # a b c d
     num_args: 4
 
@@ -694,8 +693,8 @@ r_triangle: # a b c
         perpendicular: {type: literal, args: ['perpendicular', 'at right angle', '⊥']}
 
     templates:
-        - "{p0}{p1}{p2} is a a right triangle, with {p0}{p1} {perpendicular} to {p0}{p2}"
-        - "{p0}{p1}{p2} is a a right triangle, with the rightangle ar {p0}"
+        - "{p0}{p1}{p2} is a right triangle, with {p0}{p1} {perpendicular} to {p0}{p2}"
+        - "{p0}{p1}{p2} is a right triangle, with the right angle ar {p0}"
 
 rectangle: # a b c d
     num_args: 4
@@ -718,12 +717,14 @@ reflect: # x a b c
     templates:
         - "{point} is the reflection of {point1} {on} {line}"
 
-#TODO: Again is it valid not to have any rules?
+
 risos: # a b c
     num_args: 3
+    rules:
+        points: {type: conjunction, args: [p0, p1, p2]}
 
     templates:
-        - "{p0}{p1}{p2} is a right angle isosceles {triangle} withthe rightangle at {p0}"
+        - "{points} is a right angle isosceles triangle with the right angle at {p0}"
 
 s_angle: # a b x y
     num_args: 4
