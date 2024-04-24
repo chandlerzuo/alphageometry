@@ -9,7 +9,7 @@ from tabulate import tabulate
 from collections import Counter
 
 from .common import repo_root
-from .definitions import StatementGenerator
+from .definitions import ClauseGenerator
 
 
 @fig.script('generate')
@@ -63,10 +63,10 @@ def generate(cfg: fig.Configuration):
 
 
 	# Load the patterns
-	defs = StatementGenerator.load_patterns(path)
+	defs = ClauseGenerator.load_patterns(path)
 	print(f'Loaded {len(defs)} definitions from: {path}')
 
-	ctx = Controller(StatementGenerator(definitions))
+	ctx = Controller(ClauseGenerator(definitions))
 	if not rand_order or not rand_sel:
 		fixed = {}
 		if not rand_order:
