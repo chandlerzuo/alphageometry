@@ -8,7 +8,7 @@ from .rules import Rule
 from .common import repo_root
 import yaml
 
-from .definitions import Definition
+from .definitions import Definition, load_patterns
 
 
 
@@ -190,6 +190,36 @@ def test_generate_all():
 	from tabulate import tabulate
 	print(tabulate(clauses))
 	# print('\n'.join(map(lambda s:,clauses)))
+
+
+import re
+from .definitions import ClauseGenerator
+
+def test_all_clauses():
+	base_path = repo_root() / 'defs.txt'
+
+	unique_function_names = list(re.findall(r'\n\n\s*(\w+)', base_path.read_text(), re.MULTILINE))
+
+	path = repo_root() / 'assets' / 'def-patterns.yml'
+	defs = load_patterns(path)
+
+	print()
+
+	for d in unique_function_names:
+
+	# d = 'eq_quadrangle'
+
+		ctx = Controller(ClauseGenerator(d))
+		out = ctx['statement']
+		print(out)
+
+
+
+
+
+
+
+
 
 
 

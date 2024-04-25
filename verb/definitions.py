@@ -39,10 +39,11 @@ class ClauseGenerator(GadgetDecision):
 
 class AssignmentVerbalizer(ToolKit):
 	_assignment_templates = [
-		'define point{"" if len(variables) != 1 else "s"} {varlist}',
-		'let {varlist} be point{"" if len(variables) != 1 else "s"}',
-		'point{"" if len(variables) != 1 else "s"} {varlist} {"is" if len(variables) == 1 else "are"} defined',
-		# '{varlist} {"is a" if len(variables) == 1 else "are"} point{"" if len(variables) != 1 else "s"}',
+		'define point{"" if len(variables) == 1 else "s"} {varlist}',
+		'let {varlist} be {"a " if len(variables) == 1 else ""}point{"" if len(variables) == 1 else "s"}',
+		'point{"" if len(variables) == 1 else "s"} {varlist} {"is" if len(variables) == 1 else "are"} defined',
+		'{varlist} {"is" if len(variables) == 1 else "are"} defined',
+		'{varlist} {"is a" if len(variables) == 1 else "are"} point{"" if len(variables) != 1 else "s"}',
 	]
 	def __init__(self, variables: list[str], *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -60,7 +61,7 @@ class AssignmentVerbalizer(ToolKit):
 		if len(variables) > 1:
 			self.include(Conjunction('varlist', [f'var{i}' for i in range(len(variables))]))
 		else:
-			self.include(tool('varlist', ))
+			self.include(tool('varlist')(lambda var0: var0))
 		if len(options) > 1:
 			self.include(GadgetDecision(options, choice_gizmo='assignment_choice'))
 		elif len(options) == 1:
@@ -177,15 +178,7 @@ class Definition(ToolKit):
 		self.include(clause_gadget)
 
 
-	_rule_prefixes = {
-		'point': Point,
-		'line': Line,
-		'angle': Angle,
-		'triangle': Triangle,
-		'circle': Circle,
-		'quad': Quadrilateral,
-		'trapezoid': Trapezoid,
-	}
+	_rule_prefixes = Rule._kind_registry
 	def _populate_rules(self, rules: dict[str, Union[dict[str, Any], list[int]]] = None):
 
 		tools = []
@@ -193,8 +186,8 @@ class Definition(ToolKit):
 		for name, data in rules.items():
 			if isinstance(data, (int, str, list)):
 				options = [key for key in self._rule_prefixes if name.startswith(key)]
-				assert len(options) == 1, f'unknown/ambiguous rule type inference for {name}: {options}'
-				rule_type = self._rule_prefixes[options[0]]
+				assert len(options) == 1, f'unknown/ambiguous rule type inference for {name!r}: {options}'
+				rule_type = self._rule_prefixes[options[0]].cls
 				tools.append(rule_type(name, data))
 			else:
 				assert isinstance(data, dict) and 'type' in data and 'args' in data, \
