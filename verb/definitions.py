@@ -7,23 +7,15 @@ from omniply.core.genetics import GeneticGadget
 # from omniply.apps import Template, GadgetDecision, SimpleDecision, Controller, Combination, Permutation
 # from omniply.apps.decisions.abstract import CHOICE
 
-from .rules import Rule, Point, Line, Angle, Triangle, Circle, Quadrilateral, Trapezoid
+from .rules import Rule, Point, Line, Angle, Triangle, Circle, Quadrilateral, Trapezoid, Conjunction
 
 
-def from_formal(formal_statement: str):
-	if ',' in formal_statement or ';' in formal_statement or '=' in formal_statement:
-		raise NotImplementedError('for now')
-
-	terms = formal_statement.split()
-
-	name, *args = terms
-
-	literal = DictGadget({f'arg{i}': arg for i, arg in enumerate(args)}, arguments=args)
-	return Context(literal, Definition.find(name))  # TODO: move to a ToolKit subclass to clean up
+def load_patterns(path: Path) -> list['Definition']:
+	return ClauseGenerator.load_patterns(path)
 
 
 
-class StatementGenerator(GadgetDecision):
+class ClauseGenerator(GadgetDecision):
 	@classmethod
 	def load_patterns(cls, path: Path) -> list['Definition']:
 		patterns = yaml.safe_load(path.read_text())
@@ -44,7 +36,98 @@ class StatementGenerator(GadgetDecision):
 		super().__init__(choices=choices, choice_gizmo=choice_gizmo, **kwargs)
 
 
+
+class AssignmentVerbalizer(ToolKit):
+	_assignment_templates = [
+		'define point{"" if len(variables) != 1 else "s"} {varlist}',
+		'let {varlist} be point{"" if len(variables) != 1 else "s"}',
+		'point{"" if len(variables) != 1 else "s"} {varlist} {"is" if len(variables) == 1 else "are"} defined',
+		# '{varlist} {"is a" if len(variables) == 1 else "are"} point{"" if len(variables) != 1 else "s"}',
+	]
+	def __init__(self, variables: list[str], *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self._populate(variables)
+
+
+	def _populate(self, variables: list[str]):
+		assert len(variables), f'{variables}'
+
+		# assignment prefix
+		options = [
+			tool('assignments')(lambda: None), # ignores the assignments
+			*[Template(tmpl, 'assignments') for tmpl in self._assignment_templates],
+		]
+		if len(variables) > 1:
+			self.include(Conjunction('varlist', [f'var{i}' for i in range(len(variables))]))
+		else:
+			self.include(tool('varlist', ))
+		if len(options) > 1:
+			self.include(GadgetDecision(options, choice_gizmo='assignment_choice'))
+		elif len(options) == 1:
+			self.include(options[0])
+
+
+
+class StatementVerbalization(ToolKit):
+	'''meant for the verbalization of an existing formal statement (including assignments and subclauses)'''
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self._populate()
+
+
+	def _populate(self):
+		self.include(SimpleDecision('clause_joiner', ['and', 'where', 'such that']))
+
+
+	@staticmethod
+	def parse_formal_clause(clause: str):
+		assert ';' not in clause and ',' not in clause, (f'Invalid clause: {clause!r} '
+														 f'(could it be a statement or problem?)')
+		prior = {}
+
+		terms = clause.split('=')
+		assert len(terms) <= 2, f'Invalid clause: {clause!r}'
+		if len(terms) > 1:
+			prior['variables'] = terms[0].strip().split()
+			prior.update({f'var{i}': var for i, var in enumerate(prior['variables'])})
+
+		name, *args = terms[-1].strip().split()
+		prior['definition'] = name
+		prior['arguments'] = args
+		prior.update({f'arg{i}': arg for i, arg in enumerate(args)})
+		return prior
+
+
+	@tool('clause_contexts')
+	def from_formal(self, formal: str, seed: int = None) -> list[Controller]:
+		clauses = formal.split(',')
+		if len(clauses) > 1:
+			seeds = [None]*len(clauses)
+			if seed is not None:
+				rng = random.Random(seed)
+				seeds = [rng.randint(0, 2**32) for _ in range(len(clauses))]
+			return [ctx for clause, clause_seed in zip(clauses, seeds) for ctx in self.from_formal(clause, clause_seed)]
+
+		prior = self.parse_formal_clause(clauses[0])
+
+		tools = [DictGadget(prior), Definition.find(prior['definition'])]
+		if 'variables' in prior:
+			assert len(prior['variables'])
+			tools.append(AssignmentVerbalizer(prior['variables']))
+		return [Controller(*tools)]
+
+
+	@tool('statement')
+	def verbalize_clauses(self, clause_contexts: list[Controller], *, clause_joiner: str = 'and'):
+		statement = clause_joiner.join(ctx['clause'] for ctx in clause_contexts)
+		if not len(statement):
+			return ''
+		return f'{statement[0].upper()}{statement[1:]}.'
+
+
+
 from .common import ArgumentGenerator
+
 
 
 class Definition(ToolKit):
@@ -74,7 +157,7 @@ class Definition(ToolKit):
 
 
 	def _populate_clause_template(self, templates: str | Iterable[str] | Mapping[str, str], **kwargs):
-		gizmo = 'clause'
+		gizmo = 'construction'
 
 		if isinstance(templates, str):
 			templates = {0: templates}
@@ -147,6 +230,16 @@ class Definition(ToolKit):
 		return [f'arg{i}' for i in range(self._num_args)]
 
 
+	@tool('clause')
+	def get_clause(self, construction: str, assignments: str = None):
+		return construction if assignments is None else f'{assignments} such that {construction}'
+
+
+	@tool('statement')
+	def as_statement(self, clause: str):
+		if not len(clause):
+			return ''
+		return f'{clause[0].upper()}{clause[1:]}.'
 
 
 
