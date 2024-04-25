@@ -13,6 +13,7 @@ from prettier_print.pretty_problem_statement import get_nl_problem_statement
 from pretty import pretty_nl
 from prettier_print.prettier_proof_statements import translate_step
 from utils.get_rand_gen_states import get_random_states
+from verb.verbalize import IndependentStatementVerbalization
 
 import csv
 
@@ -38,6 +39,8 @@ def main(run_id, interactive):
         writer.writeheader()
         serial_num = 0
         cc_gen = CompoundClauseGen(definitions, 2, 3, 2)
+        verbalizer = IndependentStatementVerbalization(None)
+
         for i in range(dataset_length):
             num_clauses = random.randint(3, 10)
             fl_statement = cc_gen.generate_clauses()
@@ -92,7 +95,8 @@ def main(run_id, interactive):
                     goal_nl = translate_step(pretty_goal)
                     goal_fl = ' '.join(goal_fl)
                 # Now we know that the generated premises are not contradictory
-                nl_prob = get_nl_problem_statement(fl_statement)
+                # nl_prob = get_nl_problem_statement(fl_statement)
+                nl_prob = verbalizer.problem_fl_2_nl(fl_statement)
                 # dump this row
                 row = {'sl_n': serial_num, 'num_clauses': num_clauses, 'nl_statement': nl_prob,
                        'fl_statement': fl_statement, 'goal_nl': goal_nl, 'goal_fl': goal_fl,
@@ -114,8 +118,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Create problem fl - nl dataset')
-    parser.add_argument('--run_id', type=int, help='An integer positional argument')
-    parser.add_argument('--interactive', type=str_to_bool, help='A boolean value (true/false)')
+    parser.add_argument('--run_id', required=True, type=int, help='An integer positional argument')
+    parser.add_argument('--interactive', required=True, type=str_to_bool, help='A boolean value (true/false)')
     args = parser.parse_args()
 
     n_processes = 2
