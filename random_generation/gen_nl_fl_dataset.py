@@ -29,15 +29,16 @@ def main(run_id, interactive):
     # Load definitions and rules
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
 
-    field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'goal_nl', 'goal_fl', 'rnd_states']
+    # field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'goal_nl', 'goal_fl', 'rnd_states']
+    field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'goal_nl', 'goal_fl']
 
     # Write data to the CSV file
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
         # writer = csv.DictWriter(csvfile, fieldnames=field_names,)# delimiter='#')
         # this is necessary for the inspect to work
-        writer = csv.DictWriter(csvfile, fieldnames=field_names, delimiter='#')
+        writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
         writer.writeheader()
-        serial_num = 0
+        serial_num = run_id * dataset_length
         cc_gen = CompoundClauseGen(definitions, 2, 3, 2)
         verbalizer = IndependentStatementVerbalization(None)
 
@@ -84,11 +85,13 @@ def main(run_id, interactive):
             # Randomly select a cache node to be the goal. #TODO: Is this right can we do better? Consider coverage!
             possible_goals = list(g.cache.keys())
             if len(possible_goals) > 0:
-                goal_fl = random.choice(possible_goals)  # comment this line
+                goal_fl = list(random.choice(possible_goals))  # comment this line
                 # goal_fl = random.choice(possible_goals + [''])  # uncomment this line to get goal less problems
                 if goal_fl == '':
                     goal_nl = ''
                 else:
+                    capitalized_pt_names = [point_name.capitalize() for point_name in goal_fl[1:]]
+                    goal_fl[1:] = capitalized_pt_names
                     pretty_goal = pretty_nl(goal_fl[0], goal_fl[1:])
                     if pretty_goal is None:
                         raise ValueError(f'Could not pretty print goal: {goal_fl}')
@@ -98,9 +101,14 @@ def main(run_id, interactive):
                 # nl_prob = get_nl_problem_statement(fl_statement)
                 nl_prob = verbalizer.problem_fl_2_nl(fl_statement)
                 # dump this row
-                row = {'sl_n': serial_num, 'num_clauses': num_clauses, 'nl_statement': nl_prob,
-                       'fl_statement': fl_statement, 'goal_nl': goal_nl, 'goal_fl': goal_fl,
-                       'rnd_states': get_random_states()}
+                row = {
+                    'sl_n': serial_num,
+                    'num_clauses': num_clauses,
+                    'nl_statement': nl_prob,
+                    'fl_statement': fl_statement,
+                    'goal_nl': goal_nl,
+                    'goal_fl': goal_fl
+                }
                 writer.writerow(row)
                 serial_num += 1
 

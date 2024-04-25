@@ -27,7 +27,7 @@ class IndependentStatementVerbalization(AbstractVerbalization):
     '''
     def __init__(self, defs_path: str):
         if defs_path is None:
-            defs_path = str(repo_root() / 'assets' / 'demo-patterns.yml')
+            defs_path = str(repo_root() / 'assets' / 'def-patterns.yml')
         defs_path = Path(defs_path)
         assert defs_path.exists(), f'Pattern file not found: {defs_path}'
         # Load the patterns
