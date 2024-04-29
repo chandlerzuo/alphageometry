@@ -30,7 +30,11 @@ import numpy as np
 from numpy.random import uniform as unif  # pylint: disable=g-importing-member
 
 
-matplotlib.use('TkAgg')
+try:
+  matplotlib.use('TkAgg')
+except ImportError:
+  # TODO: Why take interractive backend?
+  print('non-interactive matplotlib backend')
 
 
 ATOM = 1e-12

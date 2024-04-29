@@ -31,3 +31,4 @@ share/python-wheels/
 MANIFEST
 .idea/
 demo.csv
+sync_to_mpi_cluster.sh

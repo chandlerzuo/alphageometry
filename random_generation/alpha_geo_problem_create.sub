@@ -1,4 +1,4 @@
-NUM_NODES = 20
+NUM_NODES = 1997
 
 executable = create_problems.sh
 arguments = $(Process) -alht
@@ -6,8 +6,8 @@ error = logs/test_$(Process).err
 output = logs/test_$(Process).out
 log = logs/test_$(Process).log
 request_memory = 128000
-request_cpus = 8
-request_disk = 50G
+request_cpus = 16
+request_disk = 1280M
 getenv = True
 
 # max #jobs is given by 10000/ number after : so now 10000/400 = 25

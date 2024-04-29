@@ -19,8 +19,9 @@ import csv
 
 
 def main(run_id, interactive):
-    dataset_length = 20
-    filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
+    dataset_length = 2000
+    # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
+    filename = f'/is/cluster/fast/pghosh/datasets/alpha_geo/nl_fl_dataset_{run_id}.csv'
     # filename = '../data/nl_fl_dataset_2.csv'
     random.seed(run_id)
     defs_path = '../defs.txt'
@@ -130,7 +131,7 @@ if __name__ == "__main__":
     parser.add_argument('--interactive', required=True, type=str_to_bool, help='A boolean value (true/false)')
     args = parser.parse_args()
 
-    n_processes = 2
+    n_processes = 16
 
     with multiprocessing.Pool(n_processes) as pool:
         pool.starmap(main, [(args.run_id * n_processes + i, args.interactive) for i in range(n_processes)])
