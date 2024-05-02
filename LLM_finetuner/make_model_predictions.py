@@ -18,7 +18,8 @@ from datasets import load_from_disk
 import gradio as gr
 from contextlib import nullcontext, redirect_stdout
 
-import os, sys; sys.path.append(os.path.join(os.path.dirname(__file__), ".")) #todo
+import os, sys; sys.path.append(os.path.join(os.path.dirname(__vsc_ipynb_file__), ".")) #todo
+# import os, sys; sys.path.append(os.path.join(os.path.dirname(__file__), ".")) #todo
 from question_answer_utils import extract_answer, extract_question_prompt, get_question_answer_to_chat_formatter
 from utils import load_model_for_inference, setup_logging, subset_dataset
 
@@ -26,6 +27,7 @@ from utils import load_model_for_inference, setup_logging, subset_dataset
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 setup_logging()
+
 
 #%%
 # model_name_or_path = sys.argv[1]
@@ -69,12 +71,15 @@ max_new_tokens = args.max_new_tokens
 #%%
 # mikado config
 logger.warning("Using dummy args")
-model_name_or_path = "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/gpt2"
+# model_name_or_path = "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/gpt2"
+# model_name_or_path = "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/gpt2_2ex"
+model_name_or_path = "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/gpt2_withpeft"
 dataset_name = "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo_small_processed"
 # dataset_test_name = "test"
 dataset_test_name = "train" # for overfitting exp
 filename_predictions_out = "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/predictions/exp_small/gpt2_predictions.txt"
-max_predict_samples = 2
+# max_predict_samples = 2
+max_predict_samples = 1
 dataset_text_field = "text"
 max_new_tokens = 70
     

@@ -2,7 +2,7 @@
 
 ## Set up venv
 ```{bash}
-cd ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new
+cd ~/reinforcement/alphageometry/LLM_finetuner
 python3.10 -m venv verbalization_venv3
 source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
 pip install --upgrade pip
@@ -14,12 +14,17 @@ huggingface-cli login
 
 Prepare with
 ```
-mkdir -p /fast/mmordig/general_ai_rl/alphageom_project/verbalization/{training,datasets,predictions}
-export VERB_RUN_DIR=/fast/mmordig/general_ai_rl/alphageom_project/verbalization
+mkdir -p /fast/mmordig/general_ai_rl/alphageom_project
+ln -s /fast/mmordig/general_ai_rl/alphageom_project ~/reinforcement/alphageometry/LLM_finetuner/runs
+mkdir -p ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/{training,datasets,predictions}
+export VERB_RUN_DIR=~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization
 
 # mikado
-mkdir -p /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/{training,datasets,predictions}
-export VERB_RUN_DIR=/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization
+mkdir -p ~/reinforcement/alphageometry/LLM_finetuner/runs
+mkdir -p ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/{training,datasets,predictions}
+ln -s alpha_geo_small alpha_geo
+ln -s alpha_geo_small_processed alpha_geo_processed
+export VERB_RUN_DIR=~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization
 ```
 
 For debugging:
@@ -42,7 +47,7 @@ cp -r ~/.cache/huggingface/ /fast/mmordig/hf_cache
 
 # cannot download directly to this directory due to locking not available
 # export HF_HOME=/fast/mmordig/hf_cache/huggingface
-source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/verbalization_venv3/bin/activate
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
 huggingface-cli download meta-llama/Meta-Llama-3-8B
 ```
 
@@ -71,8 +76,6 @@ for i in {0..15}; do
     tail -q -n +2 alpha_geo_header.csv alpha_geo/nl_fl_dataset_{$start..$end}.csv > alpha_geo_fewer_chunks/chunks$i.csv &
 done
 
-
-
 # on mikado, instead do
 cd $VERB_RUN_DIR/datasets
 cp -r /is/cluster-test/fast/mmordig/general_ai_rl/alphageom_project/verbalization/datasets/alpha_geo_small/ .
@@ -83,26 +86,80 @@ Preprocess the dataset into a HF dataset:
 # condor_submit_autokill 25 -append 'request_cpus=20' -append 'request_memory=100GB' -append 'request_disk=100GB' -i
 
 # tmux
-source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/verbalization_venv3/bin/activate
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/create_dataset.py \
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+python ~/reinforcement/alphageometry/LLM_finetuner/create_dataset.py \
     /fast/mmordig/general_ai_rl/alphageom_project/verbalization/datasets/alpha_geo_fewer_chunks \
     /fast/mmordig/general_ai_rl/alphageom_project/verbalization/datasets/alpha_geo_processed
 
 # small dataset
-source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/verbalization_venv3/bin/activate
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/create_dataset.py \
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+python ~/reinforcement/alphageometry/LLM_finetuner/create_dataset.py \
     /fast/mmordig/general_ai_rl/alphageom_project/verbalization/datasets/alpha_geo_small \
     /fast/mmordig/general_ai_rl/alphageom_project/verbalization/datasets/alpha_geo_small_processed
 
 # on mikado
-source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/verbalization_venv3/bin/activate
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/create_dataset.py \
-    /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo_small \
-    /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo_small_processed
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+python ~/reinforcement/alphageometry/LLM_finetuner/create_dataset.py \
+    ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_small \
+    ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_small_processed
 ```
 
 ## Fine-Tuning
 Train the model on GPUs:
+
+```{bash}
+
+# condor_submit_autokill 20 -append 'request_cpus=8' -append 'request_memory=128GB' -append 'request_disk=100GB' -append 'request_gpus=1' -append 'requirements = (TARGET.CUDAGlobalMemoryMb > 50000) && (Machine != "g101.internal.cluster.is.localnet")' -i
+# condor_submit_autokill 20 -append 'request_cpus=16' -append 'request_memory=256GB' -append 'request_disk=100GB' -append 'request_gpus=2' -append 'requirements = (TARGET.CUDAGlobalMemoryMb > 50000) && (Machine != "g101.internal.cluster.is.localnet")' -i
+tmux
+# wandb enabled
+# wandb online
+
+ls ~/.cache/huggingface/hub/
+source ~/reinforcement/alphageometry/LLM_finetuner/copy_hf_model_to_ram.sh models--meta-llama--Llama-2-7b-hf
+source ~/reinforcement/alphageometry/LLM_finetuner/copy_hf_model_to_ram.sh models--meta-llama--Llama-2-7b-chat-hf
+source ~/reinforcement/alphageometry/LLM_finetuner/copy_hf_model_to_ram.sh models--gpt2
+
+# source ~/reinforcement/alphageometry/LLM_finetuner/setup_commands.sh
+accelerate config
+
+# python \
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+function accelerate_cmd() {
+    accelerate launch --config_file ~/reinforcement/alphageometry/LLM_finetuner/example_accelerate_config.yaml --multi_gpu --num_processes "$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)" "$@"
+}
+
+accelerate_cmd \
+  ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
+  --overwrite_output_dir \
+  --model_name_or_path gpt2 \
+  --max_eval_samples 400 \
+  --output_dir ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/{model_name}_{max_train_samples}ex \
+  --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_processed \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
+  --max_train_samples 1000 \
+  --num_train_epochs 800
+# accelerate_cmd \
+
+
+python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
+  --overwrite_output_dir \
+  --model_name_or_path gpt2 \
+  --use_peft=True \
+  --max_eval_samples 400 \
+  --output_dir ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/{model_name}_{max_train_samples}ex_peft{use_peft} \
+  --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_processed \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
+  --max_train_samples 200 \
+  --num_train_epochs 100000
+```
+
+
+
+
+
+
+Old:
 ```{bash}
 # condor_submit_autokill 20 -append 'request_cpus=8' -append 'request_memory=128GB' -append 'request_disk=100GB' -append 'request_gpus=1' -append 'requirements = (TARGET.CUDAGlobalMemoryMb > 50000) && (Machine != "g101.internal.cluster.is.localnet")' -i
 # condor_submit_autokill 20 -append 'request_cpus=16' -append 'request_memory=256GB' -append 'request_disk=100GB' -append 'request_gpus=2' -append 'requirements = (TARGET.CUDAGlobalMemoryMb > 50000) && (Machine != "g101.internal.cluster.is.localnet")' -i
@@ -111,135 +168,106 @@ tmux
 # wandb online
 # rm -rf /fast/mmordig/general_ai_rl/alphageom_project/verbalization/training/exp_small/Llama-2-7b-hf
 #module load cuda/12.1
-source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/copy_hf_model_to_ram.sh models--meta-llama--Llama-2-7b-hf
-source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/verbalization_venv3/bin/activate
+source ~/reinforcement/alphageometry/LLM_finetuner/copy_hf_model_to_ram.sh models--meta-llama--Llama-2-7b-hf
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
 ## move there, no locks supported, export HF_DATASETS_CACHE=/fast/mmordig/hf_cache/datasets
 exp_type=_small
 #exp_type=
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_adaptations/sft_adapted.py \
+python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --overwrite_output_dir \
   --output_dir /fast/mmordig/general_ai_rl/alphageom_project/verbalization/training/exp${exp_type}/{model_name} \
   --dataset_name /fast/mmordig/general_ai_rl/alphageom_project/verbalization/datasets/alpha_geo${exp_type}_processed \
-  --config ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_sft_config.yml \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
   --dataloader_num_workers 0
 
 # mikado
-source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/verbalization_venv3/bin/activate
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
 exp_type=_small
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_adaptations/sft_adapted.py \
+python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --overwrite_output_dir \
   --model_name_or_path meta-llama/Llama-2-7b-chat-hf \
-  --output_dir /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/exp${exp_type}/{model_name} \
-  --dataset_name /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
-  --config ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_sft_config.yml \
+  --output_dir ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/exp${exp_type}/{model_name} \
+  --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
   
-source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/copy_hf_model_to_ram.sh models--meta-llama--Llama-2-7b-chat-hf
+source ~/reinforcement/alphageometry/LLM_finetuner/copy_hf_model_to_ram.sh models--meta-llama--Llama-2-7b-chat-hf
   --model_name_or_path gpt2 \
-```
-```{bash}
-
-
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_adaptations/sft_adapted.py \
-  --overwrite_output_dir \
-  --model_name_or_path gpt2 \
-  --max_eval_samples 400 \
-  --output_dir /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/{model_name}_{max_train_samples}ex \
-  --dataset_name /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
-  --config ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_sft_config.yml \
-  --max_train_samples 2 \
-  --num_train_epochs 800
-
-
-ln -s /fast/mmordig/general_ai_rl/alphageom_project ~/reinforcement/HumbleAttemptAtGeneralAI/runs
-
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_adaptations/sft_adapted.py \
-  --overwrite_output_dir \
-  --model_name_or_path gpt2 \
-  --use_peft=True \
-  --max_eval_samples 400 \
-  --output_dir /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/{model_name}_{max_train_samples}ex_peft{use_peft} \
-  --dataset_name /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo_processed \
-  --config ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_sft_config.yml \
-  --max_train_samples 200 \
-  --num_train_epochs 100000
-
-
 
 # overfit on one sample on mikado
-# rm -rf /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single
-source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/verbalization_venv3/bin/activate
+# rm -rf ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
 exp_type=_small
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_adaptations/sft_adapted.py \
+python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --overwrite_output_dir \
   --model_name_or_path meta-llama/Llama-2-7b-hf \
-  --output_dir /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/{model_name}_1ex \
+  --output_dir ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/{model_name}_1ex \
   --max_eval_samples 1 \
-  --dataset_name /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
-  --config ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_sft_config.yml \
+  --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
   --max_train_samples 1 \
   --num_train_epochs 150
 
 
 # accelerate
 accelerate config
-accelerate launch ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_adaptations/sft_adapted.py \
+accelerate launch ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --overwrite_output_dir \
   --model_name_or_path gpt2 \
   --max_eval_samples 1 \
   --use_peft=True \
-  --output_dir /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/{model_name}_withpeft \
-  --dataset_name /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
-  --config ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_sft_config.yml \
+  --output_dir ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/{model_name}_withpeft \
+  --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
   --max_train_samples 200 \
   --num_train_epochs 1000
 
 
 
 # with peft
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_adaptations/sft_adapted.py \
+python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --overwrite_output_dir \
   --model_name_or_path gpt2 \
   --max_eval_samples 1 \
   --use_peft=True \
-  --output_dir /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/{model_name}_withpeft \
-  --dataset_name /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
-  --config ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_sft_config.yml \
+  --output_dir ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/{model_name}_withpeft \
+  --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
   --max_train_samples 1 \
   --num_train_epochs 1000
 
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_adaptations/sft_adapted.py \
+python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --overwrite_output_dir \
   --model_name_or_path gpt2 \
   --max_eval_samples 400 \
-  --output_dir /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/{model_name}_{max_train_samples}ex \
-  --dataset_name /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
-  --config ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_sft_config.yml \
+  --output_dir ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/{model_name}_{max_train_samples}ex \
+  --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
   --max_train_samples 2 \
   --num_train_epochs 800
 
 # works, does not properly end with 2 samples, but otherwise fine
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_adaptations/sft_adapted.py \
+python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --overwrite_output_dir \
   --model_name_or_path gpt2 \
   --max_eval_samples 1 \
-  --output_dir /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/{model_name} \
-  --dataset_name /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
-  --config ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_sft_config.yml \
+  --output_dir ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/{model_name} \
+  --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
   --max_train_samples 1 \
   --num_train_epochs 150
   
   
   --model_name_or_path gpt2 \
 
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/make_model_predictions.py \
+python ~/reinforcement/alphageometry/LLM_finetuner/make_model_predictions.py \
     --dataset_name ~/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
-    --model_name_or_path /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/gpt2 \
+    --model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/gpt2 \
     --dataset_test_name train \
     --max_predict_samples 1 \
-    --out_filename /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/predictions/exp${exp_type}/{model_name}_overfit_single_predictions.txt
+    --out_filename ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/predictions/exp${exp_type}/{model_name}_overfit_single_predictions.txt
     
---model_name_or_path /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/Llama-2-7b-chat-hf/ \
---model_name_or_path /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single/Llama-2-7b-hf \
+--model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/Llama-2-7b-chat-hf/ \
+--model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single/Llama-2-7b-hf \
   --model_name_or_path meta-llama/Llama-2-7b-chat-hf \
 ```
 
@@ -256,21 +284,21 @@ accelerate launch <script_and_args>
 ## Generation
 Generate predictions:
 ```{bash}
-source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/verbalization_venv3/bin/activate
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
 exp_type=_small
 model=gpt2
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/make_model_predictions.py \
+python ~/reinforcement/alphageometry/LLM_finetuner/make_model_predictions.py \
     ~/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/exp${exp_type}/${model} \
     ~/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
-    /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/predictions/exp${exp_type}/${model}_predictions.txt 5
+    ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/predictions/exp${exp_type}/${model}_predictions.txt 5
 ```
 
 Deploy the model (note: different generation params than for prediction):
 ```{bash}
-source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/verbalization_venv3/bin/activate
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
 exp_type=_small
 model=gpt2
-python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/deploy_model.py \
+python ~/reinforcement/alphageometry/LLM_finetuner/deploy_model.py \
     ~/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/exp${exp_type}/${model}
 ```
 
@@ -290,7 +318,7 @@ seeding: setting `seed, data_seed`, does this prevent duplicate data?
 MultiGPU training:
 
 The input hidden states seems to be silently casted in float32, this might be related to the fact you have upcasted embedding or layer norm layers in float32. We will cast back the input in torch.bfloat16.
-/lustre/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/verbalization_venv3/lib/python3.10/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
+/lustre/home/mmordig/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/lib/python3.10/site-packages/torch/nn/parallel/_functions.py:68: UserWarning: Was asked to gather along dimension 0, but all input tensors were scalars; will instead unsqueeze and return a vector.
 ```
 
 tokenize on the fly or in advance?

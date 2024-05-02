@@ -20,3 +20,6 @@ more_itertools
 
 # for llama2 tokenizer
 sentencepiece
+
+# for "accelerate test"
+pytest

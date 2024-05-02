@@ -61,14 +61,14 @@ learning_rate:
   0.0001
 lr_scheduler_type:
   cosine
-optim: adamw_torch_fused
+# optim: adamw_torch_fused
 device: cuda
 log_level: info
 # logging_steps: 2
 logging_steps: 0.03
 # when GPU volatility is 100%, no need to use a larger batch size
-per_device_train_batch_size: 32
-per_device_eval_batch_size: 32
+per_device_train_batch_size: 64
+per_device_eval_batch_size: 64
 # auto_find_batch_size: True
 
 # neftune_noise_alpha: 5 # add noise to input embeddings
@@ -90,7 +90,7 @@ seed: 1
 data_seed: 2
 # enable_full_determinism: True # makes it slower
 
-dataloader_num_workers: 6
+dataloader_num_workers: 12
 
 # max_seq_length: 2048
 

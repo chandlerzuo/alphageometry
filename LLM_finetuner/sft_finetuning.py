@@ -55,7 +55,7 @@ from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
 
-import os, sys; sys.path.append(os.path.join(os.path.dirname(__file__), "..")) #todo, or __vsc_ipynb_file__ in jupyter
+import os, sys; sys.path.append(os.path.join(os.path.dirname(__file__), ".")) #todo, or __vsc_ipynb_file__ in jupyter
 from utils import set_pad_token_if_not_set, subset_dataset
 from question_answer_utils import get_question_answer_to_chat_formatter, response_template
 

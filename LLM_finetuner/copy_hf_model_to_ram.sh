@@ -16,16 +16,17 @@
 # source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/copy_hf_model_to_ram.sh models--meta-llama--Llama-2-7b-hf
 
 # rm -rf /dev/shm/huggingface
-ls /dev/shm
 mkdir -p /dev/shm/huggingface/hub/
+ls /dev/shm/huggingface/hub/
 # !cp -r ~/.cache/huggingface/hub/models--meta-llama--Llama-2-7b-hf/ /dev/shm/huggingface/hub/
 # !cp -r ~/.cache/huggingface/hub/version.txt /dev/shm/huggingface/hub/ # otherwise migrating the cache
 # !cp -r ~/.cache/huggingface/hub /dev/shm/huggingface/
 # !cp -r ~/.cache/huggingface/hub/models--gpt2/ /dev/shm/huggingface/hub/
 
-if [ -f /dev/shm/huggingface/hub/"$1" ]; then
+if [ -d /dev/shm/huggingface/hub/"$1" ]; then
     echo "already copied model $1"
 else
+    echo "copying model $1 to RAM"
     cp -r ~/.cache/huggingface/hub/version.txt /dev/shm/huggingface/hub/ # otherwise migrating the cache
     # unsafe: cp -r ~/.cache/huggingface/token /dev/shm/huggingface/hub/token # unsafe, set an env variable, see below
     cp -r ~/.cache/huggingface/hub/"$1" /dev/shm/huggingface/hub/

@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 def subset_dataset(dataset, n_samples=None):
-    if n_samples is not None:
+    if (n_samples is not None) and (n_samples > 0):
         if n_samples < 1:
             # fraction
             dataset = dataset.select(range(int(len(dataset) * n_samples)))
