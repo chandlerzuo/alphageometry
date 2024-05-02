@@ -8,8 +8,10 @@
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            // "program": "${file}",
-            "program": "${workspaceRoot}/gentesting.py",
+            "program": "${file}",
+            // "program": "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/src/general_ai_rl/solvers/dqn_learning.py",
+            // "program": "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/scripts/rllib_tryouts/maze_world.py",
+            "justMyCode": false,
             "console": "integratedTerminal"
         }
     ]

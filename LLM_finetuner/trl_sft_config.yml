@@ -1,0 +1,104 @@
+# see https://huggingface.co/blog/llama3
+
+# source ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/verbalization_venv3/bin/activate
+# pip install -U "transformers==4.40.0" --upgrade
+# trl sft -h
+# trl sft --config /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_chat_finetune.yml
+# ###trl sft
+# python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_adaptations/sft_adapted.py \
+#   --overwrite_output_dir \
+#   --output_dir /fast/mmord \
+#   --dataset_name /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/runs/verb_dataset \
+#   --config ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_chat_finetune.yml
+#
+# python ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_adaptations/sft_adapted.py \
+#   --overwrite_output_dir \
+#   --output_dir /fast/mmordig/general_ai_rl/alphageom_verb_training \
+#   --dataset_name /is/cluster/scratch/pghosh/dataset/alpha_geo_processed \
+#   --config ~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_chat_finetune.yml
+
+model_name_or_path:
+  # trl-internal-testing/tiny-random-LlamaForCausalLM
+  # gpt2
+  # meta-llama/Meta-Llama-3-8B
+  meta-llama/Llama-2-7b-hf
+# use_peft: True
+
+# load_in_8bit: True
+# torch_dtype: float16
+
+# load_in_4bit: True
+# torch_dtype: bfloat16
+# torch_dtype: auto # does not seem to be working, e.g. with load_in_8bit, uses fp32
+
+# bf16: True # whether to use bf16 instead of 32 bit
+# fp16: True # I think either bf16 or fp16
+# torch_compile: True
+# gradient_accumulation: 4 # increases the effective batch size by this factor (by not calling zero_grad immediately)
+gradient_checkpointing: True # makes it slower, but allows a larger batch size
+# dataset_name:
+#   # imdb
+#   /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/runs/verb_dataset
+resume_from_checkpoint: latest_if_available
+# resume_from_checkpoint: False
+dataset_text_field: text
+dataset_test_name: val # not test
+# output_dir: runs/trl_sft
+# overwrite_output_dir: True
+# max_train_samples: 5000
+# max_eval_samples: 50
+# max_seq_length: 512 # default
+
+do_train: True
+# packing: True
+# train_completions_only: True
+dataset_text_field:
+  text
+report_to:
+  # none
+  wandb
+learning_rate:
+  0.0001
+lr_scheduler_type:
+  cosine
+optim: adamw_torch_fused
+device: cuda
+log_level: info
+# logging_steps: 2
+logging_steps: 0.03
+# when GPU volatility is 100%, no need to use a larger batch size
+per_device_train_batch_size: 32
+per_device_eval_batch_size: 32
+# auto_find_batch_size: True
+
+# neftune_noise_alpha: 5 # add noise to input embeddings
+
+# num_processes: 2 # number of GPUs to use
+
+# evaluation_strategy: epoch
+evaluation_strategy: steps
+eval_steps: 0.3
+
+save_strategy: epoch
+# save_strategy: steps
+# save_steps: 500 # requires save_strategy: steps
+save_total_limit: 5
+
+# include_tokens_per_second: True # this makes it very slow because it iterates over the entire dataset beforehand
+
+seed: 1
+data_seed: 2
+# enable_full_determinism: True # makes it slower
+
+dataloader_num_workers: 6
+
+# max_seq_length: 2048
+
+num_train_epochs: 50
+# todo: pretokenize dataset, how?
+
+# possibly not supported on cluster, but on mikado
+# requires bf16 or fp16
+# attn_implementation: flash_attention_2
+
+# epochs, eval strategy
