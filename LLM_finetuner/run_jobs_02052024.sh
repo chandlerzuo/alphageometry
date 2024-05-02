@@ -37,7 +37,7 @@ launch_condor_job "$bid" --max_running_price -1 --- ~/reinforcement/alphageometr
   --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
   --max_train_samples "$num_train_samples" \
   --num_train_epochs 100000
-# does not work with peft (cublas error)
+# does not work with peft (cublas error on 95Gb GPU)
 #   --load_in_8bit \
 
 # gpt2 without peft

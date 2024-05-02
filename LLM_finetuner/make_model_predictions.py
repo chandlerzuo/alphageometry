@@ -11,6 +11,7 @@ import more_itertools
 import logging
 import sys
 import textwrap
+import collections
 
 import tqdm
 from transformers import pipeline, HfArgumentParser
@@ -85,68 +86,70 @@ max_new_tokens = 70
     
 
 #%%
+logger.info(f"Generating predictions, writing to file '{filename_predictions_out}'")
+
 raw_datasets = load_from_disk(dataset_name)
 dataset = raw_datasets[dataset_test_name]
 dataset = subset_dataset(dataset, n_samples=max_predict_samples)
 
 model, tokenizer = load_model_for_inference(model_name_or_path)
 
-formatting_func = extract_question_prompt
-if tokenizer.chat_template is not None:
+is_chat_model = tokenizer.chat_template is not None
+if is_chat_model:
     logger.info("Detected chat model, formatting according to chat template")
     # assumes user-assistant roles
-    formatting_func = get_question_answer_to_chat_formatter(tokenizer, text_column=None, add_generation_prompt=True)
+    prompt_extraction_function = get_question_answer_to_chat_formatter(tokenizer, text_column=None, add_generation_prompt=True)
+else:
+    prompt_extraction_function = extract_question_prompt
     
-logger.info(f"Generating predictions, writing to file '{filename_predictions_out}'")
+def extract_extra_cols(batch):
+    return {
+        "question_prompt": [prompt_extraction_function(item) for item in batch[dataset_text_field]],
+        "answer_only": [extract_answer(item) for item in batch[dataset_text_field]],
+    }
+dataset = dataset.map(extract_extra_cols, batched=True)
+logger.info(f"Example datapoint: {dataset[0]}")
 
-max_new_tokens = 50
-pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, num_return_sequences=2, num_beams=4, do_sample=True, max_new_tokens=max_new_tokens)
+# use_cache to avoid recomputing hidden states, see https://discuss.huggingface.co/t/what-is-the-purpose-of-use-cache-in-decoder/958
+# max_new_tokens = 70
+pipe = pipeline(
+    "text-generation", model=model, tokenizer=tokenizer, 
+    num_return_sequences=2, num_beams=4, do_sample=True, max_new_tokens=max_new_tokens, use_cache=True,
+    return_full_text=False, # answer only
+    num_workers=2, 
+    # batch_size=2 # triggers a cuda device-side error, maybe related to https://github.com/huggingface/transformers/issues/22546
+)
 
 #%%
-def get_data():
-    for row in dataset[args.dataset_text_field]:
-        # print(row)
-        yield formatting_func(row), row
 
-# using a pipe is faster because GPU works in the background while writing to file
+break_nicely = lambda x: "\u23CE\n".join(textwrap.wrap(x)) # symbol "⏎" for line breaks
+# using a pipe/dataset is faster because GPU works in the background while writing to file
 # with open(filename_predictions_out, 'w') as f, redirect_stdout(f):
-with nullcontext():
-    # for out in pipe(KeyDataset(raw_datasets["test"].map(extract_question), "text")):
-    query_it, gt_seqs_it = more_itertools.unzip(get_data())
-    query_it = (x for x in query_it) # to convert from map to generator (so hf recognizes it as an iterable)
-    for out, gt_seq in tqdm.tqdm(zip(pipe(query_it), gt_seqs_it), total=len(dataset), desc="Making predictions"):
-        # returns several candidate sequences
-        
-        if formatting_func is None:
-            question_prompt = None
-            for (i, candidate) in enumerate(out):
-                txt = candidate["generated_text"]
-                if question_prompt is None:
-                    question_prompt = extract_question_prompt(txt)
-                    print("#"*60)
-                    # print(textwrap.fill(question_prompt))
-                    # print(textwrap.fill(gt_seq))
-                    print(textwrap.fill("Query: " + extract_question_prompt(gt_seq)))
-                    print(textwrap.fill("Expected answer: " + extract_answer(gt_seq)))
-                else:
-                    assert question_prompt == extract_question_prompt(txt)
-                answer = extract_answer(txt)
-                print("#"*30 + f" Candidate {i+1} " + "#"*30)
-                extra = ""
-                # if len(tokenizer(answer)["input_ids"]) == max_new_tokens:
-                # not perfect because tokenizing with question_prompt may lead to different tokenization
-                # safer
-                if len(tokenizer(txt)["input_ids"]) - len(tokenizer(question_prompt)["input_ids"]) == max_new_tokens:
-                    extra = " <MAX token length exceeded>"
-                print("\u23CE\n".join(textwrap.wrap(answer)) + extra) # unicode symbol is enter symbol
-        else:
-            print("#"*60)
-            print(textwrap.fill(gt_seq))
-            for (i, candidate) in enumerate(out):
-                print("#"*30 + f" Candidate {i+1} " + "#"*30)
-                print(textwrap.fill(candidate))
-                
-        sys.stdout.flush()
+# with nullcontext():
+for (out, question_prompt, gt_answer) in tqdm.tqdm(zip(pipe(dataset["question_prompt"]), dataset["question_prompt"], dataset["answer_only"])):
+    print("#"*80)
+    print("Query: ")
+    print(break_nicely(question_prompt))
+    print("Expected answer: ")
+    print(break_nicely(gt_answer))
+    # strips whitespace because generated text has leading and trailing whitespace
+    out_counted = collections.Counter([candidate["generated_text"].strip() for candidate in out])
+    gt_answer = gt_answer.strip()
+    print(f"Number of candidates that are equal to expected: {out_counted.get(gt_answer, 0)}")
+    print(f"Number of candidates that begin with expected:", sum(out_counted[key] for key in out_counted if key.startswith(gt_answer)))
+    # for (i, candidate) in enumerate(out):
+    #     candidate_text = candidate["generated_text"]
+    for (i, (candidate_text, count)) in enumerate(out_counted.items()):
+        # logger.info(f"Generated text: {candidate_text}")
+        # answer = extract_answer(candidate_text)
+        answer = candidate_text
+        print("#"*20 + f" Candidate {i+1} (appears {count} times) " + "#"*20)
+        extra = ""
+        # not perfect because tokenizing with question_prompt may lead to different tokenization
+        if len(tokenizer(answer)["input_ids"]) == max_new_tokens:
+            extra = " <MAX token length exceeded>"
+        print(break_nicely(answer) + extra)
+    # sys.stdout.flush()
 
-logger.info(f"Written to file '{filename_predictions_out}'")
+# logger.info(f"Written to file '{filename_predictions_out}'")
 # %%
