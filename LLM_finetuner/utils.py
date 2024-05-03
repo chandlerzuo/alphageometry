@@ -95,7 +95,6 @@ def add_new_tokens_with_average_init(model, tokenizer, def_to_desc: Dict[str, st
     logger.info(f"Vocabulary size: {len(tokenizer)}")
     model.resize_token_embeddings(len(tokenizer))
     
-    
 def setup_logging():
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -122,9 +121,11 @@ def main():
         import yaml
         from pathlib import Path
         import os
-        # for creating this file
+        # # for creating this file
         # patterns_filename = Path(os.path.expanduser("~/reinforcement/alphageometry/assets/def-patterns.yml"))
-        # print("\n".join(list(f"{x}: {x}" for x in yaml.safe_load(patterns_filename.read_text()).keys())))
+        # filename_out = open(os.path.expanduser("~/reinforcement/alphageometry/assets/def-patterns-desc-simple.yml"), "w")
+        # filename_out = None
+        # print("\n".join(list(f"{x}: {x}" for x in yaml.safe_load(patterns_filename.read_text()).keys())), file=filename_out)
         patterns_desc_filename = Path(os.path.expanduser("~/reinforcement/alphageometry/assets/def-patterns-desc.yml"))
 
         def_to_desc = yaml.safe_load(patterns_desc_filename.read_text())

@@ -54,8 +54,9 @@ import os
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
-
 import yaml
+import sys
+
 from LLM_finetuner.utils import set_pad_token_if_not_set, subset_dataset, get_model_name_from_name_or_path, add_new_tokens_with_average_init
 from LLM_finetuner.question_answer_utils import get_question_answer_to_chat_formatter, response_template
 
@@ -122,6 +123,14 @@ class SftScriptArgumentsExtra(SftScriptArguments):
             "help": 
                 "yaml file with extra tokens to add; entries with no values are randomly init'd, "
                 "entries with values are initialized with average embedding of the tokens of its description"
+        }
+    )
+    explicit_eos_str: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": 
+                "explicit EOS token to add at the end of each sample (since some tokenizers don't "
+                "seem to do it even with eos_token); also adds token to model if not present"
         }
     )
 
@@ -234,7 +243,6 @@ if __name__ == "__main__":
         logger.info("Detected chat model, formatting according to chat template")
         # assumes user-assistant roles
         formatting_func = get_question_answer_to_chat_formatter(tokenizer, text_column=args.dataset_text_field)
-        print(f"Example chat format: {formatting_func(train_dataset[:2])}")
         args.dataset_text_field = None
         
         if args.train_completions_only:
@@ -261,13 +269,19 @@ if __name__ == "__main__":
     else:
         instruction_template = None
         # if model_config.model_name_or_path == "gpt2":
-        if False: 
-            logger.info("Explicitly appending EOS token to dataset for gpt2")
-            orig_dataset_text_field = args.dataset_text_field # will be set to None later
-            formatting_func = lambda batch: [(ex + " " + tokenizer.eos_token) for ex in batch[orig_dataset_text_field]]
-            args.dataset_text_field = None
-        else:
-            formatting_func = None
+        orig_dataset_text_field = args.dataset_text_field # will be set to None later
+        formatting_func = lambda elem: elem[orig_dataset_text_field]
+        args.dataset_text_field = None
+        
+    if args.explicit_eos_str is not None:
+        assert formatting_func is not None
+        old_formatting_func = formatting_func
+        formatting_func = lambda batch: [(x + " " + args.explicit_eos_str) for x in old_formatting_func(batch)]
+        
+        tokenizer.add_tokens(args.explicit_eos_str, special_tokens=True)
+        model.resize_token_embeddings(len(tokenizer))
+        
+    print(f"Example datapoints: {formatting_func(train_dataset[:2])}")
         
     data_collator = None
     if args.train_completions_only:

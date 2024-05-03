@@ -81,9 +81,9 @@ evaluation_strategy: steps
 # eval_steps: 0.3
 eval_steps: 500000
 
-save_strategy: epoch
-# save_strategy: steps
-# save_steps: 500 # requires save_strategy: steps
+# save_strategy: epoch
+save_strategy: steps
+save_steps: 500 # requires save_strategy: steps
 save_total_limit: 5
 
 # include_tokens_per_second: True # this makes it very slow because it iterates over the entire dataset beforehand
