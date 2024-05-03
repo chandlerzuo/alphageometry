@@ -4,7 +4,7 @@ Make predictions with the model and write to a file (along with the ground-truth
 """
 
 #%%
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Optional
 import torch
 import more_itertools
@@ -19,10 +19,14 @@ from datasets import load_from_disk
 import gradio as gr
 from contextlib import nullcontext, redirect_stdout
 
-import os, sys; sys.path.append(os.path.join(os.path.dirname(__vsc_ipynb_file__), ".")) #todo
-# import os, sys; sys.path.append(os.path.join(os.path.dirname(__file__), ".")) #todo
+if "__file__" in locals():
+    import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".")) #todo
+else:
+    import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__vsc_ipynb_file__), "..")) #todo
+print(sys.path)
+
 from question_answer_utils import extract_answer, extract_question_prompt, get_question_answer_to_chat_formatter
-from utils import load_model_for_inference, setup_logging, subset_dataset
+from utils import load_model_for_inference, setup_logging, subset_dataset, get_model_name_from_name_or_path
 
 #%%
 logger = logging.getLogger(__name__)
@@ -64,25 +68,26 @@ args, = HfArgumentParser((PredictionArguments, )).parse_args_into_dataclasses()
 model_name_or_path = args.model_name_or_path
 dataset_name = args.dataset_name
 dataset_test_name = args.dataset_test_name
-filename_predictions_out = args.out_filename.format(model_name=model_name_or_path.split("/")[-1])
+filename_predictions_out = args.out_filename.format(model_name=get_model_name_from_name_or_path(model_name_or_path), **asdict(args))
 max_predict_samples = args.max_predict_samples
 dataset_text_field = args.dataset_text_field
 max_new_tokens = args.max_new_tokens
 
 #%%
 # mikado config
-logger.warning("Using dummy args")
-# model_name_or_path = "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/gpt2"
-# model_name_or_path = "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/gpt2_2ex"
-model_name_or_path = "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/overfit_single_nocompl/gpt2_withpeft"
-dataset_name = "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo_small_processed"
-# dataset_test_name = "test"
-dataset_test_name = "train" # for overfitting exp
-filename_predictions_out = "/home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/predictions/exp_small/gpt2_predictions.txt"
-# max_predict_samples = 2
-max_predict_samples = 1
-dataset_text_field = "text"
-max_new_tokens = 70
+# logger.warning("Using dummy args")
+# # model_name_or_path = "/home/mmordig/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/gpt2"
+# # model_name_or_path = "/home/mmordig/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/gpt2_2ex"
+# # model_name_or_path = "/home/mmordig/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/gpt2_withpeft"
+# model_name_or_path = "/home/mmordig/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/failed_quote/gpt2_1000ex_peftFalse\'/"
+# dataset_name = "/home/mmordig/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_small_processed"
+# # dataset_test_name = "test"
+# dataset_test_name = "train" # for overfitting exp
+# filename_predictions_out = "/home/mmordig/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/predictions/exp_small/gpt2_predictions.txt"
+# # max_predict_samples = 2
+# max_predict_samples = 1
+# dataset_text_field = "text"
+# max_new_tokens = 70
     
 
 #%%

@@ -16,6 +16,7 @@ Prepare with
 ```
 mkdir -p /fast/mmordig/general_ai_rl/alphageom_project
 ln -s /fast/mmordig/general_ai_rl/alphageom_project ~/reinforcement/alphageometry/LLM_finetuner/runs
+ln -s /is/cluster/fast/mmordig/general_ai_rl/alphageom_project/ ~/reinforcement/alphageometry/LLM_finetuner/cluster_runs
 mkdir -p ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/{training,datasets,predictions}
 export VERB_RUN_DIR=~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization
 
@@ -152,6 +153,15 @@ python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
   --max_train_samples 200 \
   --num_train_epochs 100000
+
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+python ~/reinforcement/alphageometry/LLM_finetuner/make_model_predictions.py \
+    --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_processed \
+    --dataset_test_name train \
+    --max_predict_samples 1 \
+    --model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/gpt2_2ex \
+    --out_filename ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/predictions/overfitsingle_{model_name}_{max_predict_samples}samples.txt \
+    --max_new_tokens 70
 ```
 
 
@@ -260,11 +270,12 @@ python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --model_name_or_path gpt2 \
 
 python ~/reinforcement/alphageometry/LLM_finetuner/make_model_predictions.py \
-    --dataset_name ~/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
-    --model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/gpt2 \
+    --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_processed \
     --dataset_test_name train \
     --max_predict_samples 1 \
-    --out_filename ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/predictions/exp${exp_type}/{model_name}_overfit_single_predictions.txt
+    --model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/gpt2 \
+    --out_filename ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/predictions/overfitsingle_{model_name}_{max_predict_samples}samples.txt \
+    --max_new_tokens 70
     
 --model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/Llama-2-7b-chat-hf/ \
 --model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single/Llama-2-7b-hf \
@@ -288,8 +299,8 @@ source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activ
 exp_type=_small
 model=gpt2
 python ~/reinforcement/alphageometry/LLM_finetuner/make_model_predictions.py \
-    ~/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/exp${exp_type}/${model} \
-    ~/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
+    ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/exp${exp_type}/${model} \
+    ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo${exp_type}_processed \
     ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/predictions/exp${exp_type}/${model}_predictions.txt 5
 ```
 
@@ -299,7 +310,7 @@ source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activ
 exp_type=_small
 model=gpt2
 python ~/reinforcement/alphageometry/LLM_finetuner/deploy_model.py \
-    ~/reinforcement/HumbleAttemptAtGeneralAI/runs/verbalization/training/exp${exp_type}/${model}
+    ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/exp${exp_type}/${model}
 ```
 
 

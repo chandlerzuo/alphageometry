@@ -15,7 +15,7 @@ wandb
 # for deployment
 gradio
 
-# ipykernel
+ipykernel
 more_itertools
 
 # for llama2 tokenizer

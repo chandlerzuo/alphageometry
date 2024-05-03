@@ -25,6 +25,12 @@ def infer_checkpoint(checkpoint_dir):
     x = get_last_checkpoint(checkpoint_dir) # regexp checking for "checkpoint-<number>"
     return checkpoint_dir if x is None else x
 
+def get_model_name_from_name_or_path(model_name_or_path):
+    model_name_or_path = str(model_name_or_path)
+    if model_name_or_path.endswith("/"):
+        model_name_or_path = model_name_or_path[:-1]
+    return model_name_or_path.split("/")[-1]
+
 def load_model_for_inference(model_checkpoints_dir):
     model_name_or_path = infer_checkpoint(model_checkpoints_dir)
     logger.info(f"Loading model from '{model_name_or_path}'")

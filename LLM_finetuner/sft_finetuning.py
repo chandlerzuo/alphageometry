@@ -55,8 +55,8 @@ from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
 
-import os, sys; sys.path.append(os.path.join(os.path.dirname(__file__), ".")) #todo, or __vsc_ipynb_file__ in jupyter
-from utils import set_pad_token_if_not_set, subset_dataset
+import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".")) #todo
+from utils import set_pad_token_if_not_set, subset_dataset, get_model_name_from_name_or_path
 from question_answer_utils import get_question_answer_to_chat_formatter, response_template
 
 # TRL_USE_RICH = os.environ.get("TRL_USE_RICH", False)
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     
     parser = TrlParser((SftScriptArgumentsExtra, TrainingArguments, ModelConfig))
     # import sys; sys.argv = "python sft --overwrite_output_dir --output_dir runs.trl_sft --config /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_chat_finetune.yml".split(" ")
-    # print(sys.argv)
+    print(f"Received the following args: {sys.argv}")
     args, training_args, model_config = parser.parse_args_and_config()
 
     # Force use our print callback
@@ -182,9 +182,9 @@ if __name__ == "__main__":
             logger.warning("HF_TOKEN not available on remote machine")
         
     def adapt_output_dir(output_dir):
-        # output_dir = Path(output_dir) / model_config.model_name_or_path.split("/")[-1]
+        # output_dir = Path(output_dir) / get_model_name_from_name_or_path(model_config.model_name_or_path)
         output_dir = Path(output_dir.format(
-            model_name=model_config.model_name_or_path.split("/")[-1], 
+            model_name=get_model_name_from_name_or_path(model_config.model_name_or_path),
             **asdict(args), **asdict(training_args), **asdict(model_config),
         ))
         logger.info(f"Adapted output dir to {output_dir}")

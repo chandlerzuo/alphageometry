@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
 shopt -s expand_aliases
-alias launch_condor_job=~/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/launch_condor_job_new.py
+alias launch_condor_job="~/reinforcement/alphageometry/LLM_finetuner/launch_condor_job_new.py \
+    160 --max_running_price -1 ---" #--dry 
 
 run_dir_name=run_02052024
-bid=80
 
 for num_train_samples in 1000 -1; do
 
 # llama2 with peft
-launch_condor_job "$bid" --max_running_price -1 --- ~/reinforcement/alphageometry/LLM_finetuner/run_with_accelerate.sh \
+launch_condor_job ~/reinforcement/alphageometry/LLM_finetuner/run_with_accelerate.sh \
   ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --overwrite_output_dir \
   --use_peft \
@@ -24,7 +24,7 @@ launch_condor_job "$bid" --max_running_price -1 --- ~/reinforcement/alphageometr
   --num_train_epochs 100000
 
 # gpt2 with peft
-launch_condor_job "$bid" --max_running_price -1 --- ~/reinforcement/alphageometry/LLM_finetuner/run_with_accelerate.sh \
+launch_condor_job ~/reinforcement/alphageometry/LLM_finetuner/run_with_accelerate.sh \
   ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --overwrite_output_dir \
   --use_peft \
@@ -41,7 +41,7 @@ launch_condor_job "$bid" --max_running_price -1 --- ~/reinforcement/alphageometr
 #   --load_in_8bit \
 
 # gpt2 without peft
-launch_condor_job "$bid" --max_running_price -1 --- ~/reinforcement/alphageometry/LLM_finetuner/run_with_accelerate.sh \
+launch_condor_job ~/reinforcement/alphageometry/LLM_finetuner/run_with_accelerate.sh \
   ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --overwrite_output_dir \
   --per_device_train_batch_size 64 \

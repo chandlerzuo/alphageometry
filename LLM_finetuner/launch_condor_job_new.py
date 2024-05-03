@@ -45,9 +45,14 @@ def get_jobfile_lines_for_executable(script_and_args):
     """
     executable, *script_args = script_and_args
     
+    # see here for double quotes for arguments: https://htcondor.readthedocs.io/en/latest/man-pages/condor_submit.html#arguments
+    # this may still not be safe
+    # not safe:
+    # Arguments = {shlex.join(script_args)}
+    # when there is a string, it may be written with quotations 'str', so the argument becomes 'str', not str
     return dedent(f"""
     Executable = {executable}
-    Arguments = {shlex.join(script_args)}
+    Arguments = "{shlex.join(script_args)}"
     """)
     
 def get_extra_jobfile_content(script_and_args, time_limit, max_running_price):
