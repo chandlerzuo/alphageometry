@@ -12,9 +12,8 @@ from transformers import pipeline
 import gradio as gr
 from transformers import BitsAndBytesConfig
 
-import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".")) #todo
-from question_answer_utils import format_question_answer
-from utils import load_model_for_inference
+from LLM_finetuner.question_answer_utils import format_question_answer
+from LLM_finetuner.utils import load_model_for_inference
 
 
 logger = logging.getLogger(__name__)

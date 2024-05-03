@@ -2,9 +2,14 @@
 
 ## Set up venv
 ```{bash}
+
 cd ~/reinforcement/alphageometry/LLM_finetuner
 python3.10 -m venv verbalization_venv3
 source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+cd ~/reinforcement/alphageometry
+pip install -e "LLM_finetuner/"
+python -c "import LLM_finetuner; import LLM_finetuner.utils; LLM_finetuner.utils.subset_dataset"
+# alternatively (then make sure to adapt your python path)
 pip install --upgrade pip
 pip install -r requirements.txt
 
@@ -173,7 +178,23 @@ python ~/reinforcement/alphageometry/LLM_finetuner/make_model_predictions.py \
     --max_new_tokens 70
 ```
 
-
+Testing:
+```{bash}
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
+  --overwrite_output_dir \
+  --model_name_or_path gpt2 \
+  --per_device_eval_batch_size 32 \
+  --per_device_train_batch_size 32 \
+  --use_peft=True \
+  --extra_tokens_file ~/reinforcement/alphageometry/assets/def-patterns-desc.yml \
+  --max_eval_samples 400 \
+  --output_dir ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/{model_name}_{max_train_samples}ex_peft{use_peft}_extratokens \
+  --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_processed \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
+  --max_train_samples 32 \
+  --num_train_epochs 10000
+```
 
 
 

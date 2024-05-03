@@ -55,9 +55,9 @@ from contextlib import nullcontext
 from pathlib import Path
 from typing import Optional
 
-import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".")) #todo
-from utils import set_pad_token_if_not_set, subset_dataset, get_model_name_from_name_or_path
-from question_answer_utils import get_question_answer_to_chat_formatter, response_template
+import yaml
+from LLM_finetuner.utils import set_pad_token_if_not_set, subset_dataset, get_model_name_from_name_or_path, add_new_tokens_with_average_init
+from LLM_finetuner.question_answer_utils import get_question_answer_to_chat_formatter, response_template
 
 # TRL_USE_RICH = os.environ.get("TRL_USE_RICH", False)
 TRL_USE_RICH = True
@@ -116,6 +116,14 @@ class SftScriptArgumentsExtra(SftScriptArguments):
         default=False, 
         metadata={"help": "Whether to train on completions only (i.e. mask out the rest in the loss computation)"}
     )
+    extra_tokens_file: Optional[Path] = field(
+        default=None,
+        metadata={
+            "help": 
+                "yaml file with extra tokens to add; entries with no values are randomly init'd, "
+                "entries with values are initialized with average embedding of the tokens of its description"
+        }
+    )
 
 if TRL_USE_RICH:
     # NOTE: ignored if using init_zero_verbose() because it calls logging.basicConfig already!!
@@ -158,6 +166,12 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained(model_config.model_name_or_path, use_fast=True, add_eos_token=True)
     # tokenizer.pad_token = tokenizer.eos_token
     set_pad_token_if_not_set(model, tokenizer)
+    if args.extra_tokens_file is not None:
+        logger.info(f"Loading extra tokens from '{args.extra_tokens_file}'")
+        def_to_desc = yaml.safe_load(args.extra_tokens_file.read_text())
+        logger.info(f"Vocabulary length before: {len(tokenizer)}")    
+        add_new_tokens_with_average_init(model, tokenizer, def_to_desc)
+        logger.info(f"Vocabulary length after: {len(tokenizer)}")    
 
     ################
     # Dataset

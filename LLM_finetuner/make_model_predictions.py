@@ -19,14 +19,8 @@ from datasets import load_from_disk
 import gradio as gr
 from contextlib import nullcontext, redirect_stdout
 
-if "__file__" in locals():
-    import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".")) #todo
-else:
-    import os, sys; sys.path.insert(0, os.path.join(os.path.dirname(__vsc_ipynb_file__), "..")) #todo
-print(sys.path)
-
-from question_answer_utils import extract_answer, extract_question_prompt, get_question_answer_to_chat_formatter
-from utils import load_model_for_inference, setup_logging, subset_dataset, get_model_name_from_name_or_path
+from LLM_finetuner.question_answer_utils import extract_answer, extract_question_prompt, get_question_answer_to_chat_formatter
+from LLM_finetuner.utils import load_model_for_inference, setup_logging, subset_dataset, get_model_name_from_name_or_path
 
 #%%
 logger = logging.getLogger(__name__)

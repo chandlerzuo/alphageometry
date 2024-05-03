@@ -1,0 +1,71 @@
+# this gives a default initialization
+# example_token_with_None:
+
+angle_bisector: angle bisector
+angle_mirror: mirror point
+circle: circle
+circumcenter: triangle circumcenter
+eq_quadrangle: quadrilateral with two equal opposite sides
+eq_trapezoid: isosceles trapezoid
+eq_triangle: equilateral triangle
+eqangle2: two equal angles
+eqdia_quadrangle: quadrilateral with equal diagonals
+eqdistance: equal distance
+free: free point
+foot: foot of altitude in triangle
+incenter: incenter of triangle
+incenter2: incenter of triangle
+excenter: excenter of triangle
+excenter2: excenter of triangle
+centroid: centroid of triangle
+ninepoints: ninepoints of triangle
+intersection_cc: intersection between two circles
+intersection_lc: intersection between line and circle
+intersection_ll: intersection between two lines
+intersection_lp: parallel line intersects line
+intersection_lt: perpendicular line intersects line
+intersection_pp: pairs of parallel lines
+intersection_tt: two parallel lines and two perpendicular lines
+iso_triangle: isosceles triangle
+lc_tangent: tangent to circle through point
+midpoint: midpoint of segment
+mirror: equal length segments
+nsquare: consecutive vertices of square
+on_aline: equal angles
+on_aline2: equal angles
+on_bline: point on perpendicular bisector
+on_circle: point on circle
+on_line: point on line
+on_pline: point on parallel line
+on_tline: point on perpendicular line
+orthocenter: orthocenter of triangle
+parallelogram: parallelogram
+pentagon: pentagon
+psquare: consecutive vertices of square
+quadrangle: quadrilateral
+r_trapezoid: right angle trapezoid
+r_triangle: right triangle
+rectangle: rectangle
+reflect: reflection on line
+risos: right isosceles triangle
+s_angle: angle equal to
+segment: segment of line
+shift: shifted line
+square: square
+isquare: square
+trapezoid: trapezoid
+triangle: triangle
+triangle12: triangle with side of double length
+2l1c: two lines and one circle
+e5128: chord and tangent
+3peq: 3peq triangle
+trisect: trisect angle
+trisegment: trisect segment
+on_dia: on circle with diameter
+ieq_triangle: equilateral triangle
+on_opline: on extended segment
+cc_tangent0: two tangents to circle
+cc_tangent: two tangents to circle
+eqangle3: equal angles
+tangent: tangent
+on_circum: on circumference
