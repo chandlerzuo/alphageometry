@@ -162,6 +162,15 @@ python ~/reinforcement/alphageometry/LLM_finetuner/make_model_predictions.py \
     --model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/overfit_single_nocompl/gpt2_2ex \
     --out_filename ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/predictions/overfitsingle_{model_name}_{max_predict_samples}samples.txt \
     --max_new_tokens 70
+
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+python ~/reinforcement/alphageometry/LLM_finetuner/make_model_predictions.py \
+    --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_processed \
+    --dataset_test_name train \
+    --max_predict_samples 1 \
+    --model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/run_02052024/Llama-2-7b-chat-hf_1000ex_peftTrue \
+    --out_filename ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/predictions/overfitsingle_{model_name}_{max_predict_samples}samples.txt \
+    --max_new_tokens 70
 ```
 
 

@@ -4,7 +4,7 @@ import torch
 from transformers.trainer_utils import get_last_checkpoint
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from transformers import BitsAndBytesConfig
-# from peft import AutoPeftModelForCausalLM
+from peft import AutoPeftModelForCausalLM
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -37,7 +37,10 @@ def load_model_for_inference(model_checkpoints_dir):
     # model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
     bnb_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16)
     # bnb_config = None
-    model = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map="auto", quantization_config=bnb_config)
+    # fails when vocab size changes
+    # https://discuss.huggingface.co/t/loading-peft-model-from-checkpoint-leading-into-size-missmatch/71944
+    # model = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map="auto", quantization_config=bnb_config)
+    model = AutoPeftModelForCausalLM.from_pretrained(model_name_or_path, device_map="auto", quantization_config=bnb_config)
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path) # don't add eos_token since in generation mode
     tokenizer.padding_side = "left" # for auto-regressive generation
     logger.info(f"Loaded model")
