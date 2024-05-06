@@ -48,7 +48,14 @@ set -eux
 # module load cuda/12.1 # seems to mess up the path
 source ~/reinforcement/alphageometry/LLM_finetuner/copy_hf_model_to_ram.sh models--meta-llama--Llama-2-7b-chat-hf
 source ~/reinforcement/alphageometry/LLM_finetuner/copy_hf_model_to_ram.sh models--gpt2
-source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+#source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+
+# partha specific
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate base
+conda activate alpha_geo
+
+
 function accelerate_cmd() {
     accelerate launch --config_file ~/reinforcement/alphageometry/LLM_finetuner/example_accelerate_config.yaml --multi_gpu --num_processes "$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)" "$@"
 }
