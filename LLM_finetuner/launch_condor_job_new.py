@@ -39,11 +39,16 @@ def extract_condor_lines(input_file):
         condor_lines = [line[len(CONDOR_LINE_START):].strip() for line in file if line.startswith(CONDOR_LINE_START)]
     return condor_lines
 
-def get_jobfile_lines_for_executable(script_and_args):
+def get_jobfile_lines_for_executable(script_and_args, wait_for_others: bool):
     """
     Get extra lines to add to the job file.
     """
     executable, *script_args = script_and_args
+    
+    if wait_for_others:
+        script_args = (executable, tuple("$(Cluster) $(Process) $(NumRanks)".split(" "))) + script_args
+        executable = os.path.expanduser("~/reinforcement/alphageometry/LLM_finetuner/distributed_tests/condor_wait_for_others.sh")
+        # this script waits for the other jobs and sets useful environment variables
     
     # see here for double quotes for arguments: https://htcondor.readthedocs.io/en/latest/man-pages/condor_submit.html#arguments
     # this may still not be safe
@@ -55,7 +60,7 @@ def get_jobfile_lines_for_executable(script_and_args):
     Arguments = "{shlex.join(script_args)}"
     """)
     
-def get_extra_jobfile_content(script_and_args, time_limit, max_running_price):
+def get_extra_jobfile_content(script_and_args, time_limit, max_running_price, wait_for_others: bool):
     """
     Get lines to add to jobfile
     """
@@ -77,7 +82,13 @@ def get_extra_jobfile_content(script_and_args, time_limit, max_running_price):
             +RunningPriceExceededAction="kill"
             
         """)
-    return res + get_jobfile_lines_for_executable(script_and_args) + "\nqueue\n"
+    res += get_jobfile_lines_for_executable(script_and_args, wait_for_others=wait_for_others)
+    if "\nqueue" not in res:
+        res += "\nqueue\n"
+    else:
+        assert not wait_for_others, "only launching 1 job, so does not make sense to wait for others"
+        logging.info("Not adding 'queue' since already in file")
+    return res
     
 def create_job_script_filename(script_path, output_dir):
     """
@@ -186,7 +197,7 @@ def main(args):
             logging.error(f"Parent directory of jobfile {jobfile_name} does not exist.")
             sys.exit(1)
     
-    jobfile_content = "# parameters extracted from comments\n" + "\n".join(jobfile_lines) + "\n" + get_extra_jobfile_content(script_and_args, time_limit=args.time_limit, max_running_price=args.max_running_price)
+    jobfile_content = "# parameters extracted from comments\n" + "\n".join(jobfile_lines) + "\n" + get_extra_jobfile_content(script_and_args, time_limit=args.time_limit, max_running_price=args.max_running_price, wait_for_others=args.wait_for_others)
     jobfile_content += dedent(f"""\
     
     # Created on {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}
@@ -232,10 +243,13 @@ if __name__ == "__main__":
     parser.add_argument('condor_submit_args', nargs='+', help=f'Additional arguments to {CONDOR_SUBMIT_COMMAND}, should include a bid')
     parser.add_argument('--jobfile-name', '-o', type=Path, help="Filename to save the Condor job script to; if it is a directory, "
                         "a suitably named file will be created in the directory; defaults to a temporary directory", default=None)
+    # parser.add_argument('--submission-file', '-s', type=Path, help="Submission file, defaults to first file", default=None)
+    parser.add_argument('--dry', action='store_true', help="Don't actually submit the job, just print the job script")
+    
     parser.add_argument('--time_limit', type=int, help="Time limit for job in seconds (int)", default=None)
     parser.add_argument('--max_running_price', type=int, help="Maximum running price (int), < 0 sets no limit", default=100)
-    parser.add_argument('--no-binary-check', action='store_true', help="Don't check whether the script is not a binary file", default=False)
-    parser.add_argument('--dry', action='store_true', help="Don't actually submit the job, just print the job script")
+    parser.add_argument('--wait_for_others', action='store_true', help="Wait for other jobs to start and set appropriate env variables (for distributed setup)", default=False)
+    # parser.add_argument('--no-binary-check', action='store_true', help="Don't check whether the script is not a binary file", default=False)
      
      # nargs="*" does not parse arguments like "--port 8088" passed to script well since it thinks they are passed to this script
     parser.add_argument('---', nargs=argparse.REMAINDER, dest="script_and_args", required=True, help='The path to the script to run with condor and its arguments')

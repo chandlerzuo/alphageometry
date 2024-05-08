@@ -133,7 +133,12 @@ class SftScriptArgumentsExtra(SftScriptArguments):
                 "seem to do it even with eos_token); also adds token to model if not present"
         }
     )
-
+    extra_metadata: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "metadata, useful to show in wandb"
+        }
+    )
 if TRL_USE_RICH:
     # NOTE: ignored if using init_zero_verbose() because it calls logging.basicConfig already!!
     logging.basicConfig(format=FORMAT, datefmt="[%X]", handlers=[RichHandler()], level=logging.INFO)
@@ -142,10 +147,12 @@ if TRL_USE_RICH:
 if __name__ == "__main__":
     logger = logging
     
-    parser = TrlParser((SftScriptArgumentsExtra, TrainingArguments, ModelConfig))
+    parser = TrlParser((SftScriptArgumentsExtra, TrainingArguments, ModelConfig)) # do not subclass TrainingArguments because TrlParser YamlConfigParser hardcodes this class!
     # import sys; sys.argv = "python sft --overwrite_output_dir --output_dir runs.trl_sft --config /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_chat_finetune.yml".split(" ")
     print(f"Received the following args: {sys.argv}")
     args, training_args, model_config = parser.parse_args_and_config()
+    
+    os.environ["WANDB_PROJECT"] = "alphageom_verb" # used by WandbCallback
 
     # Force use our print callback
     if TRL_USE_RICH:
@@ -214,7 +221,11 @@ if __name__ == "__main__":
         # print(f"Adapted output dir to {output_dir}")
         output_dir.mkdir(exist_ok=True, parents=True)
         return str(output_dir)
+    run_name_was_default = (training_args.run_name == training_args.output_dir) # if run_name is not set, TrainingArguments.__post_init sets it to the output dir
     training_args.output_dir = adapt_output_dir(training_args.output_dir)
+    if run_name_was_default:
+        training_args.run_name = training_args.output_dir
+        logger.info(f"Also changed run name to {training_args.run_name}")
     
     def adapt_resume_from_checkpoint(resume_from_checkpoint):
         if resume_from_checkpoint == "latest_if_available":
@@ -233,6 +244,12 @@ if __name__ == "__main__":
         else:
             training_args.gradient_checkpointing_kwargs['use_reentrant'] = False
 
+    if args.extra_metadata is None:
+        # not working right now because it needs to be added to training_args (but not supported by TrlParser) to be logged to wandb
+        # training args will be uploaded as config to wandb
+        jobad_file = os.environ.get("_CONDOR_JOB_AD", None)
+        if jobad_file is not None:
+            args.extra_metadata = Path(jobad_file).read_text()
 
     # # this chat format is ChatML which is different from the tokenizer's one which may be optimized to the model, so we use that instead
     # model, tokenizer = setup_chat_format(model, tokenizer)

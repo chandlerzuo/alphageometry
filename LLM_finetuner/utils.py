@@ -62,25 +62,31 @@ def set_pad_token_if_not_set(model, tokenizer):
 
 def add_new_tokens_with_average_init(model, tokenizer, def_to_desc: Dict[str, str]):
     """
-    For each (key, value) of def_to_desc, add "[key]" as a new token and initialize to average 
+    For each (key, value) of def_to_desc, add "key" as a new token and initialize to average 
     embedding of tokens in value
     
     Only initializes if the tokens are not already present. If only some are present, it raises an error.
     
     Skips None's in values
     """
-    input_embeddings = model.get_input_embeddings()
-    output_embeddings = model.get_output_embeddings()
     prev_num_tokens = len(tokenizer)
 
-    tokenizer.add_tokens([f"[{defn}]" for defn in def_to_desc.keys()], special_tokens=True)
-    if len(tokenizer) != prev_num_tokens + len(def_to_desc):
-        assert len(tokenizer) == prev_num_tokens, \
-            f"some, but not all tokens are already part of the vocabulary, {len(tokenizer)} != {prev_num_tokens}"
-        logger.warning("Not initializing def tokens because they are already part of the vocabulary")
-        return
+    tokens = list(def_to_desc.keys())
+    token_ids = tokenizer.convert_tokens_to_ids(tokens)
+    def_to_desc = {token: def_to_desc[token] for (token, id) in zip(tokens, token_ids) if id == tokenizer.unk_token_id}
 
-    new_token, token_desc = list(def_to_desc.items())[0]
+    if len(def_to_desc) == 0:
+        logger.warning("All tokens are already part of the tokenizer, not modifying them")
+        return
+    
+    logger.warning(f"The following tokens are already known, ignoring them: {[token for (token, id) in zip(tokens, token_ids) if id != tokenizer.unk_token_id]}")
+    tokenizer.add_tokens([f"{defn}" for defn in def_to_desc.keys()], special_tokens=False)
+    assert len(tokenizer) == prev_num_tokens + len(def_to_desc)
+
+    logger.info(f"Vocabulary size: {len(tokenizer)}")
+    model.resize_token_embeddings(len(tokenizer))
+    input_embeddings = model.get_input_embeddings()
+    output_embeddings = model.get_output_embeddings()
 
     for (new_token, token_desc) in def_to_desc.items():
         if token_desc is None: continue
@@ -89,11 +95,10 @@ def add_new_tokens_with_average_init(model, tokenizer, def_to_desc: Dict[str, st
         ).mean(dim=0)
         
         token_id = tokenizer.convert_tokens_to_ids(new_token)
+        assert token_id != tokenizer.unk_token_id
+        # print(token_id, input_embeddings.weight.data.shape)
         input_embeddings.weight.data[token_id] = avg_embedding
         assert torch.all(input_embeddings.weight.data[token_id] == output_embeddings.weight.data[token_id]), "no weight tying, why?" # may try to set output embeddings
-        
-    logger.info(f"Vocabulary size: {len(tokenizer)}")
-    model.resize_token_embeddings(len(tokenizer))
     
 def setup_logging():
     logging.basicConfig(
