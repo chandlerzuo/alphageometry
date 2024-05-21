@@ -92,7 +92,7 @@ seed: 1
 data_seed: 2
 # enable_full_determinism: True # makes it slower
 
-dataloader_num_workers: 12
+dataloader_num_workers: 8 # recommended maximum, otherwise slow/freeze
 
 # max_seq_length: 2048
 

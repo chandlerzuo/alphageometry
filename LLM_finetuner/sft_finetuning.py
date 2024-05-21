@@ -205,6 +205,7 @@ if __name__ == "__main__":
     
     # adapt model_dir
     
+    # check hf token is available (for restricted models)
     if "HF_TOKEN" not in os.environ:
         default_token_path = os.environ.get("HF_HOME", os.path.expanduser("~/.cache/huggingface"))
         if (default_token_path is None) or (not (Path(default_token_path) / "token").exists()):

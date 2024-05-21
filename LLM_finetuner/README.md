@@ -135,6 +135,53 @@ function accelerate_cmd() {
     accelerate launch --config_file ~/reinforcement/alphageometry/LLM_finetuner/example_accelerate_config.yaml --multi_gpu --num_processes "$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)" "$@"
 }
 
+
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+python ~/reinforcement/alphageometry/LLM_finetuner/make_model_predictions.py \
+    --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_processed \
+    --dataset_test_name test \
+    --max_predict_samples 5 \
+    --model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/run_09052024/Llama-2-7b-chat-hf_-1ex_peftTrue \
+    --out_filename ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/predictions/run_09052024_{model_name}_{max_predict_samples}samples.txt \
+    --max_new_tokens 70
+    
+
+
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+python ~/reinforcement/alphageometry/LLM_finetuner/make_model_predictions.py \
+    --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_processed \
+    --dataset_test_name train \
+    --max_predict_samples 1 \
+    --model_name_or_path ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/run_09052024/gpt2_-1ex_peftTrue/ \
+    --out_filename ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/predictions/run_09052024_{model_name}_{max_predict_samples}samples.txt \
+    --max_new_tokens 70
+
+#--use_peft \
+
+#source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+source ~/reinforcement/alphageometry/LLM_finetuner/setup_env.sh
+num_train_samples=10
+run_dir_name=debug11
+python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
+  --overwrite_output_dir \
+  --per_device_train_batch_size 1 \
+  --per_device_eval_batch_size 1 \
+  --eval_steps 10 \
+  --model_name_or_path meta-llama/Llama-2-7b-chat-hf \
+  --max_eval_samples 400 \
+  --explicit_eos_str '[END]' \
+  --extra_tokens_file ~/reinforcement/alphageometry/assets/def-patterns-desc.yml \
+  --output_dir ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/${run_dir_name}/{model_name}_{max_train_samples}ex_peft{use_peft} \
+  --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_processed \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
+  --max_train_samples "$num_train_samples" \
+  --num_train_epochs 100000
+
+
+  
+
+
+
 accelerate_cmd \
   ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --overwrite_output_dir \

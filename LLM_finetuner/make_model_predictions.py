@@ -123,32 +123,33 @@ pipe = pipeline(
 
 break_nicely = lambda x: "\u23CE\n".join(textwrap.wrap(x)) # symbol "⏎" for line breaks
 # using a pipe/dataset is faster because GPU works in the background while writing to file
-# with open(filename_predictions_out, 'w') as f, redirect_stdout(f):
+logger.info(f"Writing to file '{filename_predictions_out}'")
+with open(filename_predictions_out, 'w') as f, redirect_stdout(f):
 # with nullcontext():
-for (out, question_prompt, gt_answer) in tqdm.tqdm(zip(pipe(dataset["question_prompt"]), dataset["question_prompt"], dataset["answer_only"])):
-    print("#"*80)
-    print("Query: ")
-    print(break_nicely(question_prompt))
-    print("Expected answer: ")
-    print(break_nicely(gt_answer))
-    # strips whitespace because generated text has leading and trailing whitespace
-    out_counted = collections.Counter([candidate["generated_text"].strip() for candidate in out])
-    gt_answer = gt_answer.strip()
-    print(f"Number of candidates that are equal to expected: {out_counted.get(gt_answer, 0)}")
-    print(f"Number of candidates that begin with expected:", sum(out_counted[key] for key in out_counted if key.startswith(gt_answer)))
-    # for (i, candidate) in enumerate(out):
-    #     candidate_text = candidate["generated_text"]
-    for (i, (candidate_text, count)) in enumerate(out_counted.items()):
-        # logger.info(f"Generated text: {candidate_text}")
-        # answer = extract_answer(candidate_text)
-        answer = candidate_text
-        print("#"*20 + f" Candidate {i+1} (appears {count} times) " + "#"*20)
-        extra = ""
-        # not perfect because tokenizing with question_prompt may lead to different tokenization
-        if len(tokenizer(answer)["input_ids"]) == max_new_tokens:
-            extra = " <MAX token length exceeded>"
-        print(break_nicely(answer) + extra)
-    # sys.stdout.flush()
+    for (out, question_prompt, gt_answer) in tqdm.tqdm(zip(pipe(dataset["question_prompt"]), dataset["question_prompt"], dataset["answer_only"])):
+        print("#"*80)
+        print("Query: ")
+        print(break_nicely(question_prompt))
+        print("Expected answer: ")
+        print(break_nicely(gt_answer))
+        # strips whitespace because generated text has leading and trailing whitespace
+        out_counted = collections.Counter([candidate["generated_text"].strip() for candidate in out])
+        gt_answer = gt_answer.strip()
+        print(f"Number of candidates that are equal to expected: {out_counted.get(gt_answer, 0)}")
+        print(f"Number of candidates that begin with expected:", sum(out_counted[key] for key in out_counted if key.startswith(gt_answer)))
+        # for (i, candidate) in enumerate(out):
+        #     candidate_text = candidate["generated_text"]
+        for (i, (candidate_text, count)) in enumerate(out_counted.items()):
+            # logger.info(f"Generated text: {candidate_text}")
+            # answer = extract_answer(candidate_text)
+            answer = candidate_text
+            print("#"*20 + f" Candidate {i+1} (appears {count} times) " + "#"*20)
+            extra = ""
+            # not perfect because tokenizing with question_prompt may lead to different tokenization
+            if len(tokenizer(answer)["input_ids"]) == max_new_tokens:
+                extra = " <MAX token length exceeded>"
+            print(break_nicely(answer) + extra)
+        # sys.stdout.flush()
 
-# logger.info(f"Written to file '{filename_predictions_out}'")
+logger.info(f"Wrote to file '{filename_predictions_out}'")
 # %%

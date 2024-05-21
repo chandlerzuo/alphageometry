@@ -98,7 +98,9 @@ def add_new_tokens_with_average_init(model, tokenizer, def_to_desc: Dict[str, st
         assert token_id != tokenizer.unk_token_id
         # print(token_id, input_embeddings.weight.data.shape)
         input_embeddings.weight.data[token_id] = avg_embedding
-        assert torch.all(input_embeddings.weight.data[token_id] == output_embeddings.weight.data[token_id]), "no weight tying, why?" # may try to set output embeddings
+        output_embeddings.weight.data[token_id] = avg_embedding
+        # llama2 without peft does not have weight tying
+        # assert torch.all(input_embeddings.weight.data[token_id] == output_embeddings.weight.data[token_id]), "no weight tying, why?" # may try to set output embeddings
     
 def setup_logging():
     logging.basicConfig(
