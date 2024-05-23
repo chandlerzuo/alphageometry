@@ -70,7 +70,7 @@ class RandomExpression:
 # Example usage:
 if __name__ == "__main__":
 
-    random_expr = RandomExpression(depth=2, seed=10)
+    random_expr = RandomExpression(depth=2, seed=1)
     print("Original:", random_expr.to_text())
     changed = random_expr.non_perturbing_intervention(random_expr.tree)
     if not changed:  # If no change has happened, force one
