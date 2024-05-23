@@ -1,4 +1,6 @@
-
+# Addition
+In the `Arithmetic` package there is a expression generator and evaluator. One can perform two types of interventions, 
+one that changes the expression and one that doesn't. Implementation details in [expression_generator.py](Arithmetic%2Fexpression_generator.py) 
 # Solving Olympiad Geometry without Human Demonstrations
 
 
