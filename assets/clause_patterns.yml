@@ -1,0 +1,143 @@
+
+#angle_bisector:
+#  - "{p0} is a point such that ∠{p1}{p2}{p0} = ∠{p0}{p2}{p3}. "
+#  - "{p0} is a point such that ∠{p1}{p2}{p0} is equal to ∠{p0}{p2}{p3}. "
+#angle_mirror:
+#    - "{p0} is a point such that ∠{p1}{p2}{p3} = ∠{p3}{p2}{p0}. "
+#    - "{p0} is a point such that ∠{p1}{p2}{p3} is equal to ∠{p3}{p2}{p0}. "
+#circle:
+#    - "{p0} is the centre of the circle that passes through {p1}, {p2}, {p3}. "
+#circumcenter:
+#    - "{p0} is the centre of the circumcenter of the triangle {p1}{p2}{p3}. "
+#eq_quadrangle:
+#    - "{p0}{p1}{p2}{p3} is a quadrilateral with {p0}{p3} = {p1}{p2}. "
+#eq_trapezoid:
+#    - "{p0}{p1}{p2}{p3} is an isosceles trapezoid with {p3}{p0} = {p1}{p2}. "
+#eq_triangle:
+#    - "{p0}{p1}{p2} is an equilateral triangle. "
+#eqangle2:
+#    - "{p0} is a point such that ∠{p2}{p1}{p0} = ∠{p0}{p3}{p2}. "
+#eqdia_quadrangle:
+#    - "{p0}{p1}{p2}{p3} is a quadrilateral whose diagonals are equal. "
+#eqdistance:
+#    - "{p0} is a point such that {p0}{p1} = {p2}{p3}. "
+#foot:
+#    - "{p0} is the foot of the perpendicular dropped on to {p2}{p3} from {p1}. "
+#free:
+#    - "{p0} is a point. "
+#incenter:
+#    - "{p0} is is the incentre of triangle {p1}{p2}{p3}. "
+#incenter2: # TODO(Partha): opportunity to augment! Symantic!  Also use respectively!
+#    - "{p3} is is the incentre of triangle {p4}{p5}{p6}. The incircle touches the arm {p4}{p5} at {p2}, the arm {p5}{p6} at {p0} and the arm {p6}{p4} at {p1}. "
+excenter: # TODO(Partha): opportunity to augment! Symantic!
+    - "{p0} is the excentre of triangle triangle {p1}{p2}{p3} opposite to the angle {p2}{p1}{p3}. "
+excenter2: # TODO(Partha): opportunity to augment! Symantic! Also use respectively!
+    - "{p3} is the excentre of triangle {p4}{p5}{p6} opposite to the angle {p5}{p4}{p6}. The excircle touches the arm {p4}{p5} at {p2}, the arm {p5}{p6} at {p0} and the arm {p6}{p4} at {p1}. "
+centroid: # TODO(Partha): opportunity to augment! Symantic! permuting the points of the arms.
+    - "{p4}{p5}{p6} is a triangle. {p3} is the centroid of the triangle and {p0}, {p1}, {p2} are the midpoints of the sides {p5}{p6}, {p4}{p6}, {p5}{p4} respectively. "
+ninepoints: # TODO(Partha): opportunity to augment! Symantic! permuting the points of the arms.
+    - "{p4}{p5}{p6} is a triangle. {p0}, {p1}, {p2} are the midpoints of the sides {p5}{p6}, {p4}{p6}, {p5}{p4} respectively. {p3} is the centre of the circumcircle of the triangle {p0}{p1}{p2}."
+intersection_cc: # TODO(Partha): opportunity to augment! Symantic! just describe in text
+    - "{p0}{p1}{p2}{p3} is a quadrilateral where {p1}{p3} = {p1}{p0} and {p2}{p3} = {p2}{p0}. "
+intersection_lc: # TODO(Partha): Understood better?
+    - "{p1}{p2}{p3} is a triangle. The circle drawn with the centre at {p2} and passing through {p3} intersects the (possibly extended) line {p1}{p3} again at point {p0}. "
+intersection_ll: # TODO(Partha, Felix): Mention they are not parallel?
+    - "Line {p1}{p2} and line {p3}{p4} intersect each other at {p0}. "
+intersection_lp: # intersection between line and a pair of parallel lines
+    - "{p4}{p5} and {p1}{p2}  are two non parallel lines. {p0} lies on {p1}{p2} but not on {p4}{p5} such that {p3}{p0} is parallel to {p4}{p5}. "
+intersection_lt: # TODO(Partha, Felix): Mention XC is not parallel to ab for this to make sense and therefore ab can't be
+    - "{p1}{p2} and {p4}{p5} are two non perpendicular lines. Line {p0}{p3} is perpendicular to {p4}{p5} it intersects line {p1}{p2} at {p0}. "
+    - "The line perpendicular to {p4}{p5} intersects the line {p1}{p2} at {p0}. "
+intersection_pp:  #TODO(Partha, Felix): The following is what I read from the defs! But what the hell is it trying to describe?
+    - "Line {p0}{p1} and line {p2}{p3} are parallel. Line {p4}{p0} and line {p5}{p6} are parallel. {p0} is the intersection point. "
+intersection_tt:  # TODO(Partha, Felix): This can be augmented nicely
+    - "{p2}{p3} and {p5}{p6} are two non parallel lines. {p0}{p1} and {p0}{p4} are perpendicular lines to the aforementioned lines respectively. The Perpendicular lines intersect at {p0}. "
+iso_triangle:  # TODO(Partha): Also add the angle equal description
+    - "{p0}{p1}{p2} is an isosceles triangle with base {p1}{p2}. "
+    - "{p0}{p1}{p2} is an isosceles triangle with {p0}{p1} = {p0}{p2}. "
+lc_tangent:  # TODO(Partha, Felix): Write this better
+    - "{p0}{p1} is the tangent to the circle centered on {p1}{p2} (possibly extended) and passing through {p1}. "
+    - "{p0}{p1} is perpendicular to {p1}{p2}"
+midpoint:
+    - "{p0} is the midpoint of {p1}{p2}. "
+mirror: # TODO(Partha, Felix): This is a bit confusing! Fix it! i mean how would it appear in geometry problems?
+    - "{p0} is the mirror image of {p1} in {p2}. "
+nsquare:  #TODO(Felix): Do you see a better way of saying it? Lets keep all we can think of! Look at p square
+    - "{p0}{p1}{p2} is an isosceles right angle triangle with ∠{p0}{p1}{p2} being the right angle. "
+on_aline:  # on same angle line
+    - "{p0} is a point such that ∠{p0}{p1}{p2} = ∠{p3}{p4}{p5}. "
+    - '{point1} is a point such that {angle1} = {angle2}. '
+on_aline2:
+    - "{p0} is a point such that ∠{p1}{p0}{p2} = ∠{p3}{p4}{p5}. "
+    - '{point1} is a point such that {angle1} = {angle2}. '
+on_bline:
+    - "{p0} lies on the perpendicular bisector of {p1}{p2}. "
+    - "{p0} is a point such that {p0}{p1} = {line1}. "
+on_circle:
+    - "{p0} lies on the circle centered are {p1} with radios {p1}{p2}. "
+on_line:
+    - "{p0} lies on line {p1}{p2}. "
+on_pline:  # on parallel line
+    - "{p0} is on the line passing through {p1} and parallel to {p2}{p3}. "
+on_tline:  # on perpendicular line
+    - "{p0} is a point such that {p0}{p1} is perpendicular to {p1}{p2}. "
+    - "{p0} lies on the perpendicular line to {p2}{p3} at {p1}. "
+orthocenter:
+    - "{p0} is the orthocenter of triangle {p1}{p2}{p3}. "
+parallelogram:
+    - "{p0}{p1}{p2}{p4} is a parallelogram. "
+pentagon:
+    - "{p0}{p1}{p2}{p3}{p4} is a pentagon. "
+psquare:  # from the definitions it is same as nsquare This troubling!
+    # TODO(Felix): Do you see a better way of saying it? Lets keep all we can think of! same as nsquare This troubling!
+    - "{p0}{p1}{p2} is an isosceles right angle triangle with ∠{p0}{p1}{p2} being the right angle. "
+quadrangle:
+    - "{p0}{p1}{p2}{p3} is a quadrangle. "
+    - "{p0}{p1}{p2}{p3} is a quadrilateral."
+r_trapezoid:
+  #TODO(Partha): Augment with different def of perp
+    - "{p0}{p1}{p2}{p3} is a right angle trapezoid. With {p0}{p1} ⊥ {p0}{p3}."
+r_triangle:
+    # TODO(Partha): Augment with different def of perp
+    - "{p0}{p1}{p2} is a triangle. With ∠{p1}{p0}{p2} being a right angle."
+rectangle:
+    - "{p0}{p1}{p2}{p3} is a rectangle. "
+reflect: # perhaps we don't have to augment it a lot as this seems to be a construction element
+    - "{p0} is the reflection of {p1} on {p2}{p3}. "
+risos:
+    #TODO(Partha): Augment with different def of perp
+    - "{p0}{p1}{p2} is a right angle isosceles triangle. With ∠{p1}{p0}{p2} as the right angle."
+s_angle:  # Assign that an angle is a constant degree
+    # TODO(Partha): This won't be sampled correctly in the clause creator. FIX this there!
+    - "∠{p0}{p1}{p2} is {p2} degree. "
+shift:
+    #TODO(Partha, Felix): This is not understood yet! Fix this!
+    - "{p0}{p1}{p2} is a triangle. "
+square:  # strange redefinition in isquare  # Attention!
+    - "{p0}{p1}{p2}{p3} is a square. "
+isquare:  # strange redefinition in square  # Attention!
+    - "{p0}{p1}{p2}{p3} is a square. "
+trapezoid:
+    - "{p0}{p1}{p2}{p3} is a trapezoid. "
+triangle:
+    - "{p0}{p1}{p2} is a triangle. "
+triangle12:  # Strange cache! # Attention!
+    # TODO(Partha): Write more naturally! And this happens so often that there is a separate definition fo this?!
+    - "{p0}{p1}{p2} is a triangle. With {p0}{p1} : {p0}{p2} = 1 : 2. "
+2l1c:  # Acircle touching two lines and another circle
+    # TODO(Partha, Felix): Verify and Augment.
+    - "{p4}{p6} is a line {p5}{p6} is another line. A circle centered at {p7} passes through {p4} and touches {p5}. A circle centered at {p3} touches {p4}{p6} at {p0}, {p5}{p7} at {p1} and the circle centered at {p7} at {p2} respectively. "
+e5128:
+    # TODO(Partha, Felix): Verify and Augment. Attention! Might be WRONG!
+    # Did not write the equal angles!
+    - "{p3}{p0}{p5} are points on a circle centered at {p4}. {p2}{p3} is tangent to the circle at {p3}. The line {p0}{p5} intersects {p2}{p3} at {p1}. "
+
+
+
+
+
+
+
+
+
+

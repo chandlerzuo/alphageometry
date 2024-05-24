@@ -13,7 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Numerical representation of geometry."""
+"""
+Visual/numerical representation of geometry by assigning concrete coordinates to points.
+Methods to find things such as intersections between lines, tangents to circles; as well as drawing utils.
+"""
 from __future__ import annotations
 
 import math
@@ -27,7 +30,11 @@ import numpy as np
 from numpy.random import uniform as unif  # pylint: disable=g-importing-member
 
 
-matplotlib.use('TkAgg')
+try:
+  matplotlib.use('TkAgg')
+except ImportError:
+  # TODO: Why take interractive backend?
+  print('non-interactive matplotlib backend')
 
 
 ATOM = 1e-12
@@ -622,7 +629,9 @@ def check_aconst(args: list[Point]) -> bool:
 
 
 def check(name: str, args: list[Union[gm.Point, Point]]) -> bool:
-  """Numerical check."""
+  """Numerical check that a constraint is satisfied, e.g.,
+  equal angle by computing angle with point coordinates substituted.
+  """
   if name == 'eqangle6':
     name = 'eqangle'
   elif name == 'eqratio6':

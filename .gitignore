@@ -1,9 +1,15 @@
+wandb/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
+venv3/
+meliad_lib/
+ag_ckpt_vocab/
+
 .idea/
+data/
 
 # Distribution / packaging
 .Python
@@ -24,3 +30,5 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+demo.csv
+sync_to_mpi_cluster.sh

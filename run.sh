@@ -17,17 +17,38 @@
 set -e
 set -x
 
-virtualenv -p python3 .
-source ./bin/activate
+# check if venv3 dir exists
+# install=[-d venv3] && echo 1 || echo 0
+install=0
 
-pip install --require-hashes -r requirements.txt
 
-gdown --folder https://bit.ly/alphageometry
 DATA=ag_ckpt_vocab
-
 MELIAD_PATH=meliad_lib/meliad
-mkdir -p $MELIAD_PATH
-git clone https://github.com/google-research/meliad $MELIAD_PATH
+
+if [ $install -eq 1 ]; then
+  echo "Installing env"  
+
+  # virtualenv -p python3 .
+  python3 -m venv venv3
+  source ./venv3/bin/activate
+
+  # does not work due to etils package
+  pip install --upgrade pip
+  pip install --require-hashes -r requirements.txt
+  # pip install -r requirements.txt
+  # pip install -r requirements.in # without hashes
+
+  # see https://github.com/google-deepmind/alphageometry/issues/6
+  pip install --upgrade gdown
+
+  gdown --folder https://bit.ly/alphageometry # for data
+
+  mkdir -p $MELIAD_PATH
+  git clone https://github.com/google-research/meliad $MELIAD_PATH
+
+fi
+
+source ./venv3/bin/activate
 export PYTHONPATH=$PYTHONPATH:$MELIAD_PATH
 
 DDAR_ARGS=(
