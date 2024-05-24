@@ -1,0 +1,12 @@
+#condor_submit_bid 50 ~/reinforcement/alphageometry/LLM_finetuner/distributed_tests/old_test.sub
+request_cpus=1
+request_memory=2000
+# request_disk=1G
++JobBatchName = "test_distributed"
+log = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).log
+output = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).out
+error = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).err
+executable = /usr/bin/echo
+Arguments = Hello $(Cluster) $(ExtraArg)
+
+queue

@@ -1,0 +1,16 @@
+#condor_submit_bid 50 ~/reinforcement/alphageometry/LLM_finetuner/distributed_tests/distributed_accelerate_example.sub
+request_cpus=1
+request_memory=16000
+request_disk=1G
++JobBatchName = "test_distributed"
+log = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).log
+output = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).out
+error = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).err
+request_gpus=1
+#requirements = (TARGET.CUDAGlobalMemoryMb > 50000) && (Machine != "g101.internal.cluster.is.localnet")
+NumRanks = 2
++WantIOProxy = true
+Executable = $ENV(HOME)/reinforcement/alphageometry/LLM_finetuner/distributed_tests/condor_wait_for_others.sh
+AccelerateExecutable = $ENV(HOME)/reinforcement/alphageometry/LLM_finetuner/distributed_tests/launch_distributed_accelerate.sh $ENV(HOME)/reinforcement/alphageometry/LLM_finetuner/distributed_tests/wait_for_everyone.py
+Arguments = $(Cluster) $(Process) $(NumRanks) $(AccelerateExecutable)
+queue $(NumRanks)

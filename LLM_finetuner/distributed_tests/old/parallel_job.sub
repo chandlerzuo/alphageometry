@@ -1,0 +1,16 @@
+universe=parallel
+machine_count = 2
+Executable = /bin/cat
+Arguments = Num nodes: $(Node) $(Process) $(ProcId) $$(Process) $$(ProcId) $$(Node)
+request_cpus=1
+request_memory=16000
+request_disk=1G
++JobBatchName = "test_distributed"
+log = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).log
+output = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).out
+error = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).err
+# request_gpus=1
+requirements = (TARGET.CUDAGlobalMemoryMb > 50000) && (Machine != "g101.internal.cluster.is.localnet")
+
+queue
+# condor_submit_bid 200 /home/mmordig/reinforcement/alphageometry/LLM_finetuner/tests/parallel_job.sub
