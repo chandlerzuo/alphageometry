@@ -1,3 +1,5 @@
+from math import sqrt
+
 class add:
     def __init__(self):
         self.commutative = True
@@ -26,36 +28,27 @@ class div:
     def __call__(self, x, y):
         return x / y
 
-class bin_op1:
+class risky_trick:
     def __init__(self):
         self.commutative = False
 
     def __call__(self, x, y):
-        if y == 0:
-            y += 1e-7
-        return 3 * 2 / y - (8 + 8 + x / y) + (10 + (x + 2) - (6 - y / (9 - 4)))
+        z = x^2 + 3*y - 4*x*y + 5
+        if z < 0:
+            z = 0
+        return sqrt(z)
 
-class bin_op2:
-    def __init__(self):
-        self.commutative = False
-
-    def __call__(self, x, y):
-        if y == 0:
-            y += 1e-7
-        if x == 0:
-            x += 1e-7
-        return 2 / y + 10 + (6 - x * (9 - 4)) + (2 / y / x - 7 / x / (x / y))
-
-class trin_op1:
+class p_exp:
+    # explodes when Z = 4 so potentially explosive
     def __init__(self):
         self.commutative = False
 
     def __call__(self, x, y, z):
-        if y == 0:
+        if z == 4:
             y += 1e-7
-        return z * 2 / y - (z + 8 + x / y) + (z + (x + 2) - (6 - y / (9 - 4))) + z
+        return (x + 3*y) / (z - 4)
 
-class quat_op1:
+class leap_of_faith:
     def __init__(self):
         self.commutative = False
 
@@ -63,3 +56,4 @@ class quat_op1:
         if y == 0:
             y += 1e-7
         return w * 2 / y - (w + 8 + z / y) + (z + (x + 2) - (6 - y / (9 - 4))) + w
+
