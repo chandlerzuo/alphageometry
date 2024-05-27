@@ -110,6 +110,15 @@ python ~/reinforcement/alphageometry/LLM_finetuner/create_dataset.py \
     ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_small_processed
 ```
 
+New:
+```
+python ~/reinforcement/alphageometry/LLM_finetuner/convert_dataset.py \
+    ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_small \
+    ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_small_arrow
+
+ln -s ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_small_arrow ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_arrow
+```
+
 ## Fine-Tuning
 Train the model on GPUs:
 
@@ -177,6 +186,28 @@ python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
   --max_train_samples "$num_train_samples" \
   --num_train_epochs 100000
 
+
+
+
+source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+num_train_samples=10
+run_dir_name=debug112
+python ~/reinforcement/alphageometry/LLM_finetuner/sft_finetuning.py \
+  --overwrite_output_dir \
+  --use_peft \
+  --per_device_train_batch_size 64 \
+  --per_device_eval_batch_size 64 \
+  --model_name_or_path gpt2 \
+  --eval_steps 10 \
+  --evaluation_strategy steps \
+  --max_eval_samples 400 \
+  --explicit_eos_str '[END]' \
+  --extra_tokens_file ~/reinforcement/alphageometry/assets/def-patterns-desc.yml \
+  --output_dir ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/training/${run_dir_name}/{model_name}_{max_train_samples}ex_peft{use_peft} \
+  --dataset_name ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_arrow \
+  --config ~/reinforcement/alphageometry/LLM_finetuner/trl_sft_config.yml \
+  --max_train_samples "$num_train_samples" \
+  --num_train_epochs 100000
 
   
 

@@ -49,6 +49,7 @@ python examples/scripts/sft.py \
     --lora_alpha=16
 """
 from dataclasses import asdict, dataclass, field
+import functools
 import logging
 import os
 from contextlib import nullcontext
@@ -57,8 +58,10 @@ from typing import Optional
 import yaml
 import sys
 
-from LLM_finetuner.utils import set_pad_token_if_not_set, subset_dataset, get_model_name_from_name_or_path, add_new_tokens_with_average_init
-from LLM_finetuner.question_answer_utils import get_question_answer_to_chat_formatter, response_template
+import LLM_finetuner
+from LLM_finetuner.dataset import create_inputs_labels_for_generation, format_question_answer_batch_for_training, replace_words_with_tokens
+from LLM_finetuner.utils import check_hf_token_available, set_pad_token_if_not_set, subset_dataset, get_model_name_from_name_or_path, add_new_tokens_with_average_init
+from LLM_finetuner.question_answer_utils import extract_question_answer, get_question_answer_to_chat_formatter, response_template
 
 # TRL_USE_RICH = os.environ.get("TRL_USE_RICH", False)
 TRL_USE_RICH = True
@@ -79,6 +82,7 @@ from tqdm.rich import tqdm
 from transformers import AutoTokenizer, TrainingArguments, AutoModelForCausalLM
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.models.llama import tokenization_llama_fast
+from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments, GenerationConfig
 
 from trl import (
     ModelConfig,
@@ -144,15 +148,31 @@ if TRL_USE_RICH:
     logging.basicConfig(format=FORMAT, datefmt="[%X]", handlers=[RichHandler()], level=logging.INFO)
 
 
-if __name__ == "__main__":
-    logger = logging
+logger = logging
+def adapt_resume_from_checkpoint(resume_from_checkpoint, output_dir):
+    if resume_from_checkpoint == "latest_if_available":
+        # passing resume_from_checkpoint=True will fail if no checkpoint exists
+        # so "latest_if_available" loads the most recent one if one exists
+        resume_from_checkpoint = get_last_checkpoint(output_dir) # may be None if nothing found
+        logger.info(f"Resuming from previous checkpoint {resume_from_checkpoint} (None means from scratch)")
+    return resume_from_checkpoint
+
+def main():
     
     parser = TrlParser((SftScriptArgumentsExtra, TrainingArguments, ModelConfig)) # do not subclass TrainingArguments because TrlParser YamlConfigParser hardcodes this class!
     # import sys; sys.argv = "python sft --overwrite_output_dir --output_dir runs.trl_sft --config /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/trl_chat_finetune.yml".split(" ")
     print(f"Received the following args: {sys.argv}")
     args, training_args, model_config = parser.parse_args_and_config()
+    training_args.generation_config = GenerationConfig(predict_with_generate=True, max_new_tokens=70, num_beams=2) #todo
+    training_args.predict_with_generate = True
+    training_args.generation_max_length = None
+    training_args.generation_num_beams = None
+    
+    # adapt model_dir
+    check_hf_token_available()
     
     os.environ["WANDB_PROJECT"] = "alphageom_verb" # used by WandbCallback
+    os.environ["TOKENIZERS_PARALLELISM"] = "false" # to avoid warnings
 
     # Force use our print callback
     if TRL_USE_RICH:
@@ -182,9 +202,11 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained(model_config.model_name_or_path, use_fast=True, add_eos_token=True)
     # tokenizer.pad_token = tokenizer.eos_token
     set_pad_token_if_not_set(model, tokenizer)
+    def_to_desc = None
     if args.extra_tokens_file is not None:
         logger.info(f"Loading extra tokens from '{args.extra_tokens_file}'")
         def_to_desc = yaml.safe_load(args.extra_tokens_file.read_text())
+        def_to_desc = {f"[{key}]": value for (key, value) in def_to_desc.items()}
         logger.info(f"Vocabulary length before: {len(tokenizer)}")    
         add_new_tokens_with_average_init(model, tokenizer, def_to_desc)
         logger.info(f"Vocabulary length after: {len(tokenizer)}")    
@@ -192,27 +214,40 @@ if __name__ == "__main__":
     ################
     # Dataset
     ################
-    # raw_datasets = load_dataset(args.dataset_name)
-    logger.info("Loading raw dataset")
-    raw_datasets = load_from_disk(args.dataset_name)
-    logger.info("Loaded raw dataset")
+    assert args.dataset_text_field == "text"
+    logger.info("Loading dataset")
+    raw_datasets = load_dataset(args.dataset_name)
+    logger.info(raw_datasets)
+    if def_to_desc is not None:
+        geom_tokens = sorted(list(def_to_desc.keys()), key=lambda x: -len(x))
+        raw_datasets = raw_datasets.map(lambda x: {"fl_statement": replace_words_with_tokens(x["fl_statement"], geom_tokens)}, num_proc=8)
+    
+    # raw_datasets = load_from_disk(args.dataset_name)
+    # logger.info("Loaded raw dataset")
+    train_dataset = raw_datasets[args.dataset_train_name].map(
+        functools.partial(format_question_answer_batch_for_training, tokenizer=tokenizer), 
+        batched=True
+    )
+    eval_dataset = create_inputs_labels_for_generation(raw_datasets[args.dataset_test_name], tokenizer=tokenizer)
 
     train_dataset = raw_datasets[args.dataset_train_name]
     eval_dataset = raw_datasets[args.dataset_test_name]
     
     train_dataset = subset_dataset(train_dataset, args.max_train_samples)
     eval_dataset = subset_dataset(eval_dataset, args.max_eval_samples)
+    eval_dataset = eval_dataset.map(
+        lambda x: {args.dataset_text_field: "### Question: " + extract_question_answer(x[args.dataset_text_field])[0]}
+    )
     
-    # adapt model_dir
+    print(f"Example datapoints train: {train_dataset[:2]}")
+    print(f"Example datapoints eval: {eval_dataset[:2]}")
     
-    # check hf token is available (for restricted models)
-    if "HF_TOKEN" not in os.environ:
-        default_token_path = os.environ.get("HF_HOME", os.path.expanduser("~/.cache/huggingface"))
-        if (default_token_path is None) or (not (Path(default_token_path) / "token").exists()):
-            # cannot access restricted models
-            logger.warning("HF_TOKEN not available on remote machine")
-        
-    def adapt_output_dir(output_dir):
+    args.explicit_eos_str = LLM_finetuner.dataset.END_TOKEN
+    logger.info(f"using eos token {args.explicit_eos_str} instead")
+    tokenizer.add_tokens(args.explicit_eos_str, special_tokens=True)
+    model.resize_token_embeddings(len(tokenizer))
+    
+    def format_output_dir_path(output_dir):
         # output_dir = Path(output_dir) / get_model_name_from_name_or_path(model_config.model_name_or_path)
         output_dir = Path(output_dir.format(
             model_name=get_model_name_from_name_or_path(model_config.model_name_or_path),
@@ -223,19 +258,12 @@ if __name__ == "__main__":
         output_dir.mkdir(exist_ok=True, parents=True)
         return str(output_dir)
     run_name_was_default = (training_args.run_name == training_args.output_dir) # if run_name is not set, TrainingArguments.__post_init sets it to the output dir
-    training_args.output_dir = adapt_output_dir(training_args.output_dir)
+    training_args.output_dir = format_output_dir_path(training_args.output_dir)
     if run_name_was_default:
         training_args.run_name = training_args.output_dir
         logger.info(f"Also changed run name to {training_args.run_name}")
     
-    def adapt_resume_from_checkpoint(resume_from_checkpoint):
-        if resume_from_checkpoint == "latest_if_available":
-            # passing resume_from_checkpoint=True will fail if no checkpoint exists
-            # so "latest_if_available" loads the most recent one if one exists
-            resume_from_checkpoint = get_last_checkpoint(training_args.output_dir) # may be None if nothing found
-            logger.info(f"Resuming from previous checkpoint {resume_from_checkpoint} (None means from scratch)")
-        return resume_from_checkpoint
-    training_args.resume_from_checkpoint = adapt_resume_from_checkpoint(training_args.resume_from_checkpoint)
+    training_args.resume_from_checkpoint = adapt_resume_from_checkpoint(training_args.resume_from_checkpoint, output_dir=training_args.output_dir)
     
     if training_args.gradient_checkpointing:
         # still seems to be an issue, https://github.com/huggingface/transformers/issues/26969
@@ -245,67 +273,69 @@ if __name__ == "__main__":
         else:
             training_args.gradient_checkpointing_kwargs['use_reentrant'] = False
 
-    if args.extra_metadata is None:
-        # not working right now because it needs to be added to training_args (but not supported by TrlParser) to be logged to wandb
-        # training args will be uploaded as config to wandb
-        jobad_file = os.environ.get("_CONDOR_JOB_AD", None)
-        if jobad_file is not None:
-            args.extra_metadata = Path(jobad_file).read_text()
+    # if args.extra_metadata is None:
+    #     # not working right now because it needs to be added to training_args (but not supported by TrlParser) to be logged to wandb
+    #     # training args will be uploaded as config to wandb
+    #     jobad_file = os.environ.get("_CONDOR_JOB_AD", None)
+    #     if jobad_file is not None:
+    #         args.extra_metadata = Path(jobad_file).read_text()
 
     # # this chat format is ChatML which is different from the tokenizer's one which may be optimized to the model, so we use that instead
     # model, tokenizer = setup_chat_format(model, tokenizer)
 
-    print(f"Example training data: {train_dataset[:2][args.dataset_text_field]}")
+    # print(f"Example training data before transformations: {train_dataset[:2][args.dataset_text_field]}")
     
-    if tokenizer.chat_template is not None:
-        logger.info("Detected chat model, formatting according to chat template")
-        # assumes user-assistant roles
-        formatting_func = get_question_answer_to_chat_formatter(tokenizer, text_column=args.dataset_text_field)
-        args.dataset_text_field = None
+    # if tokenizer.chat_template is not None:
+    #     logger.info("Detected chat model, formatting according to chat template")
+    #     # assumes user-assistant roles
+    #     formatting_func = get_question_answer_to_chat_formatter(tokenizer, text_column=args.dataset_text_field)
+    #     args.dataset_text_field = None
         
-        if args.train_completions_only:
+    #     if args.train_completions_only:
             
-            # example to see format
-            # model_name_or_path = "meta-llama/Llama-2-7b-chat-hf"
-            # # model_name_or_path = "meta-llama/Llama-2-7b-hf"
-            # tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)#, add_eos_token=True)
-            # # inputs = "Hello world"
-            # inputs = [
-            #     {"role": "system", "content": "System"},
-            #     # must be ordered as user-assistant alternating sequence
-            #     {"role": "user", "content": "Question1"},
-            #     {"role": "assistant", "content": "Answer1"},
-            #     {"role": "user", "content": "Question2"},
-            #     {"role": "assistant", "content": "Answer2"},
-            # ]
-            # print(tokenizer.apply_chat_template(inputs, tokenize=False))
+    #         # example to see format
+    #         # model_name_or_path = "meta-llama/Llama-2-7b-chat-hf"
+    #         # # model_name_or_path = "meta-llama/Llama-2-7b-hf"
+    #         # tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)#, add_eos_token=True)
+    #         # # inputs = "Hello world"
+    #         # inputs = [
+    #         #     {"role": "system", "content": "System"},
+    #         #     # must be ordered as user-assistant alternating sequence
+    #         #     {"role": "user", "content": "Question1"},
+    #         #     {"role": "assistant", "content": "Answer1"},
+    #         #     {"role": "user", "content": "Question2"},
+    #         #     {"role": "assistant", "content": "Answer2"},
+    #         # ]
+    #         # print(tokenizer.apply_chat_template(inputs, tokenize=False))
             
-            assert isinstance(tokenizer, tokenization_llama_fast.LlamaTokenizerFast), "only supported for llama currently"
-            response_template = tokenization_llama_fast.E_INST # [/INST]
-            instruction_template = tokenization_llama_fast.B_INST + tokenizer.bos_token # [INST]<s>
-            logger.info(f"Using instruction_template '{instruction_template}', response_template '{response_template}'")
-    else:
-        instruction_template = None
-        # if model_config.model_name_or_path == "gpt2":
-        orig_dataset_text_field = args.dataset_text_field # will be set to None later
-        formatting_func = lambda elem: elem[orig_dataset_text_field]
-        args.dataset_text_field = None
+    #         assert isinstance(tokenizer, tokenization_llama_fast.LlamaTokenizerFast), "only supported for llama currently"
+    #         response_template = tokenization_llama_fast.E_INST # [/INST]
+    #         instruction_template = tokenization_llama_fast.B_INST + tokenizer.bos_token # [INST]<s>
+    #         logger.info(f"Using instruction_template '{instruction_template}', response_template '{response_template}'")
+    # else:
+    #     instruction_template = None
+    #     # if model_config.model_name_or_path == "gpt2":
+    #     orig_dataset_text_field = args.dataset_text_field # will be set to None later
+    #     formatting_func = lambda elem: elem[orig_dataset_text_field]
+    #     args.dataset_text_field = None
         
-    if args.explicit_eos_str is not None:
-        assert formatting_func is not None
-        old_formatting_func = formatting_func
-        formatting_func = lambda batch: [(x + " " + args.explicit_eos_str) for x in old_formatting_func(batch)]
+    # if args.explicit_eos_str is not None:
+    #     assert formatting_func is not None
+    #     old_formatting_func = formatting_func
+    #     formatting_func = lambda batch: [(x + " " + args.explicit_eos_str) for x in old_formatting_func(batch)]
         
-        tokenizer.add_tokens(args.explicit_eos_str, special_tokens=True)
-        model.resize_token_embeddings(len(tokenizer))
+    #     tokenizer.add_tokens(args.explicit_eos_str, special_tokens=True)
+    #     model.resize_token_embeddings(len(tokenizer))
         
-    print(f"Example datapoints: {formatting_func(train_dataset[:2])}")
-        
-    data_collator = None
-    if args.train_completions_only:
-        logger.info("Training on completions only")
-        assert not args.packing, "cannot use packing when training on completions"
-        data_collator = DataCollatorForCompletionOnlyLM(response_template=response_template, instruction_template=instruction_template, tokenizer=tokenizer)
+    # print(f"Example datapoints: {formatting_func(train_dataset[:2])}")
+    
+    formatting_func = None
+    assert not args.train_completions_only
+    # data_collator = None
+    # if args.train_completions_only:
+    #     logger.info("Training on completions only")
+    #     assert not args.packing, "cannot use packing when training on completions"
+    #     data_collator = DataCollatorForCompletionOnlyLM(response_template=response_template, instruction_template=instruction_template, tokenizer=tokenizer)
 
     ################
     # Optional rich context managers
@@ -317,11 +347,24 @@ if __name__ == "__main__":
         else console.status(f"[bold green]Training completed! Saving the model to {training_args.output_dir}")
     )
 
+    class SFTSeq2SeqTrainer(SFTTrainer, Seq2SeqTrainer):
+        def __init__(self, *args, **kwargs):
+            SFTTrainer.__init__(self, *args, **kwargs)
+            
+            # copied from Seq2SeqTrainer.__init__
+            # Override self.model.generation_config if a GenerationConfig is specified in args.
+            # Priority: args.generation_config > model.generation_config > default GenerationConfig.
+            if self.args.generation_config is not None:
+                gen_config = self.load_generation_config(self.args.generation_config)
+                self.model.generation_config = gen_config
+        
+            
     ################
     # Training
     ################
     with init_context:
-        trainer = SFTTrainer(
+        # trainer = SFTTrainer(
+        trainer = SFTSeq2SeqTrainer(
             # model=model_config.model_name_or_path,
             # model_init_kwargs=model_kwargs,
             model=model,
@@ -337,14 +380,18 @@ if __name__ == "__main__":
             callbacks=[RichProgressCallback] if TRL_USE_RICH else None,
         )
 
-    # trainer.train(resume_from_checkpoint=Path(training_args.output_dir).exists())
-    trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
+    return trainer, training_args.resume_from_checkpoint
+    # # trainer.train(resume_from_checkpoint=Path(training_args.output_dir).exists())
+    # trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
     
-    # trainer.train(resume_from_checkpoint=False) # todo
+    # # trainer.train(resume_from_checkpoint=False) # todo
 
-    with save_context:
-        trainer.save_model(training_args.output_dir)
+    # with save_context:
+    #     trainer.save_model(training_args.output_dir)
         
-    logger.info(f"Trained model starting from '{model_config.model_name_or_path}' for {training_args.num_train_epochs}")
-    logger.info(f"Saved model to '{training_args.output_dir}'")
-    logger.info("Done with SFT training")
+    # logger.info(f"Trained model starting from '{model_config.model_name_or_path}' for {training_args.num_train_epochs}")
+    # logger.info(f"Saved model to '{training_args.output_dir}'")
+    # logger.info("Done with SFT training")
+
+if __name__ == "__main__":
+    main()

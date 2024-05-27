@@ -10,12 +10,12 @@ alias launch_condor_job="~/reinforcement/alphageometry/LLM_finetuner/condor_subm
     ~/reinforcement/alphageometry/LLM_finetuner/accelerate_launch_singlenode.sh"
     # --dry \
 
-# distributed setup
-alias launch_condor_job="~/reinforcement/alphageometry/LLM_finetuner/condor_submit_with_extra_args.py 100 \
-    --submission-file ~/reinforcement/alphageometry/LLM_finetuner/sft_distributed.sub \
-    --- \
-    ~/reinforcement/alphageometry/LLM_finetuner/setup_env.sh \
-    ~/reinforcement/alphageometry/LLM_finetuner/accelerate_launch_distributed.sh"
+# # distributed setup
+# alias launch_condor_job="~/reinforcement/alphageometry/LLM_finetuner/condor_submit_with_extra_args.py 100 \
+#     --submission-file ~/reinforcement/alphageometry/LLM_finetuner/sft_distributed.sub \
+#     --- \
+#     ~/reinforcement/alphageometry/LLM_finetuner/setup_env.sh \
+#     ~/reinforcement/alphageometry/LLM_finetuner/accelerate_launch_distributed.sh"
     # --dry \
 
 # run_dir_name=run_03052024

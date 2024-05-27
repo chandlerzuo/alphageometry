@@ -72,6 +72,12 @@ per_device_train_batch_size: 64
 per_device_eval_batch_size: 64
 # auto_find_batch_size: True
 
+# not working
+# generation_config:
+#   predict_with_generate: True
+#   generation_max_length: 70
+#   generation_num_beams: 2
+
 # neftune_noise_alpha: 5 # add noise to input embeddings
 
 # num_processes: 2 # number of GPUs to use

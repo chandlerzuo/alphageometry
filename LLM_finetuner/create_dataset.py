@@ -83,7 +83,7 @@ dataset = DatasetDict({
     "test": dataset_eval["test"],
 })
 
-logger.info(f"""Dataset: {dataset, dataset["train"][:2]}""")
+logger.info(f"""Dataset example datapoints: {dataset, dataset["train"][:2]}""")
 
 # num_shards = min(num_input_files, 1024)
 dataset.save_to_disk(dataset_output_dir, num_proc=8)#, num_shards={split: num_shards for split in dataset.keys()})

@@ -1,4 +1,6 @@
 import logging
+import os
+from pathlib import Path
 import sys
 from typing import Dict
 import torch
@@ -48,6 +50,14 @@ def load_model_for_inference(model_checkpoints_dir):
     
     return model, tokenizer
 
+def check_hf_token_available():
+    """check hf token is available (for restricted models)"""
+    if "HF_TOKEN" not in os.environ:
+        default_token_path = os.environ.get("HF_HOME", os.path.expanduser("~/.cache/huggingface"))
+        if (default_token_path is None) or (not (Path(default_token_path) / "token").exists()):
+            # cannot access restricted models
+            logger.warning("HF_TOKEN not available on remote machine")
+            
 def set_pad_token_if_not_set(model, tokenizer):
     if (tokenizer.pad_token is None) or (tokenizer.eos_token == tokenizer.pad_token):
         # padding token should be distinct from eos_token since it gets ignored in the loss, so
@@ -71,17 +81,27 @@ def add_new_tokens_with_average_init(model, tokenizer, def_to_desc: Dict[str, st
     """
     prev_num_tokens = len(tokenizer)
 
-    tokens = list(def_to_desc.keys())
-    token_ids = tokenizer.convert_tokens_to_ids(tokens)
-    def_to_desc = {token: def_to_desc[token] for (token, id) in zip(tokens, token_ids) if id == tokenizer.unk_token_id}
+    def remove_known_tokens(def_to_desc):
+        tokens = list(def_to_desc.keys())
+        token_ids = tokenizer.convert_tokens_to_ids(tokens)
+        def_to_desc = {token: def_to_desc[token] for (token, id) in zip(tokens, token_ids) if id == tokenizer.unk_token_id}
 
-    if len(def_to_desc) == 0:
-        logger.warning("All tokens are already part of the tokenizer, not modifying them")
-        return
+        if len(def_to_desc) == 0:
+            logger.warning("All tokens are already part of the tokenizer, not modifying them")
+            return None
+        
+        known_tokens = [token for (token, id) in zip(tokens, token_ids) if id != tokenizer.unk_token_id]
+        if len(known_tokens) > 0:
+            logger.warning(f"The following tokens are already known, ignoring them: {known_tokens}")
+        # no special tokens, because special tokens are never split (desired) and can also be omitted in the output (undesired)
+        tokenizer.add_tokens([defn for defn in def_to_desc.keys()], special_tokens=False)
+        assert len(tokenizer) == prev_num_tokens + len(def_to_desc)
+        
+        return def_to_desc
     
-    logger.warning(f"The following tokens are already known, ignoring them: {[token for (token, id) in zip(tokens, token_ids) if id != tokenizer.unk_token_id]}")
-    tokenizer.add_tokens([f"{defn}" for defn in def_to_desc.keys()], special_tokens=False)
-    assert len(tokenizer) == prev_num_tokens + len(def_to_desc)
+    def_to_desc = remove_known_tokens(def_to_desc)
+    if def_to_desc is None:
+        return
 
     logger.info(f"Vocabulary size: {len(tokenizer)}")
     model.resize_token_embeddings(len(tokenizer))
