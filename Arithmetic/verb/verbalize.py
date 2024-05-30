@@ -1,108 +1,192 @@
 from .imports import *
 
-from pathlib import Path
-
 from .common import repo_root
-from .definitions import StatementVerbalization, load_patterns
+from .relations import RelationManager, Relation
+from .entities import EntityManager, Entity
+
+import ast
 
 
 class AbstractVerbalization:
-    def generate_fl_problem(self, seed: int = None) -> str:
-        raise NotImplementedError('coming soon')
+	def generate_fl_problem(self, seed: int = None) -> str:
+		raise NotImplementedError('coming soon')
 
 
-    def problem_fl_2_nl(self, fl_problem: str, *, seed: int = None) -> str:
-        raise NotImplementedError
+	def problem_fl_2_nl(self, fl_problem: str, *, seed: int = None) -> str:
+		raise NotImplementedError
 
 
-    def problem_nl_2_fl(self, nl_problem: str) -> str:
-        raise NotImplementedError(f'this is too hard - is it even possible?')
+	def problem_nl_2_fl(self, nl_problem: str) -> str:
+		raise NotImplementedError(f'this is too hard - is it even possible?')
 
 
 
 class IndependentStatementVerbalization(AbstractVerbalization):
-    '''
-    verbalizes each statement in the problem independently, which is reasonable, but not ideal as it
-    significantly simplifies translation, and limits the expressiveness of the NL
-    '''
-    def __init__(self, defs_path: str):
-        if defs_path is None:
-            defs_path = str(repo_root() / 'assets' / 'def-patterns.yml')
-        defs_path = Path(defs_path)
-        assert defs_path.exists(), f'Pattern file not found: {defs_path}'
-        # Load the patterns
-        self.defs = load_patterns(defs_path)
+	'''
+	verbalizes each statement in the problem independently, which is reasonable, but not ideal as it
+	significantly simplifies translation, and limits the expressiveness of the NL
+	'''
+	def __init__(self, relations: RelationManager = None, entities = None, **kwargs):
+		if relations is None:
+			relations = self._RelationManager()#.load()
+		if entities is None:
+			entities = self._EntityManager()
+		super().__init__(**kwargs)
+		self.relations = relations
+		self.entities = entities
+
+	_RelationManager = RelationManager
+	_EntityManager = EntityManager
 
 
-    def parse_fl(self, fl_statement: str) -> Controller:
-        return Controller(StatementVerbalization(), DictGadget({'formal': fl_statement}))
+	def _generate_identifier(self, existing: list[str] = None) -> str:
+		if existing is None:
+			existing = []
+
+		idx = len(existing)
+		candidate = f'v{idx}'
+		while candidate in existing:
+			idx += 1
+			candidate = f'v{idx}'
+		return candidate
 
 
-    def fl_2_nl(self, clause_fl: str) -> str:
-        ctx = self.parse_fl(clause_fl)
-        return ctx['statement']
+	def _collect_vars(self, fl_problem: str):
+		vars = []
+		statements = fl_problem.split(';')
+		for statement in statements:
+			tree = ast.parse(statement)
+			assert len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign) and len(tree.body[0].targets) == 1, \
+				f'Invalid tree: {tree!r}'
+			vars.append(tree.body[0].targets[0].id)
+		return vars
 
 
-    def problem_fl_2_nl(self, fl_problem: str, *, seed: int = None) -> str:
-        statements = fl_problem.split(';')
-        verbs = []
-        for fl_statement in statements:
-            nl_statement = self.fl_2_nl(fl_statement)
-            verbs.append(nl_statement)
-        return ' '.join(verbs)
+	def parse_fl(self, fl_statement: str, vocab: dict[str, 'Entity'] = None, vars: list[str] = None) -> Controller:
+		vocab = vocab or {}
+		tree = ast.parse(fl_statement) # valid python syntax
+
+		assert (len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign)
+				and isinstance(tree.body[0].value, ast.Call)), f'Invalid tree: {tree!r}'
+		rel_name = tree.body[0].value.func.id
+		rel = self.relations.from_formal(rel_name)
+
+		assert (len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign)
+				and isinstance(tree.body[0].value, ast.Call)), f'Invalid tree: {tree!r}'
+		# arguments could be literals (ints) or variables
+		args = [arg.n if isinstance(arg, ast.Num) else arg.id for arg in tree.body[0].value.args]
+		entities = []
+		for arg in tree.body[0].value.args:
+			if isinstance(arg, ast.Num):
+				entities.append(self.entities.make(str(arg.n), arg.n))
+			else:
+				if arg.id not in vocab:
+					vocab[arg.id] = self.entities.make(arg.id, arg.id)
+				entities.append(vocab[arg.id])
 
 
-# class Verbalization:
-#     def __init__(self, defs_path: str):
-#         if defs_path is None:
-#             defs_path = str(repo_root() / 'assets' / 'demo-patterns.yml')
-#         defs_path = Path(defs_path)
-#         assert defs_path.exists(), f'Pattern file not found: {defs_path}'
-#         # Load the patterns
-#         self.defs = ClauseGenerator.load_patterns(defs_path)
-#         self.ctx = Controller(StatementVerbalization(None))  # uses all definitions
-#
-#     def parse_fl(self, fl_statement: str) -> str:
-#         '''assumes `fl_statement` is a single statement, but may have multiple clauses'''
-#         assert ';' not in fl_statement
-#
-#         full = fl_statement.strip()
-#
-#         clauses = full.split(',')
-#
-#         name_and_args = parts[1].split()
-#
-#         # Extract geometric element name and its arguments
-#         element_name = name_and_args[0]
-#         arguments = name_and_args[1:]
-#
-#         self.ctx.update({'definition': element_name, })
-#
-#         pass
-#
-#     def fl_2_nl(self, clause_fl: str) -> str:
-#         self.ctx.clear_cache() # remove all cached values (e.g. from previous samples)
-#
-#         self.ctx['formal'] = clause_fl
-#         return self.ctx['statement']
-#
-#     def problem_fl_2_nl(self, fl_problem: str) -> str:
-#         clauses = fl_problem.split(';')
-#         all_formal_atomic_clauses = []
-#         for clause in clauses:
-#             if clause.find(',') == -1:
-#                 # this clause is atomic
-#                 all_formal_atomic_clauses.append(clause)
-#             else:
-#                 # this clause contains two or more atomic clauses
-#                 # todo: for now treating , as same thing as ;. Perhaps we can do better
-#                 all_formal_atomic_clauses.extend(clause.split(','))
-#
-#         nl = ''
-#         for clause in all_formal_atomic_clauses:
-#             nl_this_clause = self.fl_2_nl(clause)
-#             if not nl_this_clause.endswith('.'):
-#                 nl_this_clause += '.'
-#             nl += self.fl_2_nl(clause)
-#
-#         return nl
+
+		return Controller(StatementVerbalization(), DictGadget({'formal': fl_statement}))
+
+
+	def fl_2_nl(self, clause_fl: str) -> str:
+		ctx = self.parse_fl(clause_fl)
+		return ctx['statement']
+
+
+	def problem_fl_2_nl(self, fl_problem: str, *, seed: int = None) -> str:
+		if seed is not None:
+			raise NotImplementedError
+		statements = fl_problem.split(';')
+		verbs = []
+		for fl_statement in statements:
+			nl_statement = self.fl_2_nl(fl_statement)
+			verbs.append(nl_statement)
+		return ' '.join(verbs)
+
+
+
+class StatementVerbalization(Scope):
+	def __init__(self, relation: Relation, out: Entity, args: list[Entity], **kwargs):
+		super().__init__(**kwargs)
+
+
+	def
+
+
+
+
+
+
+class ProblemVerbalization(ToolKit):
+	@staticmethod
+	def parse_formal_clause(clause: str):
+		assert ';' not in clause and ',' not in clause, (f'Invalid clause: {clause!r} '
+														 f'(could it be a statement or problem?)')
+		prior = {'tree': ast.parse(clause)}
+		return prior
+
+		# terms = clause.split('=')
+		# assert len(terms) <= 2, f'Invalid clause: {clause!r}'
+		# if len(terms) > 1:
+		# 	prior['variables'] = terms[0].strip().split()
+		# 	prior.update({f'var{i}': var for i, var in enumerate(prior['variables'])})
+		#
+		# name, *args = terms[-1].strip().split()
+		# prior['definition'] = name
+		# prior['arguments'] = args
+		# prior.update({f'arg{i}': arg for i, arg in enumerate(args)})
+		# return prior
+
+
+	@tool('return')
+	def get_variable(self, tree: ast.Module):
+		assert len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign) and len(tree.body[0].targets) == 1, \
+			f'Invalid tree: {tree!r}'
+		return tree.body[0].targets[0].id
+
+
+	@tool('symbol')
+	def get_function(self, tree: ast.Module):
+		assert (len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign)
+				and isinstance(tree.body[0].value, ast.Call)), f'Invalid tree: {tree!r}'
+		return tree.body[0].value.func.id
+
+
+	@tool('arguments')
+	def get_arguments(self, tree: ast.Module):
+		assert (len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign)
+				and isinstance(tree.body[0].value, ast.Call)), f'Invalid tree: {tree!r}'
+		return [arg.n for arg in tree.body[0].value.args]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

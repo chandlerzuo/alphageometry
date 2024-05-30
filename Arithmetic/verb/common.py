@@ -7,7 +7,7 @@ from omniply.apps import Template, GadgetDecision, SimpleDecision, Controller, C
 
 
 def repo_root():
-	return Path(__file__).parent.parent
+	return Path(__file__).parent.parent.parent
 
 
 class Selection(Combination): # always returns the selection in order

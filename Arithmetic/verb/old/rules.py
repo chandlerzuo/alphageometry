@@ -3,6 +3,7 @@ from omniply.apps.decisions.abstract import CHOICE
 from .imports import *
 
 
+
 class Rule(MultiGadgetBase):
 	_kind_registry = Class_Registry()
 	@classmethod
@@ -218,9 +219,9 @@ class OrderedConjunction(Conjunction, kind='ord-conjunction'):
 		super().__init__(name, elements, ordered=True, **kwargs)
 
 
-
 	def _as_abstract(self, ctx: 'AbstractGame'):
 		return super()._as_abstract(ctx)
+
 
 
 class Equality(ComplexRule, ToolKit, kind='equality'):
@@ -280,6 +281,7 @@ class ReferenceRule(LiteralRule, kind='ref'):
 
 	def _commit(self, ctx: 'AbstractGame', choice: CHOICE, gizmo: str) -> Any:
 		return ctx.grab(super()._commit(ctx, choice, gizmo))
+
 
 
 class SubTemplates(Rule, GadgetDecision, kind='sub'):
