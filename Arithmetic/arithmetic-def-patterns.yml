@@ -69,7 +69,7 @@ div: # z = divide(x, y)
     distribution: {type: literal, args: ['even distribution of', 'spread of']}
 
   templates:
-    - "{by_diluting} {element1} in {element1} parts, the alchemist {dilutes} the {essence}, {resulting_in} {return}."
+    - "{by_diluting} {element1} in {element2} parts, the alchemist {dilutes} the {essence}, {resulting_in} {return}."
     - "The {distribution} {element1} through {element2} {dilutes} it, {resulting_in} {return}."
     - "In the mystical laboratory, {element1} is divided by {element2}, effectively {diluting} its {essence}, {resulting_in} {return}."
     - "The {distribution} {element1} by {element2} {dilutes} it, {resulting_in} {return}."

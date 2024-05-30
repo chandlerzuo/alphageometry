@@ -7,12 +7,11 @@ from omniply.core.genetics import GeneticGadget
 # from omniply.apps import Template, GadgetDecision, SimpleDecision, Controller, Combination, Permutation
 # from omniply.apps.decisions.abstract import CHOICE
 
-from .rules import Rule, Point, Line, Angle, Triangle, Circle, Quadrilateral, Trapezoid, Conjunction
+# from .rules import Rule, Point, Line, Angle, Triangle, Circle, Quadrilateral, Trapezoid, Conjunction
 
 
 def load_patterns(path: Path) -> list['Definition']:
 	return ClauseGenerator.load_patterns(path)
-
 
 
 class ClauseGenerator(GadgetDecision):

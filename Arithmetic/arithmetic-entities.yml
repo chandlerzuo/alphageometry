@@ -1,0 +1,38 @@
+
+
+constant:
+  kind: ingredient
+
+  templates:
+    - "{value} {instance}"
+
+
+ingredient:
+
+  rules:
+    unit: {type: literal, args: ['measure', 'portion', 'quantity']}
+
+    humanoid: {type: literal, args: ['giant', 'dwarf', 'troll', 'goblin', 'elf', 'fairy', 'ogre', 'centaur']}
+    bird: {type: literal, args: ['phoenix', 'gryphon']}
+    reptile: {type: literal, args: ['basilisk', 'chimera', 'dragon', 'hydra']}
+    fish: {type: literal, args: ['mermaid', 'siren']}
+    animal: {type: literal, args: ['chimera', 'unicorn', 'centaur']}
+    sources: {type: literal, args: ['sun', 'moon']}
+
+    human_body: {type: literal, args: ['earwax', 'beard', 'tooth', 'tear']}
+    bird_body: {type: literal, args: ['feather', 'beak', 'claw']}
+    reptile_body: {type: literal, args: ['scale', 'fang']}
+    animal_body: {type: literal, args: ['horn', 'hoof', 'mane']}
+    fish_body: {type: literal, args: ['scale', 'fin']}
+    liquid: {type: literal, args: ['juice', 'extract', 'essence', 'blood', 'tear']}
+
+    powder: {type: literal, args: ['powdered', 'crushed', 'ground']}
+    processed: {type: literal, args: ['distilled', 'extracted', 'fermented']}
+    stone: {type: literal, args: ['stone', 'gem', 'crystal']}
+
+  instances:
+    - "{humanoid}'s {human_body}"
+    - "{bird} {bird_body}"
+    - "{source} {stone}"
+
+
