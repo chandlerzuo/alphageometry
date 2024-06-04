@@ -62,31 +62,41 @@ class IndependentStatementVerbalization(AbstractVerbalization):
 		return vars
 
 
-	def parse_fl(self, fl_statement: str, vocab: dict[str, 'Entity'] = None, vars: list[str] = None) -> Controller:
+	def parse_fl(self, fl_statement: str, vocab: dict[str, 'Entity'] = None, out: str | 'Entity' = None) -> Controller:
 		vocab = vocab or {}
 		tree = ast.parse(fl_statement) # valid python syntax
+
+		if out is None:
+			assert len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign) and len(tree.body[0].targets) == 1, \
+				f'Invalid tree: {tree!r}'
+			out = tree.body[0].targets[0].id
+		elif isinstance(out, Entity):
+			raise NotImplementedError('must verify the output kind matches the relation')
 
 		assert (len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign)
 				and isinstance(tree.body[0].value, ast.Call)), f'Invalid tree: {tree!r}'
 		rel_name = tree.body[0].value.func.id
-		rel = self.relations.from_formal(rel_name)
+		rel = self.relations.from_formal(rel_name, out=out)
+		arg_kinds = rel.arg_kinds
+
+		if not isinstance(out, Entity):
+			out = rel.out
 
 		assert (len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign)
 				and isinstance(tree.body[0].value, ast.Call)), f'Invalid tree: {tree!r}'
 		# arguments could be literals (ints) or variables
-		args = [arg.n if isinstance(arg, ast.Num) else arg.id for arg in tree.body[0].value.args]
+		# args = [arg.n if isinstance(arg, ast.Num) else arg.id for arg in tree.body[0].value.args]
+
 		entities = []
-		for arg in tree.body[0].value.args:
+		for arg, kind in zip(tree.body[0].value.args, arg_kinds):
 			if isinstance(arg, ast.Num):
-				entities.append(self.entities.make(str(arg.n), arg.n))
+				entities.append(self.entities.make_constant(arg.n))
 			else:
 				if arg.id not in vocab:
 					vocab[arg.id] = self.entities.make(arg.id, arg.id)
 				entities.append(vocab[arg.id])
 
-
-
-		return Controller(StatementVerbalization(), DictGadget({'formal': fl_statement}))
+		return Controller(StatementVerbalization(rel, out, ), DictGadget({'formal': fl_statement}))
 
 
 	def fl_2_nl(self, clause_fl: str) -> str:
@@ -111,7 +121,7 @@ class StatementVerbalization(Scope):
 		super().__init__(**kwargs)
 
 
-	def
+	# def
 
 
 
