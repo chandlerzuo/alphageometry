@@ -5,7 +5,10 @@ from .common import repo_root
 
 
 class Entity(ToolKit):
-	def __init__(self, ident: str, data: list[dict[str, str]] | dict[str, str] = None, kind: str = None, **kwargs):
+	def _process_patterns(self, data: dict[str, Any]):
+		raise NotImplementedError
+
+	def __init__(self, ident: str, data: dict[str, Any] = None, **kwargs):
 		super().__init__(**kwargs)
 		if data is not None:
 			if isinstance(data, dict):
@@ -37,30 +40,15 @@ class Entity(ToolKit):
 		return self._kind
 
 
-	@classmethod
-	def make(cls, name: str, data: Any, kind: str = None):
-		return cls(name, data, kind=kind)
-
-
 
 class ConstantEntity(Entity):
-	@classmethod
-	def make(cls, name: str, value: int):
-		return cls(name, value)
-
-
-	def __init__(self, name: str, value: int, **kwargs):
-		super().__init__(name=name, kind='constant', **kwargs)
+	def __init__(self, value: Any, kind: str = None, **kwargs):
+		super().__init__(name=None, kind=kind, **kwargs)
 		self.value = value
 
 
 	@tool('value')
 	def get_value(self):
-		return self.value
-
-
-	@tool('quantity')
-	def get_quantity(self):
 		return self.value
 
 
@@ -93,13 +81,6 @@ class ConstantEntity(Entity):
 
 
 class EntityManager(UserDict):
-	@staticmethod
-	def _load_default(entity_path: Path) -> dict[str, Any]:
-		assert entity_path.exists(), f'Entity file not found: {entity_path}'
-		assert entity_path.suffix in ['.yml', '.yaml'], f'Invalid entity file: {entity_path}'
-
-		kinds = yaml.safe_load(entity_path.read_text())
-		return kinds
 
 
 	def __init__(self, items: dict[str, Any] = None, constant_entity: ConstantEntity = None, *,

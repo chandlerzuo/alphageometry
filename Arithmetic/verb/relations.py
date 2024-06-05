@@ -1,6 +1,18 @@
 from .imports import *
 
 from .common import repo_root
+from .entities import Entity
+
+
+
+class AbstractRelation:
+	@property
+	def output(self) -> Entity:
+		raise NotImplementedError
+
+	@property
+	def inputs(self) -> tuple[Entity]:
+		raise NotImplementedError
 
 
 
@@ -18,55 +30,70 @@ class RelationEvaluator(ToolKit):
 
 
 
-class Relation(Scope):
-	def _populate_defaults(self):
-		self.include(RelationEvaluator(self.fn, self.args))
+class Relation(ToolKit):
+	def _process_patterns(self, data: dict[str, Any]):
+
+		# self.include(RelationEvaluator(self.fn, self.args))
+
+		raise NotImplementedError
 
 		# process templates and rules
 
 
-
-	def __init__(self, name: str, fn: Callable, args: list[str], out: str, gap: dict[str, str] = None,
-				 rules: dict[str, Any] = None, templates: list[str] = None, **kwargs):
-		if gap is None:
-			gap = {}
-		if 'value' not in gap:
-			gap['value'] = f'{out}_value'
+	def __init__(self, name: str, args: tuple[str], out: str, fn: Callable = None,
+				 data: dict[str, Any] = None, **kwargs):
+		if fn is None:
+			assert data is not None and 'fn' in data, f'No function provided for relation {name}'
+			fn = data['fn']
 		super().__init__(**kwargs)
-		self.name = name
-		self.rules = rules
-		self.templates = templates
-		self.args = args
-		self.out = out
+		self._name = name
+		self._args = args
+		self._out = out
 		self.fn = fn
 		self.num_args = len(self._get_args(fn))
-		self._populate_defaults()
+		self._process_patterns(data)
+		self.gauge_apply({'value': f'{out}_value', 'return': f'{out}'})
+
+	@property
+	def name(self):
+		return self._name
+	@property
+	def output(self) -> str:
+		return self._out
+	@property
+	def inputs(self) -> tuple[str]:
+		return tuple(self._args)
+
+	def __eq__(self, other: 'Relation'):
+		return other.name == self.name and other.inputs == self.inputs and other.output == self.output
+	def __hash__(self):
+		return hash((self.name, self.inputs, self.output))
 
 
-	def gizmo_from(self, gizmo: str) -> str:
-		'''Converts an external gizmo to its internal representation.'''
-		gizmo = super().gizmo_from(gizmo)
-		if gizmo.startswith(f'{self.out}_'):
-			return gizmo[len(self.out) + 1:]
-		return gizmo
+	# def gizmo_from(self, gizmo: str) -> str:
+	# 	'''Converts an external gizmo to its internal representation.'''
+	# 	gizmo = super().gizmo_from(gizmo)
+	# 	if gizmo.startswith(f'{self.out}_'):
+	# 		return gizmo[len(self.out) + 1:]
+	# 	return gizmo
 
 
-	def gizmo_to(self, gizmo: str) -> str:
-		'''Converts an internal gizmo to its external representation.'''
-		gizmo = super().gizmo_to(gizmo)
-
-		if gizmo == 'return':
-			return self.out
-
-		if gizmo.startswith(f'arg'):
-			if '_' in gizmo:
-				arg, key = gizmo.split('_', 1)
-				idx = int(arg[3:])
-				return f'{self.args[idx]}_{key}'
-			idx = int(gizmo[3:])
-			return self.args[idx]
-
-		return gizmo
+	# def gizmo_to(self, gizmo: str) -> str:
+	# 	'''Converts an internal gizmo to its external representation.'''
+	# 	gizmo = super().gizmo_to(gizmo)
+	#
+	# 	if gizmo == 'return':
+	# 		return self.out
+	#
+	# 	if gizmo.startswith(f'arg'):
+	# 		if '_' in gizmo:
+	# 			arg, key = gizmo.split('_', 1)
+	# 			idx = int(arg[3:])
+	# 			return f'{self.args[idx]}_{key}'
+	# 		idx = int(gizmo[3:])
+	# 		return self.args[idx]
+	#
+	# 	return gizmo
 
 
 	@staticmethod
@@ -76,12 +103,7 @@ class Relation(Scope):
 
 
 	def __str__(self):
-		return self.name
-
-
-	@property
-	def formal(self):
-		return self.name
+		return f'{self.name}({", ".join(self.inputs)}) -> {self.output}'
 
 
 
@@ -92,26 +114,6 @@ class TemplateRelation(Relation):
 
 
 class RelationManager(UserDict):
-	@staticmethod
-	def _load_default(funcs: list[Callable], patterns_path: Path):
-		assert patterns_path.exists(), f'Pattern file not found: {patterns_path}'
-		assert patterns_path.suffix in ['.yml', '.yaml'], f'Invalid pattern file: {patterns_path}'
-
-		patterns = yaml.safe_load(patterns_path.read_text())
-
-		fn_names = [fn.__name__ for fn in funcs]
-
-		assert all(name in patterns for name in fn_names), (f'No pattern found for symbols: '
-															f'{[name for name in fn_names if name not in patterns]}')
-
-		assert all(pattern in fn_names for pattern in patterns), (f'No symbol found for patterns: '
-																  f'{[pattern for pattern in patterns if pattern not in fn_names]}')
-
-		# relations = [Relation(name, patterns[name], fn) for name, fn in zip(fn_names, funcs)]
-		# return relations
-		data = {name: {'fn': fn, 'name': name, **patterns.get(name, {})} for name, fn in zip(fn_names, funcs)}
-		return data
-
 
 	def __init__(self, relation_data: dict[str, Any] = None, *, funcs: list[Callable] = None,
 				 patterns_path: Path = None, root: Path = None):
