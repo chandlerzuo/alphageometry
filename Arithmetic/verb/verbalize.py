@@ -2,7 +2,7 @@ from .imports import *
 
 from .common import repo_root
 from .relations import RelationManager, Relation
-from .entities import EntityManager, Entity, ConstantEntity
+from .entities import Entity, ConstantEntity
 
 import ast
 
@@ -63,7 +63,7 @@ class IndependentStatementVerbalization(AbstractVerbalization):
 
 		if funcs is None:
 			print(f'Using default relation functions in {repo_root() / "Arithmetic/defs.py"}')
-			from . import defs
+			from .. import defs
 			fn_keys = [name for name in dir(defs) if not name.startswith('_')]
 			funcs = [getattr(defs, name) for name in fn_keys]
 
@@ -71,11 +71,19 @@ class IndependentStatementVerbalization(AbstractVerbalization):
 
 		fn_names = [fn.__name__ for fn in funcs]
 
-		assert all(name in patterns for name in fn_names), (f'No pattern found for symbols: '
-															f'{[name for name in fn_names if name not in patterns]}')
+		# assert all(name in patterns for name in fn_names), (f'No pattern found for symbols: '
+		# 													f'{[name for name in fn_names if name not in patterns]}')
 
-		assert all(pattern in fn_names for pattern in patterns), (f'No symbol found for patterns: '
-																  f'{[pattern for pattern in patterns if pattern not in fn_names]}')
+		# assert all(pattern in fn_names for pattern in patterns), (f'No symbol found for patterns: '
+		# 														  f'{[pattern for pattern in patterns if pattern not in fn_names]}')
+
+		missing_patterns = [name for name in fn_names if name not in patterns]
+		if missing_patterns:
+			print(f'No pattern found for symbols: {missing_patterns}')
+
+		missing_symbols = [name for name in patterns if name not in fn_names]
+		if missing_symbols:
+			print(f'No symbol found for patterns: {missing_symbols}')
 
 		# relations = [Relation(name, patterns[name], fn) for name, fn in zip(fn_names, funcs)]
 		# return relations
@@ -114,7 +122,7 @@ class IndependentStatementVerbalization(AbstractVerbalization):
 
 	_ConstantEntity = ConstantEntity
 	def create_constant_entity(self, ident: str, kind: str, value: Any) -> ConstantEntity:
-		return self._ConstantEntity(ident, value, kind=kind, data=self._entity_data.get(kind, {}))
+		return self._ConstantEntity(value, ident, kind=kind, data=self._entity_data.get(kind, {}))
 
 
 	def _collect_vars(self, fl_problem: str):

@@ -25,6 +25,17 @@ def test_verb():
 
 	print(verb)
 
+	ent = verb.create_constant_entity(None, 'ingredient', 6)
+
+	print(list(ent.gizmos()))
+	print(ent)
+	for _ in range(10):
+		print(Controller(ent)['nat'])
+
+
+
+
+
 
 
 

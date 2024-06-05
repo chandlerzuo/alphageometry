@@ -1,6 +1,7 @@
 from .imports import *
 
 from .common import repo_root
+from .concepts import Concept
 from .entities import Entity
 
 
@@ -17,7 +18,7 @@ class AbstractRelation:
 
 
 class RelationEvaluator(ToolKit):
-	def __init__(self, fn: Callable, args: list[str], **kwargs):
+	def __init__(self, fn: Callable, args: Iterable[str], **kwargs):
 		super().__init__(**kwargs)
 		self.args = args
 		self.fn = fn
@@ -25,27 +26,38 @@ class RelationEvaluator(ToolKit):
 
 	@tool.from_context('value')
 	def get_value(self, ctx):
-		values = [ctx[f'arg{i}_value'] for i in range(len(self.args))]
+		values = [ctx[self.gap(f'{name}_value')] for name in self.args]
 		return self.fn(*values)
 
 
 
-class Relation(ToolKit):
+class Relation(Concept):
 	def _process_patterns(self, data: dict[str, Any]):
+		if 'rules' in data:
+			rules = list(self._process_rules(data['rules']))
+			self.extend(rules)
 
-		# self.include(RelationEvaluator(self.fn, self.args))
+		if 'templates' in data:
+			templates = data['templates']
+			templater = self._process_templates('clause', templates)
+			self.include(templater)
 
-		raise NotImplementedError
+		self.include(RelationEvaluator(self.fn, self.inputs))
 
 		# process templates and rules
 
 
 	def __init__(self, name: str, args: tuple[str], out: str, fn: Callable = None,
+				 gap: dict[str, str] = None,
 				 data: dict[str, Any] = None, **kwargs):
 		if fn is None:
 			assert data is not None and 'fn' in data, f'No function provided for relation {name}'
 			fn = data['fn']
-		super().__init__(**kwargs)
+		if gap is None:
+			gap = {}
+		if 'value' not in gap:
+			gap['value'] = f'{out}_value'
+		super().__init__(gap=gap, **kwargs)
 		self._name = name
 		self._args = args
 		self._out = out

@@ -23,4 +23,4 @@
 tqdm
 omnibelt==0.8.4
 omnifig==1.0.5
-omniply==0.3.3
+omniply==0.3.4
