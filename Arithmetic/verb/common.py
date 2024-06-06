@@ -3,7 +3,6 @@ from .imports import *
 
 
 from omniply.core.genetics import GeneticGadget
-from omniply.apps import Template, GadgetDecision, SimpleDecision, Controller, Combination, Permutation
 
 
 def repo_root():

@@ -1,7 +1,7 @@
 from .imports import *
 
 from .common import repo_root
-from .relations import RelationManager, Relation
+from .relations import Relation
 from .entities import Entity, ConstantEntity
 
 import ast
@@ -66,10 +66,11 @@ class IndependentStatementVerbalization(AbstractVerbalization):
 			from .. import defs
 			fn_keys = [name for name in dir(defs) if not name.startswith('_')]
 			funcs = [getattr(defs, name) for name in fn_keys]
+			funcs = [fn() if isinstance(fn, type) else fn for fn in funcs]
 
 		patterns = yaml.safe_load(patterns_path.read_text())
 
-		fn_names = [fn.__name__ for fn in funcs]
+		fn_names = [fn.__name__ if hasattr(fn, '__name__') else fn.__class__.__name__ for fn in funcs]
 
 		# assert all(name in patterns for name in fn_names), (f'No pattern found for symbols: '
 		# 													f'{[name for name in fn_names if name not in patterns]}')
@@ -98,19 +99,17 @@ class IndependentStatementVerbalization(AbstractVerbalization):
 	# 	assert self._known_entities[name].kind == kind, f'Kind mismatch: {self.known_entities[name].kind} != {kind}'
 	# 	return self._known_entities[name]
 
-	_default_kind = 'variable'
+	_default_kind = 'ingredient'
 	def get_relation_output_kind(self, name: str) -> str:
 		return self._relation_data[name].get('out', self._default_kind)
 	def get_relation_input_kinds(self, name: str) -> list[str]:
-		return self._relation_data[name].get('args', [self._default_kind]*self.get_relation_num_args(name))
+		return self._relation_data[name].get('kinds', [self._default_kind]*self.get_relation_num_args(name))
 	def get_relation_num_args(self, name: str) -> int:
 		sig = inspect.signature(self._relation_data[name]['fn'])
 		return len(list(sig.parameters.keys()))
 
 	_Relation = Relation
 	def create_relation(self, name: str, out_name: str, arg_names: Iterable[str]) -> Relation:
-		entities = []
-		args = []
 		data = self._relation_data.get(name, {})
 		return self._Relation(name, args=arg_names, out=out_name, data=data)
 
@@ -176,7 +175,7 @@ class IndependentStatementVerbalization(AbstractVerbalization):
 			out = self.create_entity(out_name, self.get_relation_output_kind(rel_name))
 			vocab[out_name] = out
 
-		return Controller(rel, out, *entities, DictGadget({'formal': fl_statement}))
+		return Controller(StatementVerbalization(), rel, out, *entities, DictGadget({'formal': fl_statement}))
 
 
 	def fl_2_nl(self, clause_fl: str) -> str:
@@ -190,7 +189,7 @@ class IndependentStatementVerbalization(AbstractVerbalization):
 		statements = fl_problem.split(';')
 
 		vocab = {}
-		ctxs = [self.parse_fl(statement, vocab=vocab) for statement in statements]
+		ctxs = [self.parse_fl(statement.strip(), vocab=vocab) for statement in statements]
 
 		# connect statements as needed
 		for i, ctx in enumerate(ctxs):
@@ -214,53 +213,56 @@ class IndependentStatementVerbalization(AbstractVerbalization):
 
 
 
-# class StatementVerbalization(Scope):
-# 	def __init__(self, relation: Relation, out: Entity, args: list[Entity], **kwargs):
-# 		super().__init__(**kwargs)
+class StatementVerbalization(ToolKit):
+	@tool('statement')
+	def as_statement(self, clause: str):
+		# if not len(clause):
+		# 	return ''
+		# return f'{clause[0].upper()}{clause[1:]}.'
+		return clause
 
 
 
-
-class ProblemVerbalization(ToolKit):
-	@staticmethod
-	def parse_formal_clause(clause: str):
-		assert ';' not in clause and ',' not in clause, (f'Invalid clause: {clause!r} '
-														 f'(could it be a statement or problem?)')
-		prior = {'tree': ast.parse(clause)}
-		return prior
-
-		# terms = clause.split('=')
-		# assert len(terms) <= 2, f'Invalid clause: {clause!r}'
-		# if len(terms) > 1:
-		# 	prior['variables'] = terms[0].strip().split()
-		# 	prior.update({f'var{i}': var for i, var in enumerate(prior['variables'])})
-		#
-		# name, *args = terms[-1].strip().split()
-		# prior['definition'] = name
-		# prior['arguments'] = args
-		# prior.update({f'arg{i}': arg for i, arg in enumerate(args)})
-		# return prior
-
-
-	@tool('return')
-	def get_variable(self, tree: ast.Module):
-		assert len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign) and len(tree.body[0].targets) == 1, \
-			f'Invalid tree: {tree!r}'
-		return tree.body[0].targets[0].id
-
-
-	@tool('symbol')
-	def get_function(self, tree: ast.Module):
-		assert (len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign)
-				and isinstance(tree.body[0].value, ast.Call)), f'Invalid tree: {tree!r}'
-		return tree.body[0].value.func.id
-
-
-	@tool('arguments')
-	def get_arguments(self, tree: ast.Module):
-		assert (len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign)
-				and isinstance(tree.body[0].value, ast.Call)), f'Invalid tree: {tree!r}'
-		return [arg.n for arg in tree.body[0].value.args]
+# class ProblemVerbalization(ToolKit):
+# 	@staticmethod
+# 	def parse_formal_clause(clause: str):
+# 		assert ';' not in clause and ',' not in clause, (f'Invalid clause: {clause!r} '
+# 														 f'(could it be a statement or problem?)')
+# 		prior = {'tree': ast.parse(clause)}
+# 		return prior
+#
+# 		# terms = clause.split('=')
+# 		# assert len(terms) <= 2, f'Invalid clause: {clause!r}'
+# 		# if len(terms) > 1:
+# 		# 	prior['variables'] = terms[0].strip().split()
+# 		# 	prior.update({f'var{i}': var for i, var in enumerate(prior['variables'])})
+# 		#
+# 		# name, *args = terms[-1].strip().split()
+# 		# prior['definition'] = name
+# 		# prior['arguments'] = args
+# 		# prior.update({f'arg{i}': arg for i, arg in enumerate(args)})
+# 		# return prior
+#
+#
+# 	@tool('return')
+# 	def get_variable(self, tree: ast.Module):
+# 		assert len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign) and len(tree.body[0].targets) == 1, \
+# 			f'Invalid tree: {tree!r}'
+# 		return tree.body[0].targets[0].id
+#
+#
+# 	@tool('symbol')
+# 	def get_function(self, tree: ast.Module):
+# 		assert (len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign)
+# 				and isinstance(tree.body[0].value, ast.Call)), f'Invalid tree: {tree!r}'
+# 		return tree.body[0].value.func.id
+#
+#
+# 	@tool('arguments')
+# 	def get_arguments(self, tree: ast.Module):
+# 		assert (len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign)
+# 				and isinstance(tree.body[0].value, ast.Call)), f'Invalid tree: {tree!r}'
+# 		return [arg.n for arg in tree.body[0].value.args]
 
 
 

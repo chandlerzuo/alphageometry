@@ -13,7 +13,7 @@ class Entity(Concept):
 
 		if 'templates' in data:
 			templates = data['templates']
-			templater = self._process_templates('instance', templates)
+			templater = self._process_templates('singular', templates)
 			self.include(templater)
 
 
@@ -21,6 +21,10 @@ class Entity(Concept):
 				 gap: dict[str, str] = None, **kwargs):
 		gap = gap or {}
 		super().__init__(**kwargs)
+		self._ident = ident
+		self._kind = kind
+		# self.data = data
+		self._process_patterns(data) # adds rules and templates
 
 		if ident is not None:
 			if 'nat' not in gap:
@@ -28,12 +32,12 @@ class Entity(Concept):
 			for gizmo in self.gizmos():
 				if gizmo not in gap:
 					gap[gizmo] = f'{ident}_{gizmo}'
-
-		self._ident = ident
-		self._kind = kind
-		# self.data = data
-		self._process_patterns(data) # adds rules and templates
 		self.gauge_apply(gap) # relabels all products
+
+
+	@property
+	def ident(self):
+		return self._ident
 
 
 	@property
@@ -48,14 +52,10 @@ class Entity(Concept):
 		return self._kind
 
 
-	@tool('singular')
-	def get_singular(self, instance):
-		return instance
-
 	_irregular_plurals = {
 		'child': 'children', 'person': 'people', 'foot': 'feet', 'tooth': 'teeth',
 		'goose': 'geese', 'mouse': 'mice', 'man': 'men', 'woman': 'women',
-		'ox': 'oxen', 'louse': 'lice', 'die': 'dice',
+		'ox': 'oxen', 'louse': 'lice', 'die': 'dice', 'portion': 'portions',
 	}
 	@tool('plural')
 	@classmethod
@@ -63,11 +63,16 @@ class Entity(Concept):
 		if ' of ' in singular:
 			subject, prep = singular.split(' of ', 1)
 			return f'{cls.pluralize(subject)} of {prep}'
+		if ' ' in singular:
+			words = singular.split(' ')
+			return f'{" ".join(words[:-1])} {cls.pluralize(words[-1])}'
 		if singular in cls._irregular_plurals:
 			return cls._irregular_plurals[singular]
 		if singular.endswith('y'):
 			return singular[:-1] + 'ies'
-		if singular.endswith('s') or singular.endswith('ch') or singular.endswith('sh'):
+		if singular.endswith('ex') or singular.endswith('ix'):
+			return singular[:-2] + 'ices'
+		if singular.endswith('s') or singular.endswith('x') or singular.endswith('ch') or singular.endswith('sh'):
 			return singular + 'es'
 		if singular.endswith('f') or singular.endswith('fe'):
 			return singular[:-1] + 'ves'
@@ -75,21 +80,33 @@ class Entity(Concept):
 			return singular[:-2] + 'i'
 		if singular.endswith('on') or singular.endswith('um'):
 			return singular[:-2] + 'a'
-		if singular.endswith('ex') or singular.endswith('ix'):
-			return singular[:-2] + 'ices'
 		return singular + 's'
 
 
+	# @tool('indefinite_article')
+	# @classmethod
+	# def indefinite_article(cls, singular: str):
+	# 	if singular[0].lower() in 'aeiou':
+	# 		return 'an'
+	# 	return 'a'
+
+
 	@tool('nat') # top level -> referred to by the entity identifier!
-	def get_word(self, singular, plural, quantity=None):
-		if quantity is not None and quantity == 1:
-			return singular
-		return plural
+	def get_word(self, singular: str, plural: str, quantity: int):#, indefinite_article='a'):
+		if quantity is None:
+			return plural
+		return f'{quantity} {singular if quantity == 1 else plural}'
 
 
 	@tool('formal')
 	def get_ident(self):
-		return self._ident
+		return self.ident
+
+
+	@tool.from_context('quantity')
+	def _get_quantity(self, ctx):
+		if ctx.grab('is_solution', False):
+			return ctx['value' if self.ident is None else f'{self.ident}_value']
 
 
 

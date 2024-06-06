@@ -19,12 +19,12 @@ ingredient:
     animal: {type: literal, args: ['chimera', 'unicorn', 'centaur']}
     source: {type: literal, args: ['sun', 'moon']}
 
-    human_body: {type: literal, args: ['earwax', 'beard', 'tooth', 'tear']}
+    human_body: {type: literal, args: ['beard', 'tooth', 'tear']}
     bird_body: {type: literal, args: ['feather', 'beak', 'claw']}
     reptile_body: {type: literal, args: ['scale', 'fang']}
     animal_body: {type: literal, args: ['horn', 'hoof', 'mane', 'tear']}
     fish_body: {type: literal, args: ['scale', 'fin']}
-    liquid: {type: literal, args: ['juice', 'extract', 'essence', 'blood']}
+    continuum: {type: literal, args: ['juice', 'extract', 'essence', 'blood', 'earwax']}
 
     powder: {type: literal, args: ['powdered', 'crushed', 'ground']}
     processed: {type: literal, args: ['distilled', 'extracted', 'fermented']}
@@ -34,6 +34,7 @@ ingredient:
     - "{humanoid}'s {human_body}"
     - "{bird} {bird_body}"
     - "{source} {stone}"
-    - "{unit} of {liquid}"
+    - "{unit} of {animal} {continuum}"
+    - "{unit} of {humanoid} {continuum}"
 
 

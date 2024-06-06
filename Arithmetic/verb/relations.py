@@ -44,7 +44,10 @@ class Relation(Concept):
 
 		self.include(RelationEvaluator(self.fn, self.inputs))
 
-		# process templates and rules
+		# rename args
+		if 'args' in data:
+			assert len(data['args']) == len(self.inputs), f'Invalid number of args for relation {self.name}'
+			self.gauge_apply({arg: ident for ident, arg in zip(self.inputs, data['args'])})
 
 
 	def __init__(self, name: str, args: tuple[str], out: str, fn: Callable = None,
@@ -64,7 +67,7 @@ class Relation(Concept):
 		self.fn = fn
 		self.num_args = len(self._get_args(fn))
 		self._process_patterns(data)
-		self.gauge_apply({'value': f'{out}_value', 'return': f'{out}'})
+		self.gauge_apply({'value': f'{out}_value', 'out': f'{out}'})
 
 	@property
 	def name(self):
@@ -116,40 +119,6 @@ class Relation(Concept):
 
 	def __str__(self):
 		return f'{self.name}({", ".join(self.inputs)}) -> {self.output}'
-
-
-
-
-class TemplateRelation(Relation):
-	pass
-
-
-
-class RelationManager(UserDict):
-
-	def __init__(self, relation_data: dict[str, Any] = None, *, funcs: list[Callable] = None,
-				 patterns_path: Path = None, root: Path = None):
-		if relation_data is None:
-			if root is None:
-				root = repo_root()
-			if patterns_path is None:
-				patterns_path = root / 'Arithmetic' / 'arithmetic-def-patterns.yml'
-			if funcs is None:
-				from . import defs
-				fn_keys = [name for name in dir(defs) if not name.startswith('_')]
-				funcs = [getattr(defs, name) for name in fn_keys]
-			relation_data = self._load_default(funcs, patterns_path)
-		else:
-			assert funcs is None and patterns_path is None, f'Cannot specify both relation_data and funcs/patterns_path'
-		super().__init__()
-		self.data.update(relation_data)
-
-
-	def from_formal(self, name: str, args: list[str], out: str) -> Relation:
-
-
-
-		return self[identifier]
 
 
 
