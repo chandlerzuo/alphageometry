@@ -1,19 +1,8 @@
 from .imports import *
 
 from .common import repo_root
-from .concepts import Concept
+from .concepts import Concept, Statement
 from .entities import Entity
-
-
-
-class AbstractRelation:
-	@property
-	def output(self) -> Entity:
-		raise NotImplementedError
-
-	@property
-	def inputs(self) -> tuple[Entity]:
-		raise NotImplementedError
 
 
 
@@ -29,9 +18,16 @@ class RelationEvaluator(ToolKit):
 		values = [ctx[self.gap(f'{name}_value')] for name in self.args]
 		return self.fn(*values)
 
+	@tool('args')
+	def get_args(self):
+		return self.args
 
 
-class Relation(Concept):
+
+
+
+class Relation(Statement, Concept):
+	_clause_gizmo = 'clause'
 	def _process_patterns(self, data: dict[str, Any]):
 		if 'rules' in data:
 			rules = list(self._process_rules(data['rules']))
@@ -39,8 +35,10 @@ class Relation(Concept):
 
 		if 'templates' in data:
 			templates = data['templates']
-			templater = self._process_templates('clause', templates)
+			templater = self._process_templates(self._clause_gizmo, templates)
 			self.include(templater)
+		else:
+			raise ValueError(f'Relation {self.name!r} has no templates (update the yaml)')
 
 		self.include(RelationEvaluator(self.fn, self.inputs))
 
@@ -66,8 +64,19 @@ class Relation(Concept):
 		self._out = out
 		self.fn = fn
 		self.num_args = len(self._get_args(fn))
+
+		contrib = list(self.gizmos())
+		contrib.append(self._clause_gizmo)
+		self._contrib = contrib
+
 		self._process_patterns(data)
-		self.gauge_apply({'value': f'{out}_value', 'out': f'{out}'})
+
+		for gizmo in self.gizmos():
+			if gizmo not in gap and gizmo not in contrib:
+				gap[gizmo] = f'{out}_rel_{gizmo}'
+		gap['out'] = f'{out}'
+		self.gauge_apply(gap)
+
 
 	@property
 	def name(self):
@@ -111,6 +120,10 @@ class Relation(Concept):
 	# 	return gizmo
 
 
+	def indexify(self, index: int):
+		self.gauge_apply({gizmo: f'{gizmo}{index}' for gizmo in self._contrib})
+
+
 	@staticmethod
 	def _get_args(fn):
 		sig = inspect.signature(fn)
@@ -120,6 +133,12 @@ class Relation(Concept):
 	def __str__(self):
 		return f'{self.name}({", ".join(self.inputs)}) -> {self.output}'
 
+
+	@tool('statement')
+	def as_statement(self, clause: str):
+		if not len(clause):
+			return ''
+		return f'{clause[0].upper()}{clause[1:]}'
 
 
 

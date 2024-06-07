@@ -1,7 +1,7 @@
 
 from .imports import *
 
-from .verbalize import IndependentStatementVerbalization
+from .verbalize import Verbalization
 
 import ast
 
@@ -21,7 +21,7 @@ def test_ast_parsing():
 
 def test_entity():
 
-	verb = IndependentStatementVerbalization()
+	verb = Verbalization()
 
 	ent = verb.create_constant_entity(None, 'ingredient', 6)
 
@@ -37,7 +37,7 @@ def test_entity():
 def test_relation():
 	formal = 'A = add(3, 2)'
 
-	verb = IndependentStatementVerbalization()
+	verb = Verbalization()
 
 
 	print()
@@ -58,13 +58,37 @@ def test_relation():
 
 
 def test_problem():
-	prob = 'A = add(3, 2); B = quat_op1(10, 5, 9, 1); C = mul(A, B); D = add(8, 10); E = div(8, 8); F = bin_op2(D, E); G = div(C, F); G ?'
+	prob = 'A = add(3, 2); B = leap_of_faith(10, 5, 9, 1); C = mul(A, B); D = add(8, 10); E = div(8, 8); F = risky_trick(D, E); G = div(C, F); G ?'
 
-	verb = IndependentStatementVerbalization()
+	verb = Verbalization()
 
-	nl = verb.problem_fl_2_nl(prob)
+	for _ in range(10):
 
-	print()
-	print(nl)
+		ctx = verb.parse_problem(prob)
+
+		print()
+		print(ctx['nl'])
+
+		print()
+		print(ctx['answer'])
+
+
+
+def test_problem2():
+	prob = 'A = add(3, 2); B = leap_of_faith(10, 5, 9, 1); C = mul(A, B); C ?'
+
+	verb = Verbalization()
+
+	for _ in range(10):
+
+		ctx = verb.parse_problem(prob)
+
+		print()
+		print(ctx['nl'])
+
+		print()
+		print(ctx['answer'])
+
+
 
 

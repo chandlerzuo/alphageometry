@@ -3,6 +3,7 @@ from typing import Any, Optional, Iterable, Iterator, Mapping, Union, Callable, 
 from pathlib import Path
 import random, yaml, inspect
 from collections import UserDict
+import omnifig as fig
 
 from omnibelt import pformat, Class_Registry
 from omniply.core.genetics import GeneticGadget

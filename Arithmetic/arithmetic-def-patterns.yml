@@ -2,8 +2,6 @@ add: # z = add(x, y)
   args: [ingredient1, ingredient2]
 
   rules:
-#    ingredient1: [0]
-#    ingredient2: [1]
     creates: {type: literal, args: ['creates', 'forms', 'yields', 'produces']}
     results_in: {type: literal, args: ['resulting in', 'creating', 'yielding', 'producing']}
     by_combining: {type: literal, args: ['by combining', 'by mixing together']}
@@ -23,8 +21,6 @@ sub: # z = subtract(x, y)
   args: [element1, element2]
 
   rules:
-#    element1: [0]
-#    element2: [1]
     diminishes: {type: literal, args: ['diminishes', 'reduces']}
     by_extracting: {type: literal, args: ['by extracting from', 'by taking away from']}
     essence: {type: literal, args: ['essence', 'power']}
@@ -39,10 +35,9 @@ sub: # z = subtract(x, y)
 
 mul: # z = multiply(x, y)
   args: [element1, element2]
+#  kinds: [ingredient, ingredient]
 
   rules:
-#    element1: [0]
-#    element2: [1]
     magnifies: {type: literal, args: ['magnifies', 'escalates']}
     by_enhancing: {type: literal, args: ['by enhancing', 'by amplifying']}
     essence: {type: literal, args: ['power', 'force']}
@@ -53,23 +48,21 @@ mul: # z = multiply(x, y)
     - "{by_enhancing} the {essence} of {element1} with {element2}, the alchemist {magnifies} the {essence}, {resulting_in} {out}."
     - "The {augmented_force} {element1} by {element2} {magnifies} it to {out}."
     - "Through a mystical ritual, {element1} and {element2} undergo multiplication, {resulting_in} {out}."
-    - "{element1} and {element2} are fused under an arcane spell, dramatically {magnifying} their powers, {resulting_in} {out}."
+    - "{element1} and {element2} are fused under an arcane spell, dramatically {magnifies} their powers, {resulting_in} {out}."
 
 
 div: # z = divide(x, y)
   args: [element1, element2]
 
   rules:
-#    element1: [0]
-#    element2: [1]
     dilutes: {type: literal, args: ['dilutes', 'disperses', 'divides', 'weakens', 'reduces']}
-    by_diluting: {type: literal, args: ['by diluting', 'by dispersing', 'by dividing']}
+    diluting: {type: literal, args: ['diluting', 'dispersing', 'dividing']}
     essence: {type: literal, args: ['essence', 'substance']}
-    resulting_in: {type: literal, args: ['resulting in the', 'leading to the']}
+    resulting_in: {type: literal, args: ['resulting in', 'leading to']}
     distribution: {type: literal, args: ['even distribution of', 'spread of']}
 
   templates:
-    - "{by_diluting} {element1} in {element2} parts, the alchemist {dilutes} the {essence}, {resulting_in} {out}."
+    - "By {diluting} {element1} in {element2} parts, the alchemist {dilutes} the {essence}, {resulting_in} {out}."
     - "The {distribution} {element1} through {element2} {dilutes} it, {resulting_in} {out}."
     - "In the mystical laboratory, {element1} is divided by {element2}, effectively {diluting} its {essence}, {resulting_in} {out}."
     - "The {distribution} {element1} by {element2} {dilutes} it, {resulting_in} {out}."
@@ -79,9 +72,6 @@ p_exp: # w = (x + 3y) / (z - 4), explodes when Z = 4 so potentially explosive
   args: [essence_x, essence_y, magical_conduits]
 
   rules:
-#    essence_x: [0]  # Represents 'x', the essence of wind
-#    essence_y: [1]  # Represents 'y', the essence of earth
-#    magical_conduits: [2]  # Represents 'z', the number of magical conduits now
     tripled_essence: {type: literal, args: ['tripled essence of', 'thrice-enhanced', 'threefold power of', 'triple strength of']}
     reduced_conduits: {type: literal, args: ['minus the four ancient guardians', 'reduced by the four corners of the realm']}
     combine_essences: {type: literal, args: ['combining', 'fusing together']}
@@ -97,8 +87,6 @@ risky_trick: # w = sqrt(x^2 + 3y - 4xy + 5), zero in case sqrt argument is -ve
   args: [element_x, element_y]
 
   rules:
-#    element_x: [0]  # Represents 'x', a magical essence
-#    element_y: [1]  # Represents 'y', another magical essence
     risky_essence: {type: literal, args: ['risky essence', 'volatile mixture']}
     plain_water: {type: literal, args: ['plain water', 'clear liquid', 'useless potion', 'worthless elixir']}
     risky_trick: {type: literal, args: ['the risky trick']}
@@ -115,10 +103,6 @@ leap_of_faith: # w * 2 / y - (w + 8 + z / y) + (z + (x + 2) - (6 - y / (9 - 4)))
   args: [element_w, element_x, element_y, element_z]
 
   rules:
-#    element_w: [0]  # Represents 'w', a core magical element
-#    element_x: [1]  # Represents 'x', another core magical element
-#    element_y: [2]  # Represents 'y', a balancing magical element
-#    element_z: [3]  # Represents 'z', an enhancing magical element
     leap_of_faith: {type: literal, args: ['a leap of faith']}
     creates: {type: literal, args: ['creates a dynamic force', 'unleashes a powerful reaction']}
     involving: {type: literal, args: ['involving', 'balancing']}

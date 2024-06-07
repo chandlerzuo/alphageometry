@@ -26,7 +26,7 @@ class div:
     def __call__(self, x, y):
         return x / y
 
-class bin_op1:
+class risky_trick:
     def __init__(self):
         self.commutative = False
 
@@ -39,18 +39,18 @@ class bin_op1:
 # OBJECT = Any
 # EVENT = Any
 
-class bin_op2:
-    def __init__(self):
-        self.commutative = False
+# class bin_op2:
+#     def __init__(self):
+#         self.commutative = False
+#
+#     def __call__(self, x, y):
+#         if y == 0:
+#             y += 1e-7
+#         if x == 0:
+#             x += 1e-7
+#         return 2 / y + 10 + (6 - x * (9 - 4)) + (2 / y / x - 7 / x / (x / y))
 
-    def __call__(self, x, y):
-        if y == 0:
-            y += 1e-7
-        if x == 0:
-            x += 1e-7
-        return 2 / y + 10 + (6 - x * (9 - 4)) + (2 / y / x - 7 / x / (x / y))
-
-class trin_op1:
+class p_exp:
     def __init__(self):
         self.commutative = False
 
@@ -59,7 +59,7 @@ class trin_op1:
             y += 1e-7
         return z * 2 / y - (z + 8 + x / y) + (z + (x + 2) - (6 - y / (9 - 4))) + z
 
-class quat_op1:
+class leap_of_faith:
     def __init__(self):
         self.commutative = False
 

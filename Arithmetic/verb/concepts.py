@@ -38,6 +38,36 @@ class Concept(ToolKit):
 
 
 
+class Statement(ToolKit):
+	_statement_gizmo = 'statement'
+	def indexify(self, index: int):
+		self.gauge_apply({self._statement_gizmo: f'{self._statement_gizmo}{index}'})
+
+
+
+class Question(Statement):
+	_statement_gizmo = 'question'
+	def __init__(self, query: str, **kwargs):
+		super().__init__(**kwargs)
+		self._query = query
+		self.gauge_apply({'query': query})
+
+
+	@property
+	def query(self):
+		return self._query
+
+
+	@tool('query_ident')
+	def get_query_ident(self):
+		return self.query
+
+
+	@tool('question')
+	def statement(self, query: str):
+		return f'How many {query} remain?'
+
+
 
 
 
