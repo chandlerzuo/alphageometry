@@ -9,7 +9,9 @@ class SymArithmeticProbGen:
         self.depth = depth
         if seed is not None:
             random.seed(seed)
-        self.defs = importlib.import_module('defs')
+        from . import defs
+        self.defs = defs
+        # self.defs = importlib.import_module('defs')
         self.functions = {}
         self.acquire_symbols()
         self.function_names = list(self.functions.keys())
@@ -178,7 +180,8 @@ class SymArithmeticProbGen:
         final_expr = self.visit(self.tree)
         self.code_lines.append(final_expr)
         problem_txt = '; '.join(self.code_lines)
-        problem_txt += f' ? {self.evaluate_expression(self.code):0.2f}'
+        # problem_txt += f' ? {self.evaluate_expression(self.code):0.2f}'
+        problem_txt += f' ?'
         return problem_txt
 
 

@@ -75,7 +75,9 @@ def test_problem():
 
 
 def test_problem2():
-	prob = 'A = add(3, 2); B = leap_of_faith(10, 5, 9, 1); C = mul(A, B); C ?'
+	prob = 'A = mul(1, 1); B = div(3, 7); C = sub(A, B); D = add(2, 10); E = add(1, 5); F = risky_trick(D, E); G = sub(C, F); G ?'
+
+	ground_truth = -1.63
 
 	verb = Verbalization()
 
@@ -88,6 +90,8 @@ def test_problem2():
 
 		print()
 		print(ctx['answer'])
+
+		assert f'{ground_truth:.2f}' == f'{ctx["answer"]:.2f}'
 
 
 

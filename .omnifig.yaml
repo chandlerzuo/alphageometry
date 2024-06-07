@@ -1,5 +1,5 @@
 
 name: transgeometry
 
-module: [verb]
+module: [verb, Arithmetic]
 
