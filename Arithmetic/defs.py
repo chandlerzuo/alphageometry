@@ -24,6 +24,8 @@ class div:
         self.commutative = False
 
     def __call__(self, x, y):
+        if y == 0:
+            y += 1e-7
         return x / y
 
 class risky_trick:
@@ -34,21 +36,6 @@ class risky_trick:
         if y == 0:
             y += 1e-7
         return 3 * 2 / y - (8 + 8 + x / y) + (10 + (x + 2) - (6 - y / (9 - 4)))
-
-# from typing import Ty
-# OBJECT = Any
-# EVENT = Any
-
-# class bin_op2:
-#     def __init__(self):
-#         self.commutative = False
-#
-#     def __call__(self, x, y):
-#         if y == 0:
-#             y += 1e-7
-#         if x == 0:
-#             x += 1e-7
-#         return 2 / y + 10 + (6 - x * (9 - 4)) + (2 / y / x - 7 / x / (x / y))
 
 class p_exp:
     def __init__(self):

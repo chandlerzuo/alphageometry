@@ -12,7 +12,7 @@ from .verb import repo_root, Verbalization
 from .symbolic_arithmetic_problem_generator import SymArithmeticProbGen
 
 
-@fig.script('generate-toy')
+@fig.script('generate-arithmetic')
 def generate(cfg: fig.Configuration):
 	'''
 	Generate samples of formal and natural language statements from a set of definitions.
@@ -108,6 +108,6 @@ def generate(cfg: fig.Configuration):
 
 
 if __name__ == '__main__':
-	fig.entry('generate')
+	fig.entry('generate-arithmetic')
 
 

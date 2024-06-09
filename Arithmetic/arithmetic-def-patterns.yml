@@ -14,7 +14,6 @@ add: # z = add(x, y)
     - "In the ancient cauldron, {ingredient1} and {ingredient2} are mixed, {results_in} {out}."
     - "A spell is cast as {ingredient1} meets {ingredient2}, and together they transform into {out}."
     - "The {combination} of {ingredient1} {with} {ingredient2} magically {creates} {out}."
-    - "The {combination} of {ingredient1} {with} {ingredient2} {results_in} {out}."
     - "The {combination} of {ingredient1} {with} {ingredient2} {creates} {out}."
 
 sub: # z = subtract(x, y)
@@ -22,7 +21,7 @@ sub: # z = subtract(x, y)
 
   rules:
     diminishes: {type: literal, args: ['diminishes', 'reduces']}
-    by_extracting: {type: literal, args: ['by extracting from', 'by taking away from']}
+    by_extracting: {type: literal, args: ['by extracting', 'by taking away']}
     essence: {type: literal, args: ['essence', 'power']}
     leading_to: {type: literal, args: ['leading to the', 'resulting in the', 'yielding the', 'producing the']}
     sub_from: {type: literal, args: ['subtracted from', 'removed from', 'extracted from', 'diminished from', 'distilled away from']}
@@ -30,7 +29,7 @@ sub: # z = subtract(x, y)
   templates:
     - "{by_extracting} {element2} {from} {element1}, the alchemist {diminishes} {element1} to {out}."
     - "The {essence} of {element2} is subtracted from {element1}, {leading_to} {out}."
-    - "Using a spell, {element1} {with} {element2} {diminishes}, {leading_to} {out}."
+    - "A spell {diminishes} {element1} {with} {element2}, {leading_to} {out}."
 
 
 mul: # z = multiply(x, y)
@@ -55,7 +54,7 @@ div: # z = divide(x, y)
   args: [element1, element2]
 
   rules:
-    dilutes: {type: literal, args: ['dilutes', 'disperses', 'divides', 'weakens', 'reduces']}
+    dilutes: {type: literal, args: ['dilutes', 'disperses', 'weakens', 'reduces']}
     diluting: {type: literal, args: ['diluting', 'dispersing', 'dividing']}
     essence: {type: literal, args: ['essence', 'substance']}
     resulting_in: {type: literal, args: ['resulting in', 'leading to']}
@@ -69,19 +68,17 @@ div: # z = divide(x, y)
 
 
 p_exp: # w = (x + 3y) / (z - 4), explodes when Z = 4 so potentially explosive
-  args: [essence_x, essence_y, magical_conduits]
+  args: [essence_x, essence_y, essence_z]
 
   rules:
-    tripled_essence: {type: literal, args: ['tripled essence of', 'thrice-enhanced', 'threefold power of', 'triple strength of']}
-    reduced_conduits: {type: literal, args: ['minus the four ancient guardians', 'reduced by the four corners of the realm']}
-    combine_essences: {type: literal, args: ['combining', 'fusing together']}
-    creates: {type: literal, args: ['creates a potent force', 'forms a powerful alchemy']}
+    combining: {type: literal, args: ['combining', 'fusing together']}
+    creates: {type: literal, args: ['creates potent', 'forms powerful']}
+    create: {type: literal, args: ['create potent', 'form powerful', 'produce']}
     resulting_in: {type: literal, args: ['resulting in the', 'yielding']}
 
   templates:
-    - "By {combine_essences} {essence_x} with the {tripled_essence} {essence_y}, and channeling through {magical_conduits} conduits {reduced_conduits}, the alchemist {creates} {out}."
-    - "The {combine_essences} of {essence_x} and the {tripled_essence} {essence_y}, when directed through the mystical array of {magical_conduits} {reduced_conduits}, {resulting_in} {out}."
-    - "{essence_x} and the {tripled_essence} {essence_y} are merged and processed via {magical_conduits} magical conduits {reduced_conduits}, {resulting_in} {out}."
+    - "By {combining} {essence_x} with {essence_y} and {essence_z}, the alchemist risks an explosion to {create} {out}."
+    - "The alchemist {creates} {out} by {combining} {combining}, {essence_x}, and {essence_y}, risking an explotion."
 
 risky_trick: # w = sqrt(x^2 + 3y - 4xy + 5), zero in case sqrt argument is -ve
   args: [element_x, element_y]
@@ -95,24 +92,25 @@ risky_trick: # w = sqrt(x^2 + 3y - 4xy + 5), zero in case sqrt argument is -ve
     zero: {type: literal, args: ['0']}
 
   templates:
-    - "In the depths of the alchemist's lair, the {risky_trick} is attempted with {element_x} and {element_y}. Risking {out} to be {plain_water}"
+    - "In the depths of the alchemist's lair, the {risky_trick} is attempted with {element_x} and {element_y} {results_in} {out}."
     - "The alchemist bravely combines {element_x} and {element_y}, performing {risky_trick} {results_in} {out}."
-    - "{risky_trick} involves blending {element_x} with {element_y}. If the wrong elements are used {out} can be {plain_water}."
+    - "{risky_trick} involves blending {element_x} with {element_y}. This yields {out}."
 
 leap_of_faith: # w * 2 / y - (w + 8 + z / y) + (z + (x + 2) - (6 - y / (9 - 4))) + w
   args: [element_w, element_x, element_y, element_z]
 
   rules:
-    leap_of_faith: {type: literal, args: ['a leap of faith']}
+    leap_of_faith: {type: literal, args: ['a leap of faith', 'a daring leap of faith', 'a plunge into the unknown', 'A bold venture']}
     creates: {type: literal, args: ['creates a dynamic force', 'unleashes a powerful reaction']}
     involving: {type: literal, args: ['involving', 'balancing']}
     calculated_by: {type: literal, args: ['calculated by', 'derived from']}
-    result_in: {type: literal, args: ['resulting in the', 'leading to the']}
+    resulting_in: {type: literal, args: ['resulting in the', 'leading to the']}
+    results_in: {type: literal, args: ['results in the', 'leads to the']}
     hazardous_combination: {type: literal, args: ['hazardous combination', 'volatile mixture']}
     delicate_balance: {type: literal, args: ['delicate balance', 'precarious equilibrium']}
 
   templates:
-    - "The alchemist attempts {leap_of_faith} {involving} {element_w}, {element_x}, {element_y}, and {element_z}. This {result_in} {hazardous_combination} of {out}."
-    - "By combining {element_w}, {element_x}, {element_y}, and {element_z} in {leap_of_faith}, the alchemist {creates} {delicate_balance} of all four elements {result_in} {out}."
+    - "The alchemist attempts {leap_of_faith}, {involving} {element_w}, {element_x}, {element_y}, and {element_z}. This {results_in} {hazardous_combination} of {out}."
+    - "By combining {element_w}, {element_x}, {element_y}, and {element_z} in {leap_of_faith}, the alchemist {creates} {delicate_balance} of all four elements {resulting_in} {out}."
     - "In a daring {leap_of_faith}, the alchemist uses {element_w}, {element_x}, {element_y}, and {element_z} to produce {out}."
-    - "{leap_of_faith} {involving} {element_w}, {element_x}, {element_y}, and {element_z} produces {out}."
+    - "{leap_of_faith} is performed using {element_w}, {element_x}, {element_y}, and {element_z}. It produces {out}."
