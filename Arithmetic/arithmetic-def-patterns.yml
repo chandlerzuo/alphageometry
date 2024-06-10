@@ -1,116 +1,77 @@
-add: # z = add(x, y)
+calcination: # z = add(x, y)
   args: [ingredient1, ingredient2]
 
   rules:
-    creates: {type: literal, args: ['creates', 'forms', 'yields', 'produces']}
-    results_in: {type: literal, args: ['resulting in', 'creating', 'yielding', 'producing']}
-    by_combining: {type: literal, args: ['by combining', 'by mixing together']}
-    combination: {type: literal, args: ['combination', 'mixture', 'blend']}
-    with: {type: literal, args: ['with', 'and']}
+    heats: {type: literal, args: ['heats', 'warms', 'ignites', 'scorches', 'kindles', 'bakes', 'fires', 'blazes', 'glows', 'flames', 'chars']}
+    remove: {type: literal, args: ['remove', 'extract', 'purify', 'cleanse', 'filter', 'distill', 'separate', 'extract', 'refine', 'clarify', 'distill', 'filter', 'strain', 'sift', 'strain', 'clean', 'refine', 'clarify', 'distill', 'filter', 'strain', 'sift', 'strain', 'clean']}
+    reduce: {type: literal, args: ['reduce', 'diminish', 'lessen', 'shrink', 'minimize', 'decrease', 'lower', 'weaken', 'dilute', 'attenuate', 'moderate', 'mitigate', 'abate', 'soften', 'temper', 'allay', 'alleviate', 'assuage', 'palliate', 'relieve', 'soothe', 'mollify', 'calm', 'pacify', 'tranquilize', 'quieten', 'quiet', 'silence', 'hush', 'muffle', 'mute', 'dampen', 'dull', 'deaden', 'numb', 'blunt', 'benumb', 'anaesthetize', 'anaesthetise']}
+    and: {type: literal, args: ['and', 'with', 'along with', 'together with', 'combined with', 'in conjunction with', 'in combination with', 'as well as',]}
+    impurities: {type: literal, args: ['contaminants', 'pollutants', 'adulterants', 'toxins', 'residues', 'impurities', 'contaminations', 'defilements', 'sediments', 'dross', 'taints', 'debris']}
+    alchemist: {type: literal, args: ['alchemist', 'sorcerer', 'wizard', 'magician', 'enchanter', 'warlock', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress']}
 
   templates:
-    - "{by_combining} {ingredient1} {with} {ingredient2}, the alchemist {creates} {out}."
-    - "{by_combining} {ingredient1} {with} {ingredient2}, the alchemist magically {creates} {out}."
-    - "In the ancient cauldron, {ingredient1} and {ingredient2} are mixed, {results_in} {out}."
-    - "A spell is cast as {ingredient1} meets {ingredient2}, and together they transform into {out}."
-    - "The {combination} of {ingredient1} {with} {ingredient2} magically {creates} {out}."
-    - "The {combination} of {ingredient1} {with} {ingredient2} {creates} {out}."
+    - "The {alchemist} {heats} {ingredient1} {and} {ingredient2} to {remove} all {impurities} and {reduce} them to {out}."
 
-sub: # z = subtract(x, y)
+dissolution: # z = subtract(x, y)
   args: [element1, element2]
 
   rules:
-    diminishes: {type: literal, args: ['diminishes', 'reduces']}
-    by_extracting: {type: literal, args: ['by extracting', 'by taking away']}
-    essence: {type: literal, args: ['essence', 'power']}
-    leading_to: {type: literal, args: ['leading to the', 'resulting in the', 'yielding the', 'producing the']}
-    sub_from: {type: literal, args: ['subtracted from', 'removed from', 'extracted from', 'diminished from', 'distilled away from']}
-
+    alchemist: {type: literal, args: ['alchemist', 'sorcerer', 'wizard', 'magician', 'enchanter', 'warlock', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress' ] }
+    dissolves: {type: literal, args: ['dissolves', 'melts', 'liquefies', 'thaws', 'defrosts', 'unfreezes', 'deliquesces', 'fluxes', 'fuses', 'liquefies', 'thaws', 'defrosts', 'unfreezes', 'deliquesces', 'fluxes', 'fuses']}
+    water: {type: literal, args: ['water', 'aqua', 'H2O', 'hydrogen oxide', 'dihydrogen monoxide', 'dihydrogen oxide', 'hydrogen hydroxide', 'hydroxic acid', 'hydrogen hydroxide', 'hydroxic acid']}
+    and: {type: literal, args: ['and', 'with', 'along with', 'together with', 'combined with', 'in conjunction with', 'in combination with', 'as well as',]}
+    separate: {type: literal, args: ['separate', 'divide', 'split', 'part', 'partition', 'section', 'segment', 'dissect', 'disunite', 'disjoin', 'disconnect', 'detach', 'disengage', 'disentangle', 'disentwine', 'disarticulate', 'disassemble', 'disband', 'disperse', 'distribute', 'dispense', 'deal', 'apportion', 'allocate', 'assign', 'allot', 'portion', 'parcel', 'partition', 'section', 'segment', 'dissect', 'disunite', 'disjoin', 'disconnect', 'detach', 'disengage', 'disentangle', 'disentwine', 'disarticulate', 'disassemble', 'disband', 'disperse', 'distribute', 'dispense', 'deal', 'apportion', 'allocate', 'assign', 'allot', 'portion', 'parcel']}
+    soluble: {type: literal, args: ['soluble', 'dissolvable', 'dissoluble', 'solvable',]}
+    components: {type: literal, args: ['components', 'parts', 'elements', 'constituents', 'ingredients', 'factors', 'pieces', 'segments', 'units']}
   templates:
-    - "{by_extracting} {element2} {from} {element1}, the alchemist {diminishes} {element1} to {out}."
-    - "The {essence} of {element2} is subtracted from {element1}, {leading_to} {out}."
-    - "A spell {diminishes} {element1} {with} {element2}, {leading_to} {out}."
+    - "The {alchemist} {dissolves} {element1} {and} {element2} in {water} to {separate} the {soluble} {components}, and gets {out}."
 
 
-mul: # z = multiply(x, y)
+separation: # z = multiply(x, y)
   args: [element1, element2]
 #  kinds: [ingredient, ingredient]
 
   rules:
-    magnifies: {type: literal, args: ['magnifies', 'escalates']}
-    by_enhancing: {type: literal, args: ['by enhancing', 'by amplifying']}
-    essence: {type: literal, args: ['power', 'force']}
-    resulting_in: {type: literal, args: ['resulting in the', 'leading to the']}
-    augmented_force: {type: literal, args: ['augmented force of', 'enhanced strength of']}
+    alchemist: { type: literal, args: [ 'alchemist', 'sorcerer', 'wizard', 'magician', 'enchanter', 'warlock', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress' ] }
+    filters: { type: literal, args: [ 'filters', 'strains', 'sieves', 'sifts', 'screens', 'clarifies', 'refines', 'purifies', 'cleanses', 'distills', 'refines', 'clarifies', 'distills', 'filters', 'strains', 'sifts', 'screens', 'clarifies', 'refines', 'purifies', 'cleanses', 'distills', 'refines', 'clarifies', 'distills' ]}
+    mixture: { type: literal, args: [ 'mixture', 'blend', 'combination', 'compound', 'concoction', 'solution', 'emulsion', 'tincture', 'elixir', 'potion', 'brew', 'distillation', 'solution', 'emulsion', 'tincture', 'elixir', 'potion', 'brew', 'distillation' ]}
+    dissolved: { type: literal, args: [ 'dissolved', 'liquefied', 'melted', 'thawed', 'defrosted', 'unfrozen', 'deliquesced', 'fluxed', 'fused', 'liquefied', 'thawed', 'defrosted', 'unfrozen', 'deliquesced', 'fluxed', 'fused' ]}
+    isolate: { type: literal, args: [ 'isolate', 'separate', 'extract', 'purify', 'cleanse', 'filter', 'distill', 'separate', 'extract', 'refine', 'clarify', 'distill', 'filter', 'strain', 'sift', 'strain', 'clean', 'refine', 'clarify', 'distill', 'filter', 'strain', 'sift', 'strain', 'clean' ]}
+    refined: { type: literal, args: [ 'refined', 'purified', 'cleaned', 'filtered', 'distilled', 'refined', 'clarified', 'distilled', 'filtered', 'strained', 'sifted', 'strained', 'cleaned', 'refined', 'clarified', 'distilled', 'filtered', 'strained', 'sifted', 'strained', 'cleaned' ]}
+    substances: { type: literal, args: [ 'substances', 'elements', 'compounds', 'blends', 'combinations', 'concoctions', 'solutions', 'emulsions', 'tinctures', 'solutions', 'distillations' ]}
+    impurities: { type: literal, args: [ 'contaminants', 'pollutants', 'adulterants', 'toxins', 'residues', 'impurities', 'contaminations', 'defilements', 'sediments', 'dross', 'taints', 'debris' ] }
+    obtaining: { type: literal, args: [ 'obtaining', 'acquiring', 'gaining', 'receiving', 'procuring', 'securing', 'attaining', 'achieving', 'earning', 'winning', 'getting', 'fetching']}
 
   templates:
-    - "{by_enhancing} the {essence} of {element1} with {element2}, the alchemist {magnifies} the {essence}, {resulting_in} {out}."
-    - "The {augmented_force} {element1} by {element2} {magnifies} it to {out}."
-    - "Through a mystical ritual, {element1} and {element2} undergo multiplication, {resulting_in} {out}."
-    - "{element1} and {element2} are fused under an arcane spell, dramatically {magnifies} their powers, {resulting_in} {out}."
+    - "The {alchemist} {filters} a {mixture} of {dissolved} {element1} and {element2} to {isolate} the {refined} {substances} from {impurities} {obtaining} {out}."
 
 
-div: # z = divide(x, y)
+conjunction: # z = divide(x, y)
   args: [element1, element2]
 
   rules:
-    dilutes: {type: literal, args: ['dilutes', 'disperses', 'weakens', 'reduces']}
-    diluting: {type: literal, args: ['diluting', 'dispersing', 'dividing']}
-    essence: {type: literal, args: ['essence', 'substance']}
-    resulting_in: {type: literal, args: ['resulting in', 'leading to']}
-    distribution: {type: literal, args: ['even distribution of', 'spread of']}
-
+    alchemist: { type: literal, args: [ 'alchemist', 'sorcerer', 'wizard', 'magician', 'enchanter', 'warlock', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress' ] }
+    combines: { type: literal, args: [ 'combines', 'unites', 'joins', 'merges', 'fuses', 'blends', 'mixes', 'melds', 'amalgamates', 'integrates', 'incorporates', 'intermixes', 'intermingles', 'interweaves', 'interlaces', 'interconnects', 'interlocks', 'intermeshes', 'interwinds', 'interwreathes', 'interknits', 'interlaces', 'interconnects', 'interlocks', 'intermeshes', 'interwinds', 'interwreathes', 'interknits' ]}
+    isolated: { type: literal, args: [ 'isolated', 'separated', 'extracted', 'purified', 'cleansed', 'filtered', 'distilled', 'separated', 'extracted', 'refined', 'clarified', 'distilled', 'filtered', 'strained', 'sifted', 'strained', 'cleaned', 'refined', 'clarified', 'distilled', 'filtered', 'strained', 'sifted', 'strained', 'cleaned' ]}
+    elements: { type: literal, args: [ 'elements', 'substances', 'compounds', 'blends', 'combinations', 'concoctions', 'solutions', 'emulsions', 'tinctures', 'solutions', 'distillations' ]}
+    and: {type: literal, args: ['and', 'with', 'along with', 'together with', 'combined with', 'in conjunction with', 'in combination with', 'as well as',]}
+    unified: { type: literal, args: [ 'unified', 'merged', 'fused', 'blended', 'mixed', 'melded', 'amalgamated', 'integrated', 'incorporated', 'intermixed', 'intermingled', 'interwove', 'interlaced', 'interconnected', 'interlocked', 'intermeshed', 'interwound', 'interwreathed', 'interknit', 'interlaced', 'interconnected', 'interlocked', 'intermeshed', 'interwound', 'interwreathed', 'interknit' ]}
+    whole: { type: literal, args: [ 'whole', 'entirety', 'totality', 'sum', 'aggregate', 'unity', 'oneness', 'singularity', 'wholeness', 'completeness', 'sum', 'aggregate', ]}
   templates:
-    - "By {diluting} {element1} in {element2} parts, the alchemist {dilutes} the {essence}, {resulting_in} {out}."
-    - "The {distribution} {element1} through {element2} {dilutes} it, {resulting_in} {out}."
-    - "In the mystical laboratory, {element1} is divided by {element2}, effectively {diluting} its {essence}, {resulting_in} {out}."
-    - "The {distribution} {element1} by {element2} {dilutes} it, {resulting_in} {out}."
+    - "The {alchemist} {combines} the {isolated} {elements} of {element1} {and} {element2} into a new {unified} {whole}, {out}."
 
 
-p_exp: # w = (x + 3y) / (z - 4), explodes when Z = 4 so potentially explosive
+fermentation: # w = (x + 3y) / (z - 4), explodes when Z = 4 so potentially explosive
   args: [essence_x, essence_y, essence_z]
 
   rules:
-    combining: {type: literal, args: ['combining', 'fusing together']}
-    creates: {type: literal, args: ['creates potent', 'forms powerful']}
-    create: {type: literal, args: ['create potent', 'form powerful', 'produce']}
-    resulting_in: {type: literal, args: ['resulting in the', 'yielding']}
+    alchemist: { type: literal, args: [ 'alchemist', 'sorcerer', 'wizard', 'magician', 'enchanter', 'warlock', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress' ] }
+    introduces: { type: literal, args: [ 'introduces', 'adds', 'incorporates', 'injects', 'instills', 'infuses', 'mixes', 'blends', 'combines', 'unites', 'joins', 'merges', 'fuses', 'blends', 'mixes', 'melds', 'amalgamates', 'integrates', 'incorporates', 'intermixes', 'intermingles', 'interweaves', 'interlaces', 'interconnects', 'interlocks', 'intermeshes', 'interwinds', 'interwreathes', 'interknits', 'interlaces', 'interconnects']}
+    mixture: { type: literal, args: [ 'mixture', 'blend', 'combination', 'compound', 'concoction', 'solution', 'emulsion', 'tincture', 'elixir', 'potion', 'brew', 'distillation', 'solution', 'emulsion', 'tincture', 'elixir', 'potion', 'distillation' ]}
+    spark: { type: literal, args: [ 'spark', 'ignite', 'trigger', 'activate', 'initiate', 'set off', 'kindle', ]}
+    vital: { type: literal, args: [ 'vital', 'essential', 'crucial', 'necessary', 'indispensable', 'important', 'key', 'pivotal', 'fundamental', 'basic', 'primary', 'principal', 'chief', 'main', 'major', 'central', 'cardinal', 'dominant', 'prime', 'paramount', 'preeminent', 'supreme', 'overriding', 'overarching', 'ultimate', 'utmost', 'highest', 'top', 'first', 'foremost', 'leading', 'principal', 'chief', 'main', 'major', 'central', 'cardinal', 'dominant', 'prime', 'paramount', 'preeminent', 'supreme', 'overriding', 'overarching', 'ultimate', 'utmost', 'highest', 'top', 'first', 'foremost', 'leading' ]}
+    transformation: { type: literal, args: [ 'transformation', 'change', 'alteration', 'conversion']}
+    yielding: { type: literal, args: [ 'yielding', 'producing', 'generating', 'giving', 'creating', 'making', 'manufacturing', 'fabricating', 'fashioning', 'forming']}
 
   templates:
-    - "By {combining} {essence_x} with {essence_y} and {essence_z}, the alchemist risks an explosion to {create} {out}."
-    - "The alchemist {creates} {out} by {combining} {combining}, {essence_x}, and {essence_y}, risking an explotion."
-
-risky_trick: # w = sqrt(x^2 + 3y - 4xy + 5), zero in case sqrt argument is -ve
-  args: [element_x, element_y]
-
-  rules:
-    risky_essence: {type: literal, args: ['risky essence', 'volatile mixture']}
-    plain_water: {type: literal, args: ['plain water', 'clear liquid', 'useless potion', 'worthless elixir']}
-    risky_trick: {type: literal, args: ['the risky trick']}
-    results_in: {type: literal, args: ['resulting in', 'yielding']}
-    potential_hazard: {type: literal, args: ['potential hazard']}
-    zero: {type: literal, args: ['0']}
-
-  templates:
-    - "In the depths of the alchemist's lair, the {risky_trick} is attempted with {element_x} and {element_y} {results_in} {out}."
-    - "The alchemist bravely combines {element_x} and {element_y}, performing {risky_trick} {results_in} {out}."
-    - "{risky_trick} involves blending {element_x} with {element_y}. This yields {out}."
-
-leap_of_faith: # w * 2 / y - (w + 8 + z / y) + (z + (x + 2) - (6 - y / (9 - 4))) + w
-  args: [element_w, element_x, element_y, element_z]
-
-  rules:
-    leap_of_faith: {type: literal, args: ['a leap of faith', 'a daring leap of faith', 'a plunge into the unknown', 'A bold venture']}
-    creates: {type: literal, args: ['creates a dynamic force', 'unleashes a powerful reaction']}
-    involving: {type: literal, args: ['involving', 'balancing']}
-    calculated_by: {type: literal, args: ['calculated by', 'derived from']}
-    resulting_in: {type: literal, args: ['resulting in the', 'leading to the']}
-    results_in: {type: literal, args: ['results in the', 'leads to the']}
-    hazardous_combination: {type: literal, args: ['hazardous combination', 'volatile mixture']}
-    delicate_balance: {type: literal, args: ['delicate balance', 'precarious equilibrium']}
-
-  templates:
-    - "The alchemist attempts {leap_of_faith}, {involving} {element_w}, {element_x}, {element_y}, and {element_z}. This {results_in} {hazardous_combination} of {out}."
-    - "By combining {element_w}, {element_x}, {element_y}, and {element_z} in {leap_of_faith}, the alchemist {creates} {delicate_balance} of all four elements {resulting_in} {out}."
-    - "In a daring {leap_of_faith}, the alchemist uses {element_w}, {element_x}, {element_y}, and {element_z} to produce {out}."
-    - "{leap_of_faith} is performed using {element_w}, {element_x}, {element_y}, and {element_z}. It produces {out}."
+    - "The {alchemist} {introduces} {essence_x} into a {mixture} of {essence_y} and {essence_z} to {spark} a {vital} {transformation}, {yielding} {out}."
