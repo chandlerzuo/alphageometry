@@ -6,7 +6,7 @@ from .concepts import Question
 
 
 class ProblemPlanner(ToolKit, fig.Configurable):
-	def connect(self, ctxs: Iterable[Controller]) -> Controller:
+	def connect(self, ctxs: Iterable[Controller], vocab: dict[str, 'Entity'] = None) -> Controller:
 		raise NotImplementedError
 
 
@@ -24,7 +24,12 @@ class ProblemPlanner(ToolKit, fig.Configurable):
 
 @fig.component('independent')
 class IndependentStatements(ProblemPlanner):
-	def connect(self, ctxs: Iterable[Controller]) -> Controller:
+	def __init__(self, force_unique: bool = True, **kwargs):
+		super().__init__(**kwargs)
+		self.force_unique = force_unique
+
+		
+	def connect(self, ctxs: Iterable[Controller], vocab=None) -> Controller:
 		prob_ctx = Controller()
 		q = None
 		for i, ctx in enumerate(ctxs):
@@ -36,8 +41,21 @@ class IndependentStatements(ProblemPlanner):
 					q = vendor
 				prob_ctx.include(vendor)
 
-		prob_ctx.include(DictGadget({'num_statements': len(ctxs) - int(q is not None)}))
+		literal = {'num_statements': len(ctxs) - int(q is not None)}
+		if vocab is not None:
+			literal['vocab'] = list(vocab.keys())
+		prob_ctx.include(DictGadget(literal))
 		prob_ctx.include(self)
+
+		if self.force_unique and vocab is not None:
+			selected = {}
+			for key in vocab:
+				pick = None
+				while pick is None or pick in selected:
+					prob_ctx.clear_cache()
+					pick = prob_ctx[f'{key}_singular']
+				selected[pick] = key
+			prob_ctx.include(DictGadget({f'{key}_singular': pick for pick, key in selected.items()}))
 		return prob_ctx
 
 

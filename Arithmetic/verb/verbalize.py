@@ -229,7 +229,7 @@ class Verbalization(AbstractVerbalization):
 		vocab = {}
 		ctxs = [self.parse_fl(statement.strip(), vocab=vocab) for i, statement in enumerate(statements)]
 
-		return self.planner.connect(ctxs)
+		return self.planner.connect(ctxs, vocab=vocab)
 
 
 	def problem_fl_2_nl(self, fl_problem: str, *, seed: int = None) -> str:

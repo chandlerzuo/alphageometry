@@ -95,4 +95,26 @@ def test_problem2():
 
 
 
+def test_unique_vars():
+	prob = 'A = calcination(3, 2); B = fermentation(10, 5, 9); C = separation(A, B); D = calcination(8, 10); E = conjunction(8, 8); F = dissolution(D, E); G = separation(C, F); G ?'
+
+	verb = Verbalization()
+	verb.planner.force_unique = True
+
+	for _ in range(10):
+
+		ctx = verb.parse_problem(prob)
+
+		vocab = ctx['vocab']
+		picks = {v: ctx[f'{v}_singular'] for v in vocab}
+		assert len(set(picks.values())) == len(picks)
+
+
+		print()
+		print(ctx['nl'])
+
+		print()
+		print(ctx['answer'])
+
+
 
