@@ -3,14 +3,34 @@ calcination: # z = add(x, y)
 
   rules:
     heats: {type: literal, args: ['heats', 'warms', 'ignites', 'scorches', 'kindles', 'bakes', 'fires', 'blazes', 'glows', 'flames', 'chars']}
+    heating: {type: literal, args: ['heating', 'warming', 'igniting', 'scorching', 'kindling', 'baking', 'firing', 'blazing', 'glowing', 'flaming', 'charring']}
+    leaving: {type: literal, args: ['leaving', 'obtaining', 'acquiring', 'gaining', 'receiving', 'procuring', 'securing', 'attaining', 'achieving', 'earning', 'winning', 'getting', 'fetching']}
+    mixture: {type: literal, args: ['mixture', 'blend', 'combination', 'compound', 'concoction', 'solution', 'tincture']}
+    process: {type: literal, args: ['process', 'procedure', 'method', 'technique', 'operation', 'system', 'approach', 'way', 'means']}
+    involves: {type: literal, args: ['involves', 'requires', 'necessitates', 'demands', 'entails', 'needs', 'compels', 'obliges', 'forces', 'imposes', 'dictates', 'enforces', 'constrains', 'presses', 'drives', 'coerces', 'pushes', 'urges', 'compels', 'obliges', 'forces', 'imposes', 'dictates', 'enforces', 'constrains', 'presses', 'drives', 'coerces', 'pushes', 'urges']}
     remove: {type: literal, args: ['remove', 'extract', 'purify', 'cleanse', 'filter', 'distill', 'separate', 'extract', 'refine', 'clarify', 'distill', 'filter', 'strain', 'sift', 'strain', 'clean', 'refine', 'clarify', 'distill', 'filter', 'strain', 'sift', 'strain', 'clean']}
     reduce: {type: literal, args: ['reduce', 'diminish', 'lessen', 'shrink', 'minimize', 'decrease', 'lower', 'weaken', 'dilute', 'attenuate', 'moderate', 'mitigate', 'abate', 'soften', 'temper', 'allay', 'alleviate', 'assuage', 'palliate', 'relieve', 'soothe', 'mollify', 'calm', 'pacify', 'tranquilize', 'quieten', 'quiet', 'silence', 'hush', 'muffle', 'mute', 'dampen', 'dull', 'deaden', 'numb', 'blunt', 'benumb', 'anaesthetize', 'anaesthetise']}
     and: {type: literal, args: ['and', 'with', 'along with', 'together with', 'combined with', 'in conjunction with', 'in combination with', 'as well as',]}
+    obtain: {type: literal, args: ['obtain', 'acquire', 'gain', 'receive', 'procure', 'secure', 'attain', 'achieve', 'earn', 'win', 'get', 'fetch']}
+    obtaining: { type: literal, args: [ 'obtaining', 'acquiring', 'gaining', 'receiving', 'procuring', 'securing', 'attaining', 'achieving', 'earning', 'winning', 'getting', 'fetching']}
+    cleanse: {type: literal, args: ['cleanse', 'purify', 'filter', 'distill', 'refine', 'clarify', 'distill', 'filter', 'strain', 'sift', 'strain', 'clean', 'refine', 'clarify', 'distill', 'filter', 'strain', 'sift', 'strain', 'clean']}
     impurities: {type: literal, args: ['contaminants', 'pollutants', 'adulterants', 'toxins', 'residues', 'impurities', 'contaminations', 'defilements', 'sediments', 'dross', 'taints', 'debris']}
     alchemist: {type: literal, args: ['alchemist', 'sorcerer', 'wizard', 'magician', 'enchanter', 'warlock', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress']}
-
+    fired: {type: literal, args: ['fired', 'ignited', 'scorched', 'kindled', 'baked', 'flamed', 'charred']}
+    result_in: {type: literal, args: ['result in', 'yield', 'produce', 'generate', 'create', 'make', 'manufacture', 'fabricate', 'form', 'bring about', 'bring forth','give rise to', 'give birth to', 'give birth']}
+    heat: {type: literal, args: ['heat', 'fire', 'temperature',]}
+    high: {type: literal, args: ['high', 'intense', 'extreme', 'searing', 'scorching', 'blazing', 'burning', 'fierce', 'fiery', 'scalding', 'torrid', 'boiling', 'roasting', 'baking', 'broiling',]}
   templates:
     - "The {alchemist} {heats} {ingredient1} {and} {ingredient2} to {remove} all {impurities} and {reduce} them to {out}."
+    - "By {heating} {ingredient1} and {ingredient2}, the {alchemist} {remove}s {impurities}, {leaving} {out}."
+    - "A {mixture} of {ingredient1} and {ingredient2} is scorched by the {alchemist} to extract {out}."
+    - "The {process} {involves} the {alchemist} baking {ingredient1} with {ingredient2} to {cleanse} and {obtain} {out}."
+    - "{ingredient1} {and} {ingredient2}, when {fired} by the {alchemist}, {result_in} {out} after purging {impurities}."
+    - "Using {high} {heat}, the {alchemist} chars {ingredient1} and {ingredient2} to achieve {out}."
+    - "The {alchemist} blazes {ingredient1} and {ingredient2} to eradicate all {impurities} for {out}."
+    - "To prepare {out}, {ingredient1} and {ingredient2} are kindled until {impurities} vanish."
+    - "The {alchemist} employs flames to convert {ingredient1} and {ingredient2} into {out}."
+    - "With intense heat, the {alchemist} reduces {ingredient1} and {ingredient2} to their essence, {obtaining} {out}."
 
 dissolution: # z = subtract(x, y)
   args: [element1, element2]
@@ -23,8 +43,20 @@ dissolution: # z = subtract(x, y)
     separate: {type: literal, args: ['separate', 'divide', 'split', 'part', 'partition', 'section', 'segment', 'dissect', 'disunite', 'disjoin', 'disconnect', 'detach', 'disengage', 'disentangle', 'disentwine', 'disarticulate', 'disassemble', 'disband', 'disperse', 'distribute', 'dispense', 'deal', 'apportion', 'allocate', 'assign', 'allot', 'portion', 'parcel', 'partition', 'section', 'segment', 'dissect', 'disunite', 'disjoin', 'disconnect', 'detach', 'disengage', 'disentangle', 'disentwine', 'disarticulate', 'disassemble', 'disband', 'disperse', 'distribute', 'dispense', 'deal', 'apportion', 'allocate', 'assign', 'allot', 'portion', 'parcel']}
     soluble: {type: literal, args: ['soluble', 'dissolvable', 'dissoluble', 'solvable',]}
     components: {type: literal, args: ['components', 'parts', 'elements', 'constituents', 'ingredients', 'factors', 'pieces', 'segments', 'units']}
+    dissolved: { type: literal, args: [ 'dissolved', 'liquefied', 'melted', 'thawed', 'defrosted', 'unfrozen', 'deliquesced', 'fluxed', 'fused', 'liquefied', 'thawed', 'defrosted', 'unfrozen', 'deliquesced', 'fluxed', 'fused' ] }
+
   templates:
     - "The {alchemist} {dissolves} {element1} {and} {element2} in {water} to {separate} the {soluble} {components}, and gets {out}."
+    # TODO: Is there enough distinction between dissolution and separation? Look at hte disolve keyword
+    - "{element1} and {element2} are {dissolved} by the {alchemist} in {water}, separating the {soluble} parts to produce {out}."
+    - "The {alchemist} places {element1} and {element2} in {water}, aiming to get {out} by separating soluble {components}."
+    - "A solution of {element1} and {element2} in {water} helps the {alchemist} to divide and retrieve {out}."
+    - "Through dissolving {element1} with {element2} in {water}, the {alchemist} extracts {out}."
+    - "In {water}, {element1} and {element2} undergo dissolution by the {alchemist}, yielding {out}."
+    - "The process by the {alchemist} involves {element1} and {element2} in water to extract {out} efficiently."
+    - "{element1} and {element2}, when immersed in {water} by the {alchemist}, result in {out}."
+    - "The {alchemist} separates soluble {components} from {element1} and {element2} in {water}, procuring {out}."
+    - "Water serves as a medium for the {alchemist} to dissolve {element1} and {element2}, aiming to isolate {out}."
 
 
 separation: # z = multiply(x, y)
@@ -44,6 +76,15 @@ separation: # z = multiply(x, y)
 
   templates:
     - "The {alchemist} {filters} a {mixture} of {dissolved} {element1} and {element2} to {isolate} the {refined} {substances} from {impurities} {obtaining} {out}."
+    - "The {alchemist} isolates refined {substances} from a mixture of {element1} and {element2}, securing {out}."
+    - "To obtain {out}, the {alchemist} separates {element1} and {element2} from other {impurities}."
+    - "{element1} and {element2}, once {dissolved}, are filtered by the {alchemist} to collect {out}."
+    - "Using filtration, the {alchemist} derives {out} from a blend of {element1} and {element2}."
+    - "The {alchemist} refines {element1} and {element2} to extract {out} from mixed {impurities}."
+    - "To achieve {out}, the {alchemist} processes a solution of {element1} and {element2} to remove {impurities}."
+    - "The {alchemist} employs a technique to filter out {impurities}, leaving {element1} and {element2} as {out}."
+    - "A refined {out} is the result of the {alchemist}'s effort to separate {element1} and {element2} from their mixture."
+    - "From a complex mixture, the {alchemist} extracts {out} by isolating {element1} and {element2}."
 
 
 conjunction: # z = divide(x, y)
@@ -59,6 +100,15 @@ conjunction: # z = divide(x, y)
     whole: { type: literal, args: [ 'whole', 'entirety', 'totality', 'sum', 'aggregate', 'unity', 'oneness', 'singularity', 'wholeness', 'completeness', 'sum', 'aggregate', ]}
   templates:
     - "The {alchemist} {combines} the {isolated} {elements} of {element1} {and} {element2} into a new {unified} {whole}, {out}."
+    - "Combining {element1} and {element2}, the {alchemist} forms a new {unified} entity known as {out}."
+    - "The {alchemist} merges {element1} and {element2} into {out}, a newly unified {whole}."
+    - "A new {whole}, {out}, results from the {alchemist}'s combination of {element1} with {element2}."
+    - "{element1} and {element2} are unified by the {alchemist} into a singular {out}."
+    - "The fusion of {element1} and {element2} by the {alchemist} results in {out}."
+    - "The {alchemist}'s skill combines {element1} and {element2} into a unique {out}."
+    - "Through the {alchemist}'s expertise, {element1} and {element2} become the cohesive {out}."
+    - "The {alchemist} creates {out} by synthesizing {element1} with {element2} into a cohesive unit."
+    - "In the {alchemist}'s hands, {element1} and {element2} merge, forming the complex {out}."
 
 
 fermentation: # w = (x + 3y) / (z - 4), explodes when Z = 4 so potentially explosive
@@ -75,3 +125,12 @@ fermentation: # w = (x + 3y) / (z - 4), explodes when Z = 4 so potentially explo
 
   templates:
     - "The {alchemist} {introduces} {essence_x} into a {mixture} of {essence_y} and {essence_z} to {spark} a {vital} {transformation}, {yielding} {out}."
+    - "The {alchemist} catalyzes a reaction between {essence_x}, {essence_y}, and {essence_z}, producing {out}."
+    - "In the mixture, {essence_x}, {essence_y}, and {essence_z} are combined by the {alchemist} to create {out}."
+    - "{essence_x} is introduced into a blend of {essence_y} and {essence_z} by the {alchemist}, resulting in {out}."
+    - "The {alchemist} orchestrates a vital transformation by fermenting {essence_x} with {essence_y} and {essence_z}, yielding {out}."
+    - "A transformation initiated by the {alchemist} with {essence_x}, {essence_y}, and {essence_z} leads to {out}."
+    - "By fermenting {essence_x} with {essence_y} and {essence_z}, the {alchemist} brings about {out}."
+    - "The {alchemist}'s use of {essence_x}, {essence_y}, and {essence_z} in fermentation procures {out}."
+    - "Fermentation by the {alchemist} of {essence_x} with {essence_y} and {essence_z} transforms into {out}."
+    - "The {alchemist} sparks a transformation in {essence_x}, {essence_y}, and {essence_z}, ultimately achieving {out}."

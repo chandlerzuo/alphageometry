@@ -1,16 +1,19 @@
 import ast
-import importlib
 import inspect
 import random
 
 
 class SymArithmeticProbGen:
-    def __init__(self, seed=None, depth=2):
+    def __init__(self, defs=None, seed=None, depth=2):
         self.depth = depth
         if seed is not None:
             random.seed(seed)
-        from . import defs
-        self.defs = defs
+        if defs is None:
+            from . import defs
+            self.defs = defs
+        else:
+            self.defs = defs
+
         # self.defs = importlib.import_module('defs')
         self.functions = {}
         self.acquire_symbols()
@@ -187,7 +190,8 @@ class SymArithmeticProbGen:
 
 # Example usage
 if __name__ == "__main__":
-    generator = SymArithmeticProbGen()
+    import defs
+    generator = SymArithmeticProbGen(defs, depth=1)
     generator.generate_expression()
     print(f'original: \t\t {generator.decompose_expression()}')
     generator.perturbing_intervention(generator.tree)
