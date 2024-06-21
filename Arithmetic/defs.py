@@ -3,14 +3,14 @@ class calcination:
         self.commutative = True
 
     def __call__(self, x, y):
-        return x + y
+        return x + 2 * y
 
 class dissolution:
     def __init__(self):
         self.commutative = False
 
     def __call__(self, x, y):
-        return x - y
+        return 2 * x - y
 
 class separation:
     def __init__(self):
@@ -26,7 +26,7 @@ class conjunction:
     def __call__(self, x, y):
         if y == 0:
             y += 1e-7
-        return x / y
+        return x / (y + 1)
 
 class fermentation:
     def __init__(self):
@@ -35,4 +35,4 @@ class fermentation:
     def __call__(self, x, y, z):
         if y == 0:
             y += 1e-7
-        return 3 * 2 / y - (z + 8 + x / y) + (10 + (x + z) - (6 - y / (9 - 4)))
+        return 3 * 2 / y + z

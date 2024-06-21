@@ -5,6 +5,26 @@ import ast
 import inspect
 from constant_replacement import CodeConstTransformer
 
+import re
+
+
+def get_code_last_var(input_string):
+    # Split the input string at the last semicolon
+    parts = input_string.rsplit(';', 1)
+    last_part = parts[-1].strip()
+
+    # Extract the main part of the string and the last variable separately
+    main_part = parts[0].strip()
+
+    # Extract the variable being checked
+    last_var = re.search(r'(\w+)\s*\?', last_part)
+    if last_var:
+        last_var = last_var.group(1)
+    else:
+        last_var = ''
+
+    return [main_part, last_var]
+
 
 def sym_alter_exp(expr):
     funcs = [sp.simplify, sp.expand, sp.factor]
@@ -49,6 +69,8 @@ class CodeGenerator(ast.NodeVisitor):
             self.operations.append(f"{result_var} = mul({left}, {right})")
         elif op_type == ast.Div:
             self.operations.append(f"{result_var} = div({left}, {right})")
+        elif op_type == ast.Pow:
+            self.operations.append(f"{result_var} = pow({left}, {right})")
         else:
             raise NotImplementedError(f"Operation {ast.dump(node.op)} not supported")
 
@@ -80,6 +102,7 @@ class GetAlternativeCode:
         self.defs = defs_module
 
         # Building the function map from the defs module
+        self.function_map = None
         self.acquire_symbols()
         self.code_gen = CodeGenerator()
         self.const_transformer = CodeConstTransformer()
@@ -118,10 +141,8 @@ class GetAlternativeCode:
         return local_vars
 
     def __call__(self, code_string):
-        code_string, key_var = code_string.split('?')
+        code_string, key_var = get_code_last_var(code_string)
         key_var = key_var.strip()  # Cleanup any whitespace around the variable name
-
-
         code_with_sym_var = self.const_transformer.replace_constants_with_temp_vars(code_string)
 
         expr_tree = ast.parse(code_with_sym_var.strip(), mode='exec')  # Parse the code string into an AST
@@ -133,13 +154,14 @@ class GetAlternativeCode:
         _, result_var, new_code_sym_var = self.code_gen.generate_code(altered_expression_body)
 
         new_code_const_var = self.const_transformer.restore_constants_in_expression(new_code_sym_var)
+        self.const_transformer.reset()
 
-        return new_code_const_var + f' ? {result_var}'
+        return new_code_const_var + f'; {result_var} ?'
 
 
 if __name__ == "__main__":
     import defs  # Import your module, ensuring it is accessible and correctly defined
-    init_prog = 'A = calcination(1, 2); B = separation(100, 23); C = conjunction(A, B)? C'
+    init_prog = 'A = calcination(1, 2); B = dissolution(100, 23); C = separation(A, B); C ?'
     code_changer = GetAlternativeCode(defs)
     result = code_changer(init_prog)
     print("Result:", result)
