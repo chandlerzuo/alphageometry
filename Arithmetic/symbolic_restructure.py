@@ -186,12 +186,7 @@ class GetAlternativeCode:
             _, result_var, new_code_sym_var = self.code_gen.generate_code(altered_expression_body)
 
             new_code_const_var = self.const_transformer.restore_constants_in_expression(new_code_sym_var)
-            if new_code_const_var.find('None') != -1:
-               a = 0
             self.const_transformer.reset()
-
-
-
             final_code = new_code_const_var + f'; {result_var} ?'
 
         except TimeoutException:

@@ -4,45 +4,8 @@ import ast
 import unittest
 import sympy as sp
 from constant_replacement import CodeConstTransformer
-from symbolic_restructure import GetAlternativeCode, get_code_last_var, sym_alter_exp, CodeGenerator
-
-
-def add(a, b):
-    return a + b
-
-
-def minus(a, b):
-    return a - b
-
-
-def mul(a, b):
-    return a * b
-
-
-def div(a, b):
-    return a / b
-
-
-def pow(a, b):
-    return a ** b
-
-
-def evaluate_expression(func_map, code, target_var):
-    """Evaluate the generated code using instances of the operations."""
-    # Prepare the environment with the operation functions
-    local_env = {
-        'add': add,
-        'minus': minus,
-        'mul': mul,
-        'div': div
-    }
-
-    # Add function instances from func_map to the local environment
-    local_env.update(func_map)
-
-    # Evaluate the expression in this prepared environment
-    exec(code, {}, local_env)
-    return local_env.get(target_var)
+from code_evaluator import evaluate_expression
+from symbolic_restructure import GetAlternativeCode, sym_alter_exp, CodeGenerator, get_code_last_var
 
 
 class TestSymRestructure(unittest.TestCase):
