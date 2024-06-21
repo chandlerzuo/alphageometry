@@ -30,7 +30,7 @@ def main():
 
     # Setup the argument parser
     parser = argparse.ArgumentParser(description="Process CSV files and prepare a prompt.")
-    parser.add_argument('--demo_csv', default='../arith_test.csv', type=str, help='Path to the demo CSV file')
+    parser.add_argument('--demo_csv', default='../demo.csv', type=str, help='Path to the demo CSV file')
     parser.add_argument('--test_csv', default='../arith_test.csv', type=str, help='Path to the test CSV file')
     parser.add_argument('-n', default=50, type=int, help='Number of random examples to include in the prompt')
 
