@@ -10,6 +10,7 @@ from collections import Counter
 
 from .verb import repo_root, Verbalization
 from .symbolic_arithmetic_problem_generator import SymArithmeticProbGen
+from .symbolic_restructure import GetAlternativeCode
 
 
 @fig.script('generate-arithmetic')
@@ -75,21 +76,26 @@ def generate(cfg: fig.Configuration):
 
 	# count = Counter({d.name: 0 for d in defs})
 	samples = []
+	code_changer = GetAlternativeCode(seed=seed)
 	for _ in itr:
 		sample = {}
 
 		generator.generate_expression()
-		formal = generator.decompose_expression()
+		formal, answer = generator.decompose_expression()
+
 		if store_formal:
 			sample['formal'] = formal
 
+		# with some probability alter the formal expression to an equivalen one and verbalize that
+		if random.random() < 0.1:
+			formal = code_changer(formal)
 		ctx = verb.parse_problem(formal)
 		sample['natural'] = ctx['nl']
 
 		if store_certificates:
 			sample['certificate'] = json.dumps(ctx.certificate())
 
-		sample['answer'] = ctx['answer']
+		sample['answer'] = answer
 
 		# d = ctx['definition']
 		# count[d] += 1

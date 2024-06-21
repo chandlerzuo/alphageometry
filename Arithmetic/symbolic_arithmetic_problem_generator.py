@@ -185,7 +185,7 @@ class SymArithmeticProbGen:
         problem_txt = '; '.join(self.code_lines)
         # problem_txt += f' ? {self.evaluate_expression(self.code):0.2f}'
         problem_txt += f' ?'
-        return problem_txt
+        return problem_txt, self.evaluate_expression(self.code)
 
 
 # Example usage

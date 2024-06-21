@@ -1,11 +1,19 @@
+import re
 import sympy as sp
 import numpy as np
 import random
 import ast
 import inspect
-from constant_replacement import CodeConstTransformer
+from .constant_replacement import CodeConstTransformer
+import signal
 
-import re
+
+class TimeoutException(Exception):
+    pass
+
+
+def timeout_handler(signum, frame):
+    raise TimeoutException()
 
 
 def get_code_last_var(input_string):
@@ -98,7 +106,7 @@ class GetAlternativeCode:
         if seed is not None:
             random.seed(seed)
         if defs_module is None:
-            import defs as defs_module  # Make sure this import is valid based on your project structure
+            from . import defs as defs_module  # Make sure this import is valid based on your project structure
         self.defs = defs_module
 
         # Building the function map from the defs module
@@ -141,22 +149,35 @@ class GetAlternativeCode:
         return local_vars
 
     def __call__(self, code_string):
-        code_string, key_var = get_code_last_var(code_string)
-        key_var = key_var.strip()  # Cleanup any whitespace around the variable name
-        code_with_sym_var = self.const_transformer.replace_constants_with_temp_vars(code_string)
+        # Set the timeout handler
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(10)  # Set the alarm for 10 seconds
 
-        expr_tree = ast.parse(code_with_sym_var.strip(), mode='exec')  # Parse the code string into an AST
-        processed_vars = self.process_tree(expr_tree)  # Process the AST to execute expressions
-        final_expr = processed_vars.get(key_var.strip(), f'Variable {key_var} not found')  # Fetch the final variable expression
+        try:
+            code_string, key_var = get_code_last_var(code_string)
+            key_var = key_var.strip()  # Cleanup any whitespace around the variable name
+            code_with_sym_var = self.const_transformer.replace_constants_with_temp_vars(code_string)
 
-        altered_expression = sym_alter_exp(final_expr)
-        altered_expression_body = ast.parse(str(altered_expression), mode='eval').body
-        _, result_var, new_code_sym_var = self.code_gen.generate_code(altered_expression_body)
+            expr_tree = ast.parse(code_with_sym_var.strip(), mode='exec')  # Parse the code string into an AST
+            processed_vars = self.process_tree(expr_tree)  # Process the AST to execute expressions
+            final_expr = processed_vars.get(key_var.strip(), f'Variable {key_var} not found')  # Fetch the final variable expression
 
-        new_code_const_var = self.const_transformer.restore_constants_in_expression(new_code_sym_var)
-        self.const_transformer.reset()
+            altered_expression = sym_alter_exp(final_expr)
+            altered_expression_body = ast.parse(str(altered_expression), mode='eval').body
+            _, result_var, new_code_sym_var = self.code_gen.generate_code(altered_expression_body)
 
-        return new_code_const_var + f'; {result_var} ?'
+            new_code_const_var = self.const_transformer.restore_constants_in_expression(new_code_sym_var)
+            self.const_transformer.reset()
+
+            final_code = new_code_const_var + f'; {result_var} ?'
+
+        except TimeoutException:
+            final_code = code_string
+
+        finally:
+            signal.alarm(0)  # Disable the alarm
+
+        return final_code
 
 
 if __name__ == "__main__":
@@ -164,4 +185,5 @@ if __name__ == "__main__":
     init_prog = 'A = calcination(1, 2); B = dissolution(100, 23); C = separation(A, B); C ?'
     code_changer = GetAlternativeCode(defs)
     result = code_changer(init_prog)
-    print("Result:", result)
+    print(f'Initial: {init_prog}')
+    print('Altered:', result)
