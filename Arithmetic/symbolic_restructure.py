@@ -4,7 +4,7 @@ import numpy as np
 import random
 import ast
 import inspect
-from .constant_replacement import CodeConstTransformer
+from Arithmetic.constant_replacement import CodeConstTransformer
 import signal
 
 
@@ -62,6 +62,10 @@ class CodeGenerator(ast.NodeVisitor):
         self.operations = []
         self.var_count = 0
 
+    def reset(self):
+        self.operations = []
+        self.var_count = 0
+
     def visit_BinOp(self, node):
         left = self.visit(node.left)
         right = self.visit(node.right)
@@ -84,6 +88,19 @@ class CodeGenerator(ast.NodeVisitor):
 
         return result_var
 
+    def visit_UnaryOp(self, node):
+        operand = self.visit(node.operand)
+        op_type = type(node.op)
+        result_var = f"A_{self.var_count}"
+        self.var_count += 1
+
+        if op_type == ast.USub:
+            self.operations.append(f"{result_var} = minus(0, {operand})")
+        else:
+            raise NotImplementedError(f"Unary operation {ast.dump(node.op)} not supported")
+
+        return result_var
+
     def visit_Name(self, node):
         return node.id
 
@@ -97,8 +114,10 @@ class CodeGenerator(ast.NodeVisitor):
         return self.visit(node.value)
 
     def generate_code(self, node):
+        self.reset()
         result_var = self.visit(node)
-        return self.operations, result_var, '; '.join(self.operations)
+        code = self.operations, result_var, '; '.join(self.operations)
+        return code
 
 
 class GetAlternativeCode:
@@ -106,7 +125,7 @@ class GetAlternativeCode:
         if seed is not None:
             random.seed(seed)
         if defs_module is None:
-            from . import defs as defs_module  # Make sure this import is valid based on your project structure
+            from Arithmetic import defs as defs_module  # Make sure this import is valid based on your project structure
         self.defs = defs_module
 
         # Building the function map from the defs module
@@ -167,7 +186,11 @@ class GetAlternativeCode:
             _, result_var, new_code_sym_var = self.code_gen.generate_code(altered_expression_body)
 
             new_code_const_var = self.const_transformer.restore_constants_in_expression(new_code_sym_var)
+            if new_code_const_var.find('None') != -1:
+               a = 0
             self.const_transformer.reset()
+
+
 
             final_code = new_code_const_var + f'; {result_var} ?'
 
@@ -181,6 +204,8 @@ class GetAlternativeCode:
 
 
 if __name__ == "__main__":
+    import sys
+    sys.path.append('..')
     import defs  # Import your module, ensuring it is accessible and correctly defined
     init_prog = 'A = calcination(1, 2); B = dissolution(100, 23); C = separation(A, B); C ?'
     code_changer = GetAlternativeCode(defs)

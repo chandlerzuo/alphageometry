@@ -10,21 +10,21 @@ class dissolution:
         self.commutative = False
 
     def __call__(self, x, y):
-        return 2 * x - y
+        return x * x - y
 
 class separation:
     def __init__(self):
         self.commutative = True
 
     def __call__(self, x, y):
-        return x * y
+        return x * y - x
 
 class conjunction:
     def __init__(self):
         self.commutative = False
 
     def __call__(self, x, y):
-        if y == 0:
+        if y == -1:
             y += 1e-7
         return x / (y + 1)
 

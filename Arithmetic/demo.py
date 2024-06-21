@@ -1,4 +1,3 @@
-
 import random
 import json, yaml
 from tqdm import tqdm
@@ -8,9 +7,12 @@ import omnifig as fig
 from tabulate import tabulate
 from collections import Counter
 
-from .verb import repo_root, Verbalization
-from .symbolic_arithmetic_problem_generator import SymArithmeticProbGen
-from .symbolic_restructure import GetAlternativeCode
+from Arithmetic.verb import repo_root, Verbalization
+from Arithmetic.symbolic_arithmetic_problem_generator import SymArithmeticProbGen
+from Arithmetic.symbolic_restructure import GetAlternativeCode
+
+import signal
+from Arithmetic.symbolic_restructure import TimeoutException, timeout_handler
 
 
 @fig.script('generate-arithmetic')
@@ -82,6 +84,7 @@ def generate(cfg: fig.Configuration):
 
 		generator.generate_expression()
 		formal, answer = generator.decompose_expression()
+		unaltered_formal = formal
 
 		if store_formal:
 			sample['formal'] = formal
@@ -89,7 +92,18 @@ def generate(cfg: fig.Configuration):
 		# with some probability alter the formal expression to an equivalen one and verbalize that
 		if random.random() < 0.1:
 			formal = code_changer(formal)
-		ctx = verb.parse_problem(formal)
+		# Set the timeout handler
+		signal.signal(signal.SIGALRM, timeout_handler)
+		signal.alarm(3)  # Set the alarm for 3 seconds
+		try:
+			ctx = verb.parse_problem(formal)
+		except TimeoutException:
+			print(f'The original formal is: {unaltered_formal}')
+			print(f'Failed to verbalize {formal}')
+			continue
+		finally:
+			signal.alarm(0)  # Disable the alarm
+
 		sample['natural'] = ctx['nl']
 
 		if store_certificates:
@@ -115,5 +129,3 @@ def generate(cfg: fig.Configuration):
 
 if __name__ == '__main__':
 	fig.entry('generate-arithmetic')
-
-

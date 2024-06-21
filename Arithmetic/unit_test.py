@@ -1,3 +1,4 @@
+import random
 import re
 import ast
 import unittest
@@ -46,10 +47,12 @@ def evaluate_expression(func_map, code, target_var):
 
 class TestSymRestructure(unittest.TestCase):
     def test_restructured_code(self):
-        codes = ['A = calcination(1, 2); B = dissolution(100, 23); C = separation(A, B); C ?',
+        codes = ['A = conjunction(9, 1); B = conjunction(3, 8); C = fermentation(6, 3, 2); D = fermentation(A, B, C); D ?',
+                 'A = calcination(1, 2); B = dissolution(100, 23); C = separation(A, B); C ?',
                  'A = conjunction(6, 7); B = fermentation(9, 7, 4); C = separation(A, B); C ?',
                  'A = calcination(10, 4); B = fermentation(7, 4, 9); C = calcination(A, B); C ?',
-                 'A = fermentation(7, 5, 8); B = fermentation(4, 8, 7); C = separation(A, B); C ?']
+                 'A = fermentation(7, 5, 8); B = fermentation(4, 8, 7); C = separation(A, B); C ?',
+                 ]
         code_changer = GetAlternativeCode()
         for code in codes:
             changed_code = code_changer(code)
@@ -62,7 +65,8 @@ class TestSymRestructure(unittest.TestCase):
         expressions = ['A = calcination(1, 2); B = dissolution(100, 23); C = separation(A, B); C ?',
                        'A = conjunction(6, 7); B = fermentation(9, 7, 4); C = separation(A, B); C ?',
                        'A = calcination(10, 4); B = fermentation(7, 4, 9); C = calcination(A, B); C ?',
-                       'A = fermentation(7, 5, 8); B = fermentation(4, 8, 7); C = separation(A, B); C ?']
+                       'A = fermentation(7, 5, 8); B = fermentation(4, 8, 7); C = separation(A, B); C ?',
+                       'A = conjunction(9, 1); B = conjunction(3, 8); C = fermentation(6, 3, 2); D = fermentation(A, B, C); D ?',]
         const_transformer = CodeConstTransformer()
         for exp in expressions:
             code, target_var = get_code_last_var(exp)
@@ -83,6 +87,7 @@ class TestSymRestructure(unittest.TestCase):
             "1**3 + 3*1**2 + 3*1 + 1",
             "2*3*4 - 6/3 + 5**2",
             "9/(3 + 2) - 2/(9 - 3)"
+            "-5*6 + 3*4 - 2*7",
         ]
         code_gen = CodeGenerator()
         for exp in expressions:
@@ -126,4 +131,7 @@ class TestSymRestructure(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    import numpy as np
+    random.seed(6)
+    np.random.seed(6)
     unittest.main()

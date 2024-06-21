@@ -52,6 +52,7 @@ class CodeConstTransformer:
     def restore_constants_in_expression(self, expression):
         for temp_var, value in self.constant_mapping.items():
             expression = expression.replace(temp_var, str(value))
+        # self.reset()
         return expression
 
 
