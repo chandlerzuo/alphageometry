@@ -90,7 +90,7 @@ def generate(cfg: fig.Configuration):
 			sample['formal'] = formal
 
 		# with some probability alter the formal expression to an equivalen one and verbalize that
-		if random.random() < 0.1:
+		if random.random() < 0.5:
 			formal = code_changer(formal)
 		# Set the timeout handler
 		signal.signal(signal.SIGALRM, timeout_handler)

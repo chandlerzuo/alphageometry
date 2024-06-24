@@ -152,16 +152,16 @@ add: # z = add(x, y)
     combining: { type: literal, args: [ 'combining', 'uniting', 'joining', 'merging', 'fusing', 'blending', 'mixing', 'melding', 'amalgamating', 'integrating', 'incorporating', 'intermixing', 'intermingling', 'interweaving']}
 
   templates:
-    - "The {alchemist} {combines} {ingredient1} and {ingredient2} to create a {mixture} that {spark}s a reaction, {yielding} {out}."
-    - "By {combining} {ingredient1} and {ingredient2}, the {alchemist} creates {out} through a {mixture} that {spark}s a reaction."
-    - "A {mixture} of {ingredient1} and {ingredient2} is combined by the {alchemist} to {spark} a reaction, {yielding} {out}."
-    - "The {alchemist} {combines} {ingredient1} with {ingredient2} to create {out} through a {mixture} that {spark}s a reaction."
-    - "By {combining} {ingredient1} with {ingredient2}, the {alchemist} creates {out} through a {mixture} that {spark}s a reaction."
-    - "A {mixture} of {ingredient1} and {ingredient2} is combined by the {alchemist} to {spark} a reaction, {yielding} {out}."
-    - "The {alchemist} {combines} {ingredient1} with {ingredient2} to create {out} through a {mixture} that {spark}s a reaction."
-    - "By {combining} {ingredient1} with {ingredient2}, the {alchemist} creates {out} through a {mixture} that {spark}s a reaction."
-    - "A {mixture} of {ingredient1} and {ingredient2} is combined by the {alchemist} to {spark} a reaction, {yielding} {out}."
-    - "The {alchemist} {combines} {ingredient1} with {ingredient2} to create {out} through a {mixture} that {spark}s a reaction."
+    - "The {alchemist} adds {ingredient1} and {ingredient2} to create a {mixture} that {spark}s a reaction, {yielding} {out}."
+#    - "By {combining} {ingredient1} and {ingredient2}, the {alchemist} creates {out} through a {mixture} that {spark}s a reaction."
+#    - "A {mixture} of {ingredient1} and {ingredient2} is combined by the {alchemist} to {spark} a reaction, {yielding} {out}."
+#    - "The {alchemist} {combines} {ingredient1} with {ingredient2} to create {out} through a {mixture} that {spark}s a reaction."
+#    - "By {combining} {ingredient1} with {ingredient2}, the {alchemist} creates {out} through a {mixture} that {spark}s a reaction."
+#    - "A {mixture} of {ingredient1} and {ingredient2} is combined by the {alchemist} to {spark} a reaction, {yielding} {out}."
+#    - "The {alchemist} {combines} {ingredient1} with {ingredient2} to create {out} through a {mixture} that {spark}s a reaction."
+#    - "By {combining} {ingredient1} with {ingredient2}, the {alchemist} creates {out} through a {mixture} that {spark}s a reaction."
+#    - "A {mixture} of {ingredient1} and {ingredient2} is combined by the {alchemist} to {spark} a reaction, {yielding} {out}."
+#    - "The {alchemist} {combines} {ingredient1} with {ingredient2} to create {out} through a {mixture} that {spark}s a reaction."
 #    - "adding {ingredient1} and {ingredient2} results in {out}."  # This is debug verbalization
 
 mul: # z = multiply(x, y)
@@ -186,7 +186,7 @@ minus: # z = subtract(x, y)
 
   rules:
     alchemist: { type: literal, args: [ 'alchemist', 'sorcerer', 'wizard', 'magician', 'enchanter', 'warlock', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress', 'witch', 'mage', 'conjurer', 'necromancer', 'thaumaturge', 'sorceress', 'enchantress' ] }
-    separates: { type: literal, args: [ 'separates', 'divides', 'splits', 'parts', 'partitions', 'sections', 'segments', 'dissects', 'disunites', 'disjoins', 'disconnects', 'detaches', 'disengages', 'disentangles', 'disentwines', 'disarticulates', 'disassembles', 'disbands', 'disperses', 'distributes', 'dispenses', 'deals', 'apportions', 'allocates', 'assigns', 'allots', 'portions', 'parcels', 'partitions', 'sections', 'segments', 'dissects', 'disunites', 'disjoins', 'disconnects', 'detaches', 'disengages', 'disentangles', 'disentwines', 'disarticulates', 'disassembles', 'disbands', 'disperses', 'distributes', 'dispenses', 'deals', 'apportions', 'allocates', 'assigns', 'allots', 'portions', 'parcels' ]}
+    separates: { type: literal, args: [ 'subtracts', ]}
     mixture: { type: literal, args: [ 'mixture', 'blend', 'combination', 'compound', 'concoction', 'solution', 'emulsion', 'tincture', 'elixir', 'potion', 'brew', 'distillation', 'solution', 'emulsion', 'tincture', 'elixir', 'potion', 'distillation' ]}
     spark: { type: literal, args: [ 'spark', 'ignite', 'trigger', 'activate', 'initiate', 'set off', 'kindle', ]}
     yielding: { type: literal, args: [ 'yielding', 'producing', 'generating', 'giving', 'creating', 'making', 'manufacturing', 'fabricating', 'fashioning', 'forming']}

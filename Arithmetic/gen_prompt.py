@@ -30,7 +30,7 @@ def main():
 
     # Setup the argument parser
     parser = argparse.ArgumentParser(description="Process CSV files and prepare a prompt.")
-    parser.add_argument('--demo_csv', default='../demo.csv', type=str, help='Path to the demo CSV file')
+    parser.add_argument('--demo_csv', default='../arith_test.csv', type=str, help='Path to the demo CSV file')
     parser.add_argument('--test_csv', default='../arith_test.csv', type=str, help='Path to the test CSV file')
     parser.add_argument('-n', default=50, type=int, help='Number of random examples to include in the prompt')
 
@@ -43,6 +43,13 @@ def main():
     for func_name, (num_args, func) in available_funcs.items():
         func_exp, args = get_symbolic_func_exp(func, num_args)
         func_definitions += f'{func_name}({", ".join(args)}) = {func_exp}\n'
+
+    func_definitions += 'Therefore, your job is to use this functions to construct the arithmetic expression being ' \
+                        'described in the natural language description. Imagine the expression being described is ' \
+                        'x^2 -y + 2*Z, then you can express it as A = dissolution(x, y); B = calcination(A, z); B?' \
+                        'Similarly, x + 2x^2 - 2y can be expressed as A = dissolution(x, y); B = calcination(x, A); B?.' \
+                        'Think step by step algebraically how to get the expression while using the elementary ' \
+                        'expressions given'
 
     # Parse command line arguments
     args = parser.parse_args()

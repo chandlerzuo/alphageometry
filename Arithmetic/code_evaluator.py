@@ -40,7 +40,9 @@ def evaluate_expression(func_map, code, target_var):
 if __name__ == "__main__":
     # Example usage
     from symbolic_restructure import get_code_last_var, GetAlternativeCode
-    code = 'A = calcination(4, 3); B = conjunction(4, 2); C = conjunction(A, B); C ?'
+    # code = 'A = calcination(4, 3); B = conjunction(4, 2); C = conjunction(A, B); C ?'
+    # code = 'A = dissolution(5, 4); B = conjunction(4, 6); C = calcination(A, B); C ?'
+    code = 'D = conjunction(calcination(calcination(A_corrected, 1), 1), calcination(calcination(A_corrected, 1), 1) + 1); D ?'
     code_changer = GetAlternativeCode()
     print(evaluate_expression(code_changer.function_map, *get_code_last_var(code)))
 
