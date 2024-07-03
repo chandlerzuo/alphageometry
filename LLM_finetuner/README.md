@@ -5,13 +5,12 @@
 
 cd ~/reinforcement/alphageometry/LLM_finetuner
 python3.10 -m venv verbalization_venv3
+pip install --upgrade pip
 source ~/reinforcement/alphageometry/LLM_finetuner/verbalization_venv3/bin/activate
+pip install -r requirements.txt
 # pip uninstall -y LLM_finetuner
 pip install -e ~/reinforcement/alphageometry/
 python -c "import LLM_finetuner; import LLM_finetuner.utils; LLM_finetuner.utils.subset_dataset"
-# alternatively (then make sure to adapt your python path)
-pip install --upgrade pip
-pip install -r requirements.txt
 
 wandb login
 huggingface-cli login
@@ -117,6 +116,11 @@ python ~/reinforcement/alphageometry/LLM_finetuner/convert_dataset.py \
     ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_small_arrow
 
 ln -s ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_small_arrow ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_arrow
+
+# on mpi
+python ~/reinforcement/alphageometry/LLM_finetuner/convert_dataset.py \
+    ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_fewer_chunks \
+    ~/reinforcement/alphageometry/LLM_finetuner/runs/verbalization/datasets/alpha_geo_arrow
 ```
 
 ## Fine-Tuning

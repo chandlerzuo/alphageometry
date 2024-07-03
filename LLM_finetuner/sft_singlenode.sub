@@ -1,13 +1,15 @@
 #condor_submit_bid 50 ~/reinforcement/alphageometry/LLM_finetuner/distributed_tests/distributed_accelerate_example.sub
-request_cpus=20
-request_memory=256000
-request_disk=100G
+#request_cpus=20
+#request_memory=256000
+request_cpus=30
+request_memory=400000
+request_disk=300G
 +JobBatchName = "verb_sft"
 log = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).log
 output = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).out
 error = /home/mmordig/joblogs/job-$(ClusterId)-$(ProcId)-$(Node).$$([NumJobStarts]).err
 +MaxRunningPrice=100
-request_gpus=2
+request_gpus=3
 requirements = (TARGET.CUDAGlobalMemoryMb > 50000)
 # && (Machine != "g101.internal.cluster.is.localnet")
 NumRanks = 1

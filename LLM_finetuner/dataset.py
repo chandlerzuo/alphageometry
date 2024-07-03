@@ -24,7 +24,39 @@ SYSTEM_MESSAGE = textwrap.dedent(f"""\
     exactly to its natural language description.
     You should only output the formal language description of the question, not the solution or anything else.
     """).strip().replace("\n", " ")
-    
+
+JSON_SCHEMA = textwrap.dedent("""\
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "fun": {
+        "type": "string"
+      },
+      "args": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "defines": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": ["fun", "args", "defines"]
+  }
+}""")
+SYSTEM_MESSAGE_JSON = textwrap.dedent(f"""\
+You are an expert in translating geometry problems from natural language to JSON.
+You should only output the formal language description of the question, not the solution or anything else.
+Use the following JSON schema:
+{JSON_SCHEMA}""")#.strip().replace("\n", " ")
+
 def create_chat(question, answer, system_message=None):
     chat = []
     if system_message:
@@ -74,20 +106,56 @@ def format_question_answer_single(tokenizer, question, answer, system_message=No
         add_generation_prompt=add_generation_prompt
     ) + end
     
+import json
 
-## Dataset operations    
-END_TOKEN = "[END]"
-def format_question_answer_batch_for_training(batch, tokenizer, col_name="text"):
+def convert_formalalphageom_to_json(expression, pretty=False):
+    """
+    Splits by semicolon, then by equal sign, then args and outputs by whitespace
+    """
+    parts = expression.split("; ")
+    result = []
+
+    for part in parts:
+        defines, func_call = part.split(" = ")
+        func_name, *args = func_call.split()
+        defines_list = defines.split()
+
+        func_dict = {
+            "fun": func_name,
+            "args": args,
+            "defines": defines_list
+        }
+
+        result.append(func_dict)
+
+    # return json.dumps(result)
+    return json.dumps(result, indent=2) if pretty else result
+
+# # Example usage
+# expression = 'A B C = ieq_triangle A B C; D E F = risos D E F; G = psquare G A E; H = intersection_cc H C G E; I J = tangent I J C B F; K = intersection_tt K J D I E A G'
+# def show_transformation(expression):
+#     print(expression)
+#     print("Translation:")
+#     json_output = convert_formalalphageom_to_json(expression, pretty=True)
+#     # json_output = convert_formalalphageom_to_json(expression, pretty=False)
+#     print(json_output)
+# show_transformation(expression)
+# # print(convert_to_json(dataset["train"][1]["fl_statement"]))
+
+
+## Dataset operations
+# END_TOKEN = "[END]"
+def format_question_answer_batch_for_training(batch, tokenizer, col_name="text", **kwargs):
     """END_TOKEN should be added to the vocabulary"""
     return {col_name: [
-        format_question_answer_single(tokenizer, question, answer, end=END_TOKEN) 
+        format_question_answer_single(tokenizer, question, answer, **kwargs) 
         for (question, answer) in zip(batch["nl_statement"], batch["fl_statement"])
     ]}
 
-def format_question_answer_batch_for_generation(batch, tokenizer):
+def format_question_answer_batch_for_generation(batch, tokenizer, **kwargs):
     # no end, answer=""
     return {"text": [
-        format_question_answer_single(tokenizer, question, answer="") 
+        format_question_answer_single(tokenizer, question, answer="", **kwargs) 
         for question in batch["nl_statement"]
     ]}
     
@@ -98,14 +166,16 @@ def format_question_answer_batch_for_generation(batch, tokenizer):
 #     return {"labels": tokenizer(batch["gt_text"])["input_ids"]}
 
 
-def create_inputs_labels_for_generation(dataset, tokenizer):
+def create_inputs_labels_for_generation(dataset, tokenizer, **kwargs):
+    # adds "text" column with question, but no answer
     dataset = dataset.map(
-        functools.partial(format_question_answer_batch_for_generation, tokenizer=tokenizer), 
+        functools.partial(format_question_answer_batch_for_generation, tokenizer=tokenizer, **kwargs), 
         batched=True
     )
-    # labels = input_ids normally, see gpt2 docs; here labels correspond to full prompt with answer
+    # "labels = input_ids" normally, see gpt2 docs; here labels correspond to full prompt with answer
+    # adds "labels" column with question and answer
     dataset = dataset.map(
-        functools.partial(format_question_answer_batch_for_training, tokenizer=tokenizer, col_name="labels"), batched=True
+        functools.partial(format_question_answer_batch_for_training, tokenizer=tokenizer, col_name="labels", **kwargs), batched=True
     )
     # dataset = dataset.map(get_label_ids, batched=True)
     return dataset

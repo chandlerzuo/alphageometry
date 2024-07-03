@@ -1,0 +1,17 @@
+# See https://imogeometry.blogspot.com/p/india-regional-mathematical-olympiad.html
+
+# 1990 India RMO p8
+If the circumcenter and centroid of a triangle coincide, prove that it must be equilateral. 
+A B C = triangle A B C; O = circumcenter O A B C, centroid X Y Z O A B C; ieq_triangle A B C
+
+# 1990 India RMO p3
+A square sheet of paper ABCD is so folded that B falls on the mid point M of CD. Prove that the crease will divide BC in the ratio 5:3. 
+# Define triangle F G H such right angle at G, and FG+FH=2HG & Pythagoras; wlog HG=1; then find ratio GF/FH
+# Let R be the point on line GF at equal distance from F as H.
+# Let V be the point on line GF at equal distance from G as H.
+# Then V is the midpoint of GR
+F G H = triangle F G H; R = eqdistance R F F H, on_line R F G; eqdistance V G G H, on_line V G F, midpoint V G R; todo:ratio 5/3
+
+# 2014 India RMO Region 4 p5
+Let ABC be a triangle and I be its incentre. let the incircle of ABC touch BC at D. Let incircle of triangle ABD touch AB at E and incircle of triangle ACD touch BC at F. Prove that B,E,I,F are concyclic
+A B C = triangle A B C; I = incenter2 D E F I A B C, on_circum B E I F

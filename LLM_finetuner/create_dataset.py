@@ -4,6 +4,7 @@ Create the dataset by parsing the csv files and creating "text" field to input t
 It is recommended to have few input csv files in the directory, otherwise it is inefficient.
 """
 
+import argparse
 import logging
 from pathlib import Path
 import sys
@@ -31,9 +32,17 @@ setup_logging()
 # raw_dataset_dir =    "/fast/mmordig/general_ai_rl/alphageom_project/verbalization/datasets/alpha_geo_fewer_chunks"
 # dataset_output_dir = "/fast/mmordig/general_ai_rl/alphageom_project/verbalization/datasets/alpha_geo_processed"
 
+parser = argparse.ArgumentParser(description='Create dataset for SFT')
+parser.add_argument('raw_dataset_dir', type=str, help='Directory with raw dataset')
+parser.add_argument('dataset_output_dir', type=str, help='Directory to save processed dataset')
+parser.add_argument('--fl_column_name', type=str, default="fl_statement", help='Name of the column with formal language statement')
+parser.add_argument('--nl_column_name', type=str, default="nl_statement", help='Name of the column with natural language statement')
+args = parser.parse_args()
+raw_dataset_dir = args.raw_dataset_dir
+dataset_output_dir = args.dataset_output_dir
+fl_column_name = args.fl_column_name
+nl_column_name = args.nl_column_name
 
-raw_dataset_dir = sys.argv[1]
-dataset_output_dir = sys.argv[2]
 
 # trl supports chat
 # if mode == "chat":
@@ -57,14 +66,14 @@ dataset = load_dataset("csv", data_dir=raw_dataset_dir)#, nrows=10)
 logger.info(f"""Example datapoint: {next(iter(dataset["train"]))}""")
 
 # def formatting_func(row):
-#     question = row["nl_statement"]
-#     answer = row["fl_statement"]
+#     question = row[nl_column_name]
+#     answer = row[fl_column_name]
 #     return {"text": f"### Question: {question} ### Answer: {answer}"}
 # dataset = dataset.map(formatting_func)
 
 def formatting_func_batched(batch):
-    questions = batch["nl_statement"]
-    answers = batch["fl_statement"]
+    questions = batch[nl_column_name]
+    answers = batch[fl_column_name]
     return {"text": [f"### Question: {question} ### Answer: {answer}" for (question, answer) in zip(questions, answers)]}
 
 dataset = dataset.map(formatting_func_batched, batched=True)# batching already sufficiently efficient, num_proc=num_proc)

@@ -64,8 +64,10 @@ def set_pad_token_if_not_set(model, tokenizer):
         # the model does not learn to generate the eos token
         # following works well for llama-2 at least
         # see https://discuss.huggingface.co/t/llama2-pad-token-for-batched-inference/48020/3
+        logger.info(f"Setting padding token")
         tokenizer.add_special_tokens({'pad_token': '[PAD]'}) # this fails when using gpt2 with device assertion
         # tokenizer.pad_token = "[PAD]"
+        logger.info(f"Resizing model for new tokens")
         model.resize_token_embeddings(len(tokenizer))
         
     logger.info(f"Using padding token '{tokenizer.pad_token}'")
@@ -79,7 +81,6 @@ def add_new_tokens_with_average_init(model, tokenizer, def_to_desc: Dict[str, st
     
     Skips None's in values
     """
-    prev_num_tokens = len(tokenizer)
 
     def remove_known_tokens(def_to_desc):
         tokens = list(def_to_desc.keys())
@@ -93,15 +94,17 @@ def add_new_tokens_with_average_init(model, tokenizer, def_to_desc: Dict[str, st
         known_tokens = [token for (token, id) in zip(tokens, token_ids) if id != tokenizer.unk_token_id]
         if len(known_tokens) > 0:
             logger.warning(f"The following tokens are already known, ignoring them: {known_tokens}")
-        # no special tokens, because special tokens are never split (desired) and can also be omitted in the output (undesired)
-        tokenizer.add_tokens([defn for defn in def_to_desc.keys()], special_tokens=False)
-        assert len(tokenizer) == prev_num_tokens + len(def_to_desc)
-        
+            
         return def_to_desc
     
+    prev_num_tokens = len(tokenizer)
     def_to_desc = remove_known_tokens(def_to_desc)
     if def_to_desc is None:
         return
+    # add as special tokens to avoid splitting (otherwise llama tokenizer splits them, e.g. eqangle into eq angle)
+    # undesired: the special tokens may be omitted from the output
+    tokenizer.add_tokens([defn for defn in def_to_desc.keys()], special_tokens=True)
+    assert len(tokenizer) == prev_num_tokens + len(def_to_desc)
 
     logger.info(f"Vocabulary size: {len(tokenizer)}")
     model.resize_token_embeddings(len(tokenizer))
@@ -129,7 +132,10 @@ def setup_logging():
         handlers=[logging.StreamHandler(sys.stdout)],
         level=logging.INFO,
     )
-    
+
+def args_as_dict(**kwargs):
+    return kwargs
+
 def main():
 
     def test1():

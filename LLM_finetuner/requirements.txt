@@ -9,8 +9,14 @@ bitsandbytes
 evaluate
 wandb
 
-# wheel # required by flash-attn
-# flash-attn # pip install flash-attn --no-build-isolation
+# module load cuda/12.1
+wheel # required by flash-attn
+flash-attn # pip install flash-attn --no-build-isolation
+
+# constrained generation
+outlines
+pydantic
+# git+https://github.com/outlines-dev/outlines.git pycountry pyairports
 
 # for deployment
 gradio

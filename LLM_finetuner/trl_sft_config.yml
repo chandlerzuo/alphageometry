@@ -24,25 +24,25 @@ model_name_or_path:
   meta-llama/Llama-2-7b-hf
 # use_peft: True
 
-# load_in_8bit: True
+load_in_8bit: True
 # torch_dtype: float16
 
 # load_in_4bit: True
-# torch_dtype: bfloat16
+torch_dtype: bfloat16
 # torch_dtype: auto # does not seem to be working, e.g. with load_in_8bit, uses fp32
 
 # bf16: True # whether to use bf16 instead of 32 bit
 # fp16: True # I think either bf16 or fp16
 # torch_compile: True
 # gradient_accumulation: 4 # increases the effective batch size by this factor (by not calling zero_grad immediately)
-gradient_checkpointing: True # makes it slower, but allows a larger batch size
+# gradient_checkpointing: True # makes it slower, but allows a larger batch size
 # dataset_name:
 #   # imdb
 #   /home/mmordig/reinforcement/HumbleAttemptAtGeneralAI/geometry_translation/new/runs/verb_dataset
 resume_from_checkpoint: latest_if_available
 # resume_from_checkpoint: False
 dataset_text_field: text
-dataset_test_name: val # not test
+dataset_test_name: validation # not test
 # output_dir: runs/trl_sft
 # overwrite_output_dir: True
 # max_train_samples: 5000
@@ -58,10 +58,11 @@ report_to:
   # none
   wandb
 learning_rate:
-  0.0001
+  # 0.0001
+  0.00001
 lr_scheduler_type:
   cosine
-# optim: adamw_torch_fused
+optim: adamw_torch_fused
 device: cuda
 log_level: info
 # logging_steps: 2
@@ -70,7 +71,9 @@ logging_steps: 500
 # when GPU volatility is 100%, no need to use a larger batch size
 per_device_train_batch_size: 64
 per_device_eval_batch_size: 64
-# auto_find_batch_size: True
+auto_find_batch_size: True
+
+gen_steps: 50
 
 # not working
 # generation_config:
@@ -82,8 +85,8 @@ per_device_eval_batch_size: 64
 
 # num_processes: 2 # number of GPUs to use
 
-# evaluation_strategy: epoch
-evaluation_strategy: steps
+# eval_strategy: epoch
+eval_strategy: steps
 # eval_steps: 0.3
 eval_steps: 500000
 
@@ -107,6 +110,7 @@ num_train_epochs: 50
 
 # possibly not supported on cluster, but on mikado
 # requires bf16 or fp16
+# not good with padding tokens
 # attn_implementation: flash_attention_2
 
 # epochs, eval strategy
