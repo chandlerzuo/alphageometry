@@ -25,14 +25,14 @@ def get_symbolic_func_exp(func, num_args):
 
 
 def main():
-    seed = 43
+    seed = 42
     random.seed(seed)  # Python's random module seed
 
     # Setup the argument parser
     parser = argparse.ArgumentParser(description="Process CSV files and prepare a prompt.")
     parser.add_argument('--demo_csv', default='../arith_test.csv', type=str, help='Path to the demo CSV file')
     parser.add_argument('--test_csv', default='../arith_test.csv', type=str, help='Path to the test CSV file')
-    parser.add_argument('-n', default=50, type=int, help='Number of random examples to include in the prompt')
+    parser.add_argument('-n', default=10, type=int, help='Number of random examples to include in the prompt')
 
     instruction = 'Your job is to convert arithmetic questions from natural language descriptions to their formal ' \
                   'version. Here are some examples. At the end there will be a test description and your job is to ' \
@@ -49,7 +49,8 @@ def main():
                         'x^2 -y + 2*Z, then you can express it as A = dissolution(x, y); B = calcination(A, z); B?' \
                         'Similarly, x + 2x^2 - 2y can be expressed as A = dissolution(x, y); B = calcination(x, A); B?.' \
                         'Think step by step algebraically how to get the expression while using the elementary ' \
-                        'expressions given'
+                        'expressions given. So look at the whole algebraic expression and imagine how that can be ' \
+                        'expressed using the functions you have access to. \n'
 
     # Parse command line arguments
     args = parser.parse_args()
