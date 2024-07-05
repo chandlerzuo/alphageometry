@@ -34,26 +34,58 @@ def get_code_last_var(input_string):
     return [main_part, last_var]
 
 
-def sym_alter_exp(expr):
-    funcs = [sp.simplify, sp.expand, sp.factor]
+def simplify_explained(expr):
+    '''We print the reverse operations in the explanation. Therefore the description looks weird'''
+    steps = []
+    transformations = []
 
-    # Collect randomly around one of the free symbols if available
-    symbols = list(expr.free_symbols)
-    if symbols:
-        # Choose a random symbol to collect around
-        symbol_to_collect = np.random.choice(symbols)
-        # Add collect function with this symbol to the function list
-        funcs.append(lambda expr: sp.collect(expr, symbol_to_collect))
+    # Record the initial expression
+    original_expr = expr
 
-    # Check if the expression is a rational function for 'together' and 'apart'
-    if expr.is_rational_function():
-        funcs.append(sp.together)
-        if len(symbols) == 1:  # Ensure that the expression is univariate before adding sp.apart
-            funcs.append(sp.apart)
+    # Expand
+    expanded = sp.expand(expr)
+    if expanded != expr and len(str(expanded)) != len(str(expr)):
+        transformations.append(("Factor", expr))  # we get back to input of expand if we factor
+        expr = expanded
 
-    # Randomly select a function that is applicable
-    func = np.random.choice(funcs)
-    return func(expr)
+    # Cancel
+    if expr.is_rational_function() and '/' in str(expr):
+        canceled = sp.cancel(expr)
+        if canceled != expr and sp.count_ops(canceled) <= sp.count_ops(expr):
+            # we get back to input of cancel if we introduce terms
+            transformations.append(("Introduce common factors", expr))
+            expr = canceled
+
+    # Factor
+    factored = sp.factor(expr)
+    if factored != expr and sp.count_ops(factored) < sp.count_ops(expr):
+        transformations.append(("Expand", expr))  # we get back to input of factor if we expand
+        expr = factored
+
+    # Collect
+    if expr.free_symbols:
+        main_symbol = np.random.choice(list(expr.free_symbols))
+        collected = sp.collect(expr, main_symbol)
+        if collected != expr:
+            # Explaining the reverse operation of collect. We write it as if we are distributing for COT-generation
+            transformations.append((f"Distributing around {main_symbol}", expr))
+            expr = collected
+
+    # Simplify
+    simplified = sp.simplify(expr)
+    if simplified != expr and sp.count_ops(simplified) < sp.count_ops(expr):
+        transformations.append(("Introducing non altering terms", expr))
+        expr = simplified
+
+    # Starting from the final expression and reversing the steps
+    steps.append(f"Start: {expr}")
+    for description, expr in reversed(transformations):
+        steps.append(f"{description}: {expr}")
+
+    steps.append(f"Final Expression: {original_expr}")
+
+    # return "\n".join(reversed(steps)), expr
+    return "\n".join(steps), expr
 
 
 # Define a class to walk through the AST and generate code
@@ -181,7 +213,8 @@ class GetAlternativeCode:
             processed_vars = self.process_tree(expr_tree)  # Process the AST to execute expressions
             final_expr = processed_vars.get(key_var.strip(), f'Variable {key_var} not found')  # Fetch the final variable expression
 
-            altered_expression = sym_alter_exp(final_expr)
+            explanation, altered_expression = simplify_explained(final_expr)
+            explanation = f'{explanation}\n With variable binding: {self.const_transformer}'
             altered_expression_body = ast.parse(str(altered_expression), mode='eval').body
             _, result_var, new_code_sym_var = self.code_gen.generate_code(altered_expression_body)
 
@@ -195,7 +228,7 @@ class GetAlternativeCode:
         finally:
             signal.alarm(0)  # Disable the alarm
 
-        return final_code
+        return explanation, final_code
 
 
 if __name__ == "__main__":

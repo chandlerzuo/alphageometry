@@ -5,10 +5,26 @@ import unittest
 import sympy as sp
 from constant_replacement import CodeConstTransformer
 from code_evaluator import evaluate_expression
-from symbolic_restructure import GetAlternativeCode, sym_alter_exp, CodeGenerator, get_code_last_var
+from symbolic_restructure import GetAlternativeCode, simplify_explained, CodeGenerator, get_code_last_var
 
 
 class TestSymRestructure(unittest.TestCase):
+
+    def test_step_by_step_symplification_of_program_show_cot(self):
+        codes = ['A = conjunction(9, 1); A ?',
+                 'C = calcination(A, B); C ?',
+                 'A = dissolution(6, 7); A ?',
+                 'A = calcination(6, 7); B = dissolution(A, 2); B ?']
+        expected_expl = [
+            'Start: X1/(X2 + 1)\nFinal Expression: X1/(X2 + 1)',
+            'Start: A + 2*B\nFinal Expression: A + 2*B',
+            'Start: X1**2 - X2\nFinal Expression: X1**2 - X2',
+            'Start: X1**2 + 4*X1*X2 + 4*X2**2 - X3\nFactor: -X3 + (X1 + 2*X2)**2\nFinal Expression: -X3 + (X1 + 2*X2)**2']
+        code_changer = GetAlternativeCode()
+        for i, code in enumerate(codes):
+            expl, _ = code_changer(code)
+            assert expl == expected_expl[i], f"Expected {expected_expl[i]}, got {expl}"
+
     def test_restructured_code(self):
         codes = ['A = conjunction(9, 1); B = conjunction(3, 8); C = fermentation(6, 3, 2); D = fermentation(A, B, C); D ?',
                  'A = calcination(1, 2); B = dissolution(100, 23); C = separation(A, B); C ?',
@@ -18,7 +34,7 @@ class TestSymRestructure(unittest.TestCase):
                  ]
         code_changer = GetAlternativeCode()
         for code in codes:
-            changed_code = code_changer(code)
+            _, changed_code = code_changer(code)
             original_result = evaluate_expression(code_changer.function_map, *get_code_last_var(code))
             changed_result = evaluate_expression(code_changer.function_map, *get_code_last_var(changed_code))
             self.assertAlmostEqual(original_result, changed_result, delta=1e-7,
@@ -61,7 +77,7 @@ class TestSymRestructure(unittest.TestCase):
             self.assertAlmostEqual(original_res, res_new_code, delta=1e-7,
                                    msg=f"Original: {original_res}, Changed: {res_new_code}")
 
-    def test_sym_alter_exp(self):
+    def test_simplify_explained(self):
         def extract_variables(expr):
             # Find all single character alphabetic variables
             return sorted(set(re.findall(r'[a-zA-Z]', expr)))
@@ -85,7 +101,7 @@ class TestSymRestructure(unittest.TestCase):
             # Simplify the difference between the two expressions
             # Parse the expressions
             expr1_sympy = sp.sympify(exp, locals=symbols)
-            expr2_sympy = sym_alter_exp(expr1_sympy)
+            _, expr2_sympy = simplify_explained(expr1_sympy)
 
             # Simplify the difference between the two expressions
             difference = sp.simplify(expr1_sympy - expr2_sympy)

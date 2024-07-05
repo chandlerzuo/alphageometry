@@ -30,9 +30,13 @@ def main():
 
     # Setup the argument parser
     parser = argparse.ArgumentParser(description="Process CSV files and prepare a prompt.")
-    parser.add_argument('--demo_csv', default='../arith_test.csv', type=str, help='Path to the demo CSV file')
-    parser.add_argument('--test_csv', default='../arith_test.csv', type=str, help='Path to the test CSV file')
-    parser.add_argument('-n', default=10, type=int, help='Number of random examples to include in the prompt')
+    parser.add_argument('--demo_csv', default='../arith_test_with_expl.csv', type=str, help='Path to the demo CSV file')
+    parser.add_argument('--test_csv', default='../arith_test_with_expl.csv', type=str, help='Path to the test CSV file')
+    parser.add_argument('-n', default=5, type=int, help='Number of random examples to include in the prompt')
+    parser.add_argument('--COT', type=str, default='false', help='whether to use chain of though prompting')
+    # Parse command line arguments
+    cmd_args = parser.parse_args()
+    cot = cmd_args.COT.lower() in ['true', '1', 't', 'y', 'yes']
 
     instruction = 'Your job is to convert arithmetic questions from natural language descriptions to their formal ' \
                   'version. Here are some examples. At the end there will be a test description and your job is to ' \
@@ -41,8 +45,8 @@ def main():
     func_definitions = 'You have the following funcs available to you. You can only use these functions. ' \
                        'Nothing else.\n'
     for func_name, (num_args, func) in available_funcs.items():
-        func_exp, args = get_symbolic_func_exp(func, num_args)
-        func_definitions += f'{func_name}({", ".join(args)}) = {func_exp}\n'
+        func_exp, func_args = get_symbolic_func_exp(func, num_args)
+        func_definitions += f'{func_name}({", ".join(func_args)}) = {func_exp}\n'
 
     func_definitions += 'Therefore, your job is to use this functions to construct the arithmetic expression being ' \
                         'described in the natural language description. Imagine the expression being described is ' \
@@ -52,22 +56,19 @@ def main():
                         'expressions given. So look at the whole algebraic expression and imagine how that can be ' \
                         'expressed using the functions you have access to. \n'
 
-    # Parse command line arguments
-    args = parser.parse_args()
-
     # Read the CSV files
-    demo_df = pd.read_csv(args.demo_csv)
-    test_df = pd.read_csv(args.test_csv)
+    demo_df = pd.read_csv(cmd_args.demo_csv)
+    test_df = pd.read_csv(cmd_args.test_csv)
 
     # Ensure the data contains expected columns
     if not {'formal', 'natural', 'answer'}.issubset(demo_df.columns) or not {'formal', 'natural', 'answer'}.issubset(test_df.columns):
         raise ValueError("CSV files must contain 'formal', 'natural', and 'answer' columns")
 
     # Select 'n' random samples from the demo dataframe
-    if args.n > len(demo_df):
+    if cmd_args.n > len(demo_df):
         raise ValueError("The number of samples requested exceeds the number of available entries in the demo CSV.")
 
-    random_samples = demo_df.sample(n=args.n)
+    random_samples = demo_df.sample(n=cmd_args.n)
 
     # Add the last description from the test dataframe
     last_test_entry = test_df.sample(n=1, random_state=seed).iloc[0]
@@ -75,8 +76,12 @@ def main():
     # Build the prompt string
     prompt = ""
     for _, row in random_samples.iterrows():
+        cot_descrip = ''
         if last_test_entry['natural'] != row['natural'] and last_test_entry['formal'] != row['formal']:
-            prompt += f"description: \n{row['natural']}\nformal: \n{row['formal']}\n\n"
+            if cot and row["explanation"] != '':
+                cot_descrip = f'Thinking symbolically; the current expression is \n{row["explanation"]}.\n' \
+                              f'Now we can easily see the functional form of the elemental functions given above.\n'
+            prompt += f"description: \n{row['natural']}\n{cot_descrip}\nformal: \n{row['formal']}\n\n"
 
     prompt += f"description: \n{last_test_entry['natural']}\nformal: \n"
 

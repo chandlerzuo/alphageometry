@@ -10,6 +10,9 @@ class CodeConstTransformer:
         self.temp_var_counter = 0
         self.constant_mapping = {}
 
+    def __str__(self):
+        return str(self.constant_mapping)
+
     def get_temp_var(self):
         self.temp_var_counter += 1
         return f"X{self.temp_var_counter}"
