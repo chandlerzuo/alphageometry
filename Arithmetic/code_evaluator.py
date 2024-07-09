@@ -42,7 +42,7 @@ if __name__ == "__main__":
     from symbolic_restructure import get_code_last_var, GetAlternativeCode
     # code = 'A = calcination(4, 3); B = conjunction(4, 2); C = conjunction(A, B); C ?'
     # code = 'A = dissolution(5, 4); B = conjunction(4, 6); C = calcination(A, B); C ?'
-    code = 'A = dissolution(2, 2); B = calcination(2, 1); C = dissolution(B, 2); D = conjunction(A, C); E = separation(6, 8); F = separation(D, E); F ?'
+    code = 'A=dissolution(2,0);B=calcination(1,1);C=dissolution(3,0);D=conjunction(A,C);E=dissolution(D,6);F=conjunction(6,8);G=dissolution(E,F);G?'
     code_changer = GetAlternativeCode()
     print(evaluate_expression(code_changer.function_map, *get_code_last_var(code)))
 

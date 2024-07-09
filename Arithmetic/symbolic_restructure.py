@@ -170,8 +170,9 @@ class GetAlternativeCode:
         self.function_map = {}
         # Assuming defs contains callable classes that when instantiated, can be used directly as functions
         for name, obj in inspect.getmembers(self.defs, lambda x: inspect.isclass(x) and callable(x)):
-            instance = obj()  # Instantiate each class
-            self.function_map[name] = instance
+            if name != 'Stringifiable':
+                instance = obj()  # Instantiate each class
+                self.function_map[name] = instance
 
     def execute_expression(self, node, local_vars):
         if isinstance(node, ast.Call):

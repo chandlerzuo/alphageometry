@@ -4,16 +4,18 @@ import inspect
 import defs
 import random
 import sympy as sp
+import defs
 
 
 def acquire_symbols():
     functions = {}
     """Acquire symbols from the defs module, instantiating callable classes."""
     for name, obj in inspect.getmembers(defs, inspect.isclass):
-        instance = obj()  # Instantiate each class
-        args = inspect.signature(instance.__call__).parameters
-        arity = len(args)
-        functions[name] = (arity, instance)
+        if name != 'Stringifiable':
+            instance = obj()  # Instantiate each class
+            args = inspect.signature(instance.__call__).parameters
+            arity = len(args)
+            functions[name] = (arity, instance)
 
     return functions
 
@@ -22,6 +24,11 @@ def get_symbolic_func_exp(func, num_args):
     symbol_names = [chr(i) for i in range(ord('A'), ord('Z')+1)]
     variables = sp.symbols(' '.join(symbol_names[:num_args]))
     return func(*variables), symbol_names[:num_args]
+
+
+def remove_last_line(s):
+    lines = s.split('\n')  # Split the string into a list of lines
+    return '\n'.join(lines[:-1])  # Join all except the last line back into a string
 
 
 def main():
@@ -33,14 +40,15 @@ def main():
     parser.add_argument('--demo_csv', default='../arith_test_with_expl.csv', type=str, help='Path to the demo CSV file')
     parser.add_argument('--test_csv', default='../arith_test_with_expl.csv', type=str, help='Path to the test CSV file')
     parser.add_argument('-n', default=5, type=int, help='Number of random examples to include in the prompt')
-    parser.add_argument('--COT', type=str, default='false', help='whether to use chain of though prompting')
+    parser.add_argument('--COT', type=str, default='True', help='whether to use chain of though prompting')
     # Parse command line arguments
     cmd_args = parser.parse_args()
     cot = cmd_args.COT.lower() in ['true', '1', 't', 'y', 'yes']
 
-    instruction = 'Your job is to convert arithmetic questions from natural language descriptions to their formal ' \
-                  'version. Here are some examples. At the end there will be a test description and your job is to ' \
-                  'give me the formal version. Nothing else. \n'
+    # instruction = 'Your job is to convert arithmetic questions from natural language descriptions to their formal ' \
+    #               'version. Here are some examples. At the end there will be a test description and your job is to ' \
+    #               'give me the formal version. Nothing else. \n'
+    instruction = 'Perform algebraic operations'
     available_funcs = acquire_symbols()
     func_definitions = 'You have the following funcs available to you. You can only use these functions. ' \
                        'Nothing else.\n'
@@ -48,7 +56,7 @@ def main():
         func_exp, func_args = get_symbolic_func_exp(func, num_args)
         func_definitions += f'{func_name}({", ".join(func_args)}) = {func_exp}\n'
 
-    func_definitions += 'Therefore, your job is to use this functions to construct the arithmetic expression being ' \
+    func_definitions += 'Therefore, your job is to use these functions to construct the arithmetic expression being ' \
                         'described in the natural language description. Imagine the expression being described is ' \
                         'x^2 -y + 2*Z, then you can express it as A = dissolution(x, y); B = calcination(A, z); B?' \
                         'Similarly, x + 2x^2 - 2y can be expressed as A = dissolution(x, y); B = calcination(x, A); B?.' \
@@ -79,11 +87,24 @@ def main():
         cot_descrip = ''
         if last_test_entry['natural'] != row['natural'] and last_test_entry['formal'] != row['formal']:
             if cot and row["explanation"] != '':
-                cot_descrip = f'Thinking symbolically; the current expression is \n{row["explanation"]}.\n' \
-                              f'Now we can easily see the functional form of the elemental functions given above.\n'
-            prompt += f"description: \n{row['natural']}\n{cot_descrip}\nformal: \n{row['formal']}\n\n"
+                sym_expr, sym_code, var_map = defs.get_symbolic_expr_code_var_map(row["formal"])
+                # remove the last line
+                explanation = remove_last_line(row["explanation"])
+                # cot_descrip = f'If we replace the constants with algebric variables as in \n{var_map}\nwe ' \
+                #               f'get\n{explanation}.\nRearranging we get\n{sym_expr}.\nNow we can easily see ' \
+                #               f'the functional forms of the elemental functions given above.\nPerforming this steps ' \
+                #               f'gives us {sym_code}?.\nFinally by replacing the variables for their values we get ' \
+                #               f'the following code.\n'
 
-    prompt += f"description: \n{last_test_entry['natural']}\nformal: \n"
+                cot_descrip = f'\n\n{explanation}.\nRearranging we get\n{sym_expr}.\nNow we can easily see ' \
+                              f'the functional forms of the elemental functions given above.\nPerforming this steps ' \
+                              f'gives us {sym_code}?.'
+            # prompt += f"description: \n{row['natural']}\n{cot_descrip}\nformal: \n{row['formal']}\n\n"
+            prompt += cot_descrip
+
+    # prompt += f"description: \n{last_test_entry['natural']}\nformal: \n"
+    last_entry_sym_expr = last_test_entry["explanation"].split("\n")[0]
+    prompt += f'\n\n \n{last_entry_sym_expr}\n'
 
     print(f'Row number = {last_test_entry.name}, answer = {last_test_entry["answer"]}')
 
