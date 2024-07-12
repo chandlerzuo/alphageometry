@@ -1,4 +1,3 @@
-
 import random
 import json, yaml
 from tqdm import tqdm
@@ -8,8 +7,12 @@ import omnifig as fig
 from tabulate import tabulate
 from collections import Counter
 
-from .verb import repo_root, Verbalization
-from .symbolic_arithmetic_problem_generator import SymArithmeticProbGen
+from Arithmetic.verb import repo_root, Verbalization
+from Arithmetic.symbolic_arithmetic_problem_generator import SymArithmeticProbGen
+from Arithmetic.symbolic_restructure import GetAlternativeCode
+
+import signal
+from Arithmetic.symbolic_restructure import TimeoutException, timeout_handler
 
 
 @fig.script('generate-arithmetic')
@@ -44,7 +47,7 @@ def generate(cfg: fig.Configuration):
 
 	generator = cfg.pull('generator', None)
 	if generator is None:
-		generator = SymArithmeticProbGen()
+		generator = SymArithmeticProbGen(depth=1)
 
 	outpath = cfg.pull('out', 'demo.csv')
 	outpath = Path(outpath)
@@ -75,21 +78,40 @@ def generate(cfg: fig.Configuration):
 
 	# count = Counter({d.name: 0 for d in defs})
 	samples = []
+	code_changer = GetAlternativeCode(seed=seed)
 	for _ in itr:
 		sample = {}
 
 		generator.generate_expression()
-		formal = generator.decompose_expression()
+		formal, answer = generator.decompose_expression()
+		unaltered_formal = formal
+
 		if store_formal:
 			sample['formal'] = formal
 
-		ctx = verb.parse_problem(formal)
+		# with some probability alter the formal expression to an equivalen one and verbalize that
+		expl = ''
+		if random.random() < 10:
+			expl, formal = code_changer(formal)
+		sample['explanation'] = expl
+		# Set the timeout handler
+		signal.signal(signal.SIGALRM, timeout_handler)
+		signal.alarm(3)  # Set the alarm for 3 seconds
+		try:
+			ctx = verb.parse_problem(formal)
+		except TimeoutException:
+			print(f'The original formal is: {unaltered_formal}')
+			print(f'Failed to verbalize {formal}')
+			continue
+		finally:
+			signal.alarm(0)  # Disable the alarm
+
 		sample['natural'] = ctx['nl']
 
 		if store_certificates:
 			sample['certificate'] = json.dumps(ctx.certificate())
 
-		sample['answer'] = ctx['answer']
+		sample['answer'] = answer
 
 		# d = ctx['definition']
 		# count[d] += 1
@@ -109,5 +131,3 @@ def generate(cfg: fig.Configuration):
 
 if __name__ == '__main__':
 	fig.entry('generate-arithmetic')
-
-
