@@ -25,7 +25,7 @@ def rephrase(cfg: fig.Configuration):
     template_path = Path(template_path)
     template = template_path.read_text()
 
-    pbar = cfg.pull('pbar', not cfg.pull('no-pbar', False, silent=True), silent=True)
+    # pbar = cfg.pull('pbar', not cfg.pull('no-pbar', False, silent=True), silent=True)
 
     max_tokens = cfg.pull('max-tokens', 1000)
 
