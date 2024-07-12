@@ -10,6 +10,7 @@ ag_ckpt_vocab/
 
 .idea/
 data/
+config/secrets.yml
 
 # Distribution / packaging
 .Python

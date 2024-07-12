@@ -1,0 +1,12 @@
+_base: [secrets]
+
+_meta.script_name: rephrase
+
+outdir: data/new
+
+skip-confirm: yes
+
+path: data/Arithmetic
+
+
+
