@@ -224,6 +224,7 @@ class GetAlternativeCode:
             final_code = new_code_const_var + f'; {result_var} ?'
 
         except TimeoutException:
+            explanation = ''
             final_code = code_string
 
         finally:

@@ -14,7 +14,7 @@ seed_value=$(($1 * samples_per_run / 100))
 
 # Run the Python script
 /home/pghosh/miniconda3/envs/alpha_geo/bin/python demo.py \
---out /is/cluster/scratch/pghosh/dataset/alpha_geo/arithmetic/$1.csv \
+--out /is/cluster/scratch/pghosh/dataset/alpha_geo/arithmetic/arithmetic_probs_depth_2_base_funcs_65/$1.csv \
 --n $samples_per_run \
 --seed $seed_value \
 --pbar False \

@@ -47,7 +47,7 @@ def generate(cfg: fig.Configuration):
 
 	generator = cfg.pull('generator', None)
 	if generator is None:
-		generator = SymArithmeticProbGen(depth=1)
+		generator = SymArithmeticProbGen(depth=2)
 
 	outpath = cfg.pull('out', 'demo.csv')
 	outpath = Path(outpath)
@@ -91,14 +91,21 @@ def generate(cfg: fig.Configuration):
 
 		# with some probability alter the formal expression to an equivalen one and verbalize that
 		expl = ''
-		if random.random() < 10:
-			expl, formal = code_changer(formal)
+		# if random.random() < 10:
+		expl, formal = code_changer(formal)
+		if formal.find('None') != -1:
+			continue
 		sample['explanation'] = expl
 		# Set the timeout handler
 		signal.signal(signal.SIGALRM, timeout_handler)
-		signal.alarm(3)  # Set the alarm for 3 seconds
+		signal.alarm(1)  # Set the alarm for 3 seconds
 		try:
 			ctx = verb.parse_problem(formal)
+		except ValueError as e:
+			print(f'The original formal is: {unaltered_formal}')
+			print(f'Failed to verbalize {formal}')
+			print(f'Failed wih Error: {e}')
+			continue
 		except TimeoutException:
 			print(f'The original formal is: {unaltered_formal}')
 			print(f'Failed to verbalize {formal}')
