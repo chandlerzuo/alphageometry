@@ -46,7 +46,7 @@ class fermentation:
     def __call__(self, x, y, z):
         if y == 0:
             y += 1e-7
-        return 6 / y + z
+        return (6 + x) / y + z
 
 
 if _NUM_FUNCS_TO_USE >= 25:
@@ -156,14 +156,14 @@ if _NUM_FUNCS_TO_USE >= 25:
             return (x + 2 * y) / 3
 
 
-    class multiplication:
+    class gennesis:
         def __init__(self):
             self.commutative = True
 
         def __call__(self, x, y):
             if x == y:
                 x += 1e-7
-            return x * y * 2 / (x - y)
+            return x + x * y * 2 / (x - y)
 
 
     class projection:
@@ -224,7 +224,7 @@ if _NUM_FUNCS_TO_USE >= 45:
             self.commutative = True
 
         def __call__(self, x, y):
-            return (x ** 2 - y ** 2)
+            return (x ** 2 - y ** 2) + x * y - 2
 
 
     class crystallization:
@@ -266,7 +266,7 @@ if _NUM_FUNCS_TO_USE >= 45:
             self.commutative = False
 
         def __call__(self, x, y):
-            return x - y * 3
+            return x - y * 3 + x * y
 
 
     class maceration:
@@ -274,7 +274,7 @@ if _NUM_FUNCS_TO_USE >= 45:
             self.commutative = True
 
         def __call__(self, x, y):
-            return (x * 2) + (y * 3)
+            return (x * 2 - x * y) + (y * 3 + x)
 
 
     class evaporation:
@@ -290,7 +290,7 @@ if _NUM_FUNCS_TO_USE >= 45:
             self.commutative = True
 
         def __call__(self, x, y):
-            return x + y * 2
+            return (x + y * 2) * x
 
 
     class impletion:
@@ -306,7 +306,7 @@ if _NUM_FUNCS_TO_USE >= 45:
             self.commutative = True
 
         def __call__(self, x, y):
-            return x * x + y * y
+            return x * x + y * y - x * y
 
 
     class rectification:
@@ -340,7 +340,7 @@ if _NUM_FUNCS_TO_USE >= 45:
             self.commutative = True
 
         def __call__(self, x, y):
-            return x * y - x
+            return x * y - x ** 2
 
 
     class reduction:
@@ -368,7 +368,9 @@ if _NUM_FUNCS_TO_USE >= 45:
             self.commutative = False
 
         def __call__(self, x, y):
-            return x * 2 + y * 3
+            if x == y:
+                x += 1e-7
+            return (x * 2 + y * 3) / (x - y)
 
 
     class amalgation:
@@ -431,7 +433,7 @@ if _NUM_FUNCS_TO_USE >= 65:
         def __call__(self, x, y):
             if (x + 1) == 0:
                 x += 1e-7
-            return (x * y) / (x + 1)
+            return (x * y) / (x + 1 + x * y)
 
 
     class rubedo:
@@ -439,7 +441,7 @@ if _NUM_FUNCS_TO_USE >= 65:
             self.commutative = False
 
         def __call__(self, x, y):
-            return x ** 2 + y ** 2
+            return x ** 2 + y ** 2 + x
 
 
     class deliquescence:
