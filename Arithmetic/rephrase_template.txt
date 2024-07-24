@@ -4,10 +4,12 @@
    - Ensure that all specific numbers, terms, and descriptors are accurately retained.
    - Avoid introducing new elements that might change the original meaning or detail.
    - Don't forget to include the question at the end, but feel free to reword the question as well.
+   - The only kind of details you can change are the names or descriptions of the people that do things. You can replace the description of people or use pronouns. However, don't change any details of items or objects that are involved in the story.
 
 2. **Enhance Language and Theme:**
    - Use vivid and thematic language that matches the context of the original text.
    - Incorporate metaphors or literary devices where appropriate to make the text more engaging.
+   - Change the subjects to improve consistency: choose 1-2 of the people involved in the story and change the sentences to involve only those selected people. You can mix it which character is involved each sentence, as long as it is clear who is involved in each sentence.
 
 3. **Improve Structural Flow:**
    - Combine sentences to reduce redundancy and improve coherence.
