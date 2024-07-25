@@ -5,19 +5,18 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer
 class PerplexityCalculator(torch.nn.Module):
     def __init__(self, model_name='gpt2'):
         super().__init__()
-        # Initialize and load the tokenizer and model
-        self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
         self.model = GPT2LMHeadModel.from_pretrained(model_name)
         self.model.eval()  # Set the model to evaluation mode
+        self.perplexity_criterion = torch.nn.CrossEntropyLoss()
 
-    def forward(self, text):
-        # Tokenize the input text and prepare input tensors
-        tokens_tensor = self.tokenizer.encode(text, return_tensors='pt')
+    def forward(self, input_logits):
+        with torch.no_grad():
+            # Tokenize the input text and prepare input tensors
+            input_ids = torch.argmax(input_logits, dim=-1)
 
-        # Calculate loss without gradient updates
-        # with torch.no_grad():
-        outputs = self.model(tokens_tensor, labels=tokens_tensor)
-        log_perplexity = outputs[0]
+            # Calculate loss without gradient updates
+            outputs = self.model(input_ids)
+        log_perplexity = self.perplexity_criterion(input_logits, outputs.logits)
 
         return log_perplexity
 
@@ -26,8 +25,17 @@ if __name__ == '__main__':
     # Example usage
     perplexity_calculator = PerplexityCalculator()
 
-    text1 = "The quick brown fox jumps over the lazy dog."
-    print(f"Perplexity of text1: {perplexity_calculator(text1)}")
+    # Initialize and load the tokenizer and model
+    model_name = 'gpt2'
+    tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+    model = GPT2LMHeadModel.from_pretrained(model_name)
+    model.eval()
 
-    text2 = "Example of a second piece of text to evaluate."
-    print(f"Perplexity of text2: {perplexity_calculator(text2)}")
+    with torch.no_grad():
+        text1 = "The quick brown fox jumps over the lazy dog."
+        tokens_tensor = tokenizer.encode(text1, return_tensors='pt')
+        import ipdb; ipdb.set_trace()
+        outputs = model(tokens_tensor)
+        # expect this to be almost large negative numberr because GPT2 generated text should hav every small perplexity
+        # for the GPT2 model itself
+        print(f"Log perplexity of text1 generated logits: {perplexity_calculator(outputs.logits)}")
