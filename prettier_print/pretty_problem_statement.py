@@ -319,7 +319,7 @@ if __name__ == '__main__':
     print(get_nl_problem_statement(txt))
     
     print("#"*80)
-    with open("defs.txt", "r") as f:
+    with open("../defs.txt", "r") as f:
         for (i, line) in enumerate(f):
             if i % 6 != 0: continue
             line = line.strip()

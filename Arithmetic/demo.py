@@ -47,7 +47,7 @@ def generate(cfg: fig.Configuration):
 
 	generator = cfg.pull('generator', None)
 	if generator is None:
-		generator = SymArithmeticProbGen(depth=2)
+		generator = SymArithmeticProbGen(depth=cfg.pull('depth', 1, silent=True))
 
 	outpath = cfg.pull('out', 'demo.csv')
 	outpath = Path(outpath)

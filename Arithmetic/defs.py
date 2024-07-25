@@ -1,8 +1,10 @@
 import re
+import os
 
-_NUM_FUNCS_TO_USE = 65
+_NUM_FUNCS_TO_USE = int(os.environ.get('NUM_FUNCS_TO_USE', 65))
 
-assert _NUM_FUNCS_TO_USE in [5, 25, 45, 65]
+assert _NUM_FUNCS_TO_USE in [5, 25, 45, 65], \
+    f'NUM_FUNCS_TO_USE must be one of [5, 25, 45, 65] but got {_NUM_FUNCS_TO_USE} of type {type(_NUM_FUNCS_TO_USE)}'
 
 
 class calcination:
