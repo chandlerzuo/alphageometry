@@ -2,11 +2,14 @@ _base: [secrets]
 
 _meta.script_name: rephrase
 
-outdir: data/new
+#outdir: data/new
 
 skip-confirm: yes
 
-path: data/Arithmetic
+n: 8
+
+#path: data/Arithmetic
+path: data/depth1_func25/0.csv
 
 
 
