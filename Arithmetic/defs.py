@@ -1,59 +1,10 @@
 import re
+import os
 
+_NUM_FUNCS_TO_USE = int(os.environ.get('NUM_FUNCS_TO_USE', 65))
 
-class Stringifiable:
-    num_vars = 0
-    vars_mapping = {}
-
-    @classmethod
-    def reset(cls):
-        cls.num_vars = 0
-        cls.vars_mapping = {}
-
-    def __init__(self, desc):
-        if isinstance(desc, int):
-            # desc = f"x{desc}"
-            Stringifiable.num_vars += 1
-            value = desc
-            desc = f"X{Stringifiable.num_vars}"
-            self.vars_mapping[desc] = value
-        elif isinstance(desc, Stringifiable):
-            desc = desc.desc
-
-        self.desc = desc
-
-    def __repr__(self):
-        return self.desc
-
-    def __mul__(self, other):
-        return Stringifiable(f"({self} * {other})")
-
-    def __rmul__(self, other):
-        return Stringifiable(f"({other} * {self})")
-
-    def __add__(self, other):
-        return Stringifiable(f"({self} + {other})")
-
-    def __radd__(self, other):
-        return Stringifiable(f"({other} + {self})")
-
-    def __sub__(self, other):
-        return Stringifiable(f"({self} - {other})")
-
-    def __rsub__(self, other):
-        return Stringifiable(f"({other} - {self})")
-
-    def __truediv__(self, other):
-        return Stringifiable(f"({self} / {other})")
-
-    def __rtruediv__(self, other):
-        return Stringifiable(f"({other} / {self})")
-    # def __minus__(self, other):
-    #     return Stringifiable(f"{get_str(self)} - {get_str(other)}")
-    # def __add__(self, other):
-    #     return Stringifiable(f"{get_str(self)} + {get_str(other)}")
-    # def __truediv__(self, other):
-    #     return Stringifiable(f"{get_str(self)} / {get_str(other)}")
+assert _NUM_FUNCS_TO_USE in [5, 25, 45, 65], \
+    f'NUM_FUNCS_TO_USE must be one of [5, 25, 45, 65] but got {_NUM_FUNCS_TO_USE} of type {type(_NUM_FUNCS_TO_USE)}'
 
 
 class calcination:
@@ -72,11 +23,6 @@ class dissolution:
         return x * x - y
 
 
-# Stringifiable(2) * Stringifiable(3)
-# calcination()(Stringifiable(2), Stringifiable(3))
-# calcination()(2, Stringifiable(3))
-
-# %%
 class separation:
     def __init__(self):
         self.commutative = True
@@ -102,7 +48,522 @@ class fermentation:
     def __call__(self, x, y, z):
         if y == 0:
             y += 1e-7
-        return 6 / y + z
+        return (6 + x) / y + z
+
+
+if _NUM_FUNCS_TO_USE >= 25:
+    class sublimation:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x - 3 * y
+
+
+    class coagulation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return x + y + 1
+
+
+    class fixation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return x * (y + 2)
+
+
+    class calcification:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            if (y + 2) == 0:
+                y += 1e-7
+            return x / (y + 2)
+
+
+    class distillation:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return (x ** 2) + (y ** 2)
+
+
+    class coction:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x * 3) - y
+
+
+    class ceration:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return (x + y) * 5
+
+
+    class amalgamation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return x * (y - 0.1) + 2
+
+
+    class levigation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x + 5) - (y * 2)
+
+
+    class solution:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x / 3 + y / 2
+
+
+    class filtration:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return (x + y ** 2) / 2
+
+
+    class extraction:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x - y) * (y - 2)
+
+
+    class digestion:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return (x + 2 * y) / 3
+
+
+    class gennesis:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            if x == y:
+                x += 1e-7
+            return x + x * y * 2 / (x - y)
+
+
+    class projection:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return (x * y + 2) ** 2
+
+
+    class elixiration:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x + y) * (x - y)
+
+
+    class cementation:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return 3 * (x + y)
+
+
+    class imbibition:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            if (y + 1) == 0:
+                y += 1e-7
+            return (x + 10) / (y + 1)
+
+
+    class putrefaction:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            if (x + y) == 0:
+                x += 1e-7
+            return y - x / (x + y)
+
+
+    class tincturation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return x * 2 + y * 2
+
+
+if _NUM_FUNCS_TO_USE >= 45:
+    class pulverization:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x ** 2 - y ** 2) + x * y - 2
+
+
+    class crystallization:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x % y if y != 0 else 0
+
+
+    class reverberation:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            if (x + 1) == 0:
+                x += 1e-7
+            return (x * y) / (x + 1)
+
+
+    class cerementation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x + y) / 10
+
+
+    class precipitation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x * 10) - (y * 5)
+
+
+    class incineration:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x - y * 3 + x * y
+
+
+    class maceration:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x * 2 - x * y) + (y * 3 + x)
+
+
+    class evaporation:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x / 2 - y
+
+
+    class infusion:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x + y * 2) * x
+
+
+    class impletion:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x * (y + 5)
+
+
+    class congelation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return x * x + y * y - x * y
+
+
+    class rectification:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x - y * 2 + 3
+
+
+    class subduction:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y, z):
+            if y == z:
+                y += 1e-7
+            return (x - y) / (y - z)
+
+
+    class ascension:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return (x + y) ** 2
+
+
+    class mortification:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return x * y - x ** 2
+
+
+    class reduction:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y, z):
+            if z == 0:
+                z += 1e-7
+            return x / z + y
+
+
+    class percolation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y, z):
+            if z == 0:
+                z += 1e-7
+            return (x + y) * 3 / z
+
+
+    class liquefaction:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            if x == y:
+                x += 1e-7
+            return (x * 2 + y * 3) / (x - y)
+
+
+    class amalgation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return x ** 2 - y ** 3
+
+
+    class calcinization:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            if (x + 1) == 0:
+                x += 1e-7
+            return (x + y) / (x + 1)
+
+
+if _NUM_FUNCS_TO_USE >= 65:
+    class vinculation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x * y) + (x - y)
+
+
+    class effervescence:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return (x ** 2) - 3 * y
+
+
+    class amalgam:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            if x == y:
+                x += 1e-7
+            return (x * y)/(x - y) * 2
+
+
+    class albedo:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x + y) ** 3
+
+
+    class nigredo:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            if (x + 1) == 0:
+                x += 1e-7
+            return (x * y) / (x + 1 + x * y)
+
+
+    class rubedo:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x ** 2 + y ** 2 + x
+
+
+    class deliquescence:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y, z):
+            if (x + y - z) == 0:
+                x += 1e-7
+
+            return x * y / (x + y - z)
+
+
+    class incrustation:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x * 3 + y * 2) / 5
+
+
+    class quintessence:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return (x + y * x) / 2
+
+
+    class alkahest:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return x - y + 10 + x * y
+
+
+    class philosophers_stone:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x * y + 1
+
+
+    class athanor:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return (x + y) * (x - y) + 2
+
+
+    class aurification:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x + 5 * y
+
+
+    class solification:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y, z):
+            if z == 0:
+                z += 1e-7
+            return (x * x / z) - (y * y)
+
+
+    class lunation:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x / 2 + y * 2
+
+
+    class solarization:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            return x * 2 + y * 3
+
+
+    class hermetic_seal:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y, z):
+            return x * y - z
+
+
+    class spiritization:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y, z):
+            return (x + z) - (y + 10)
+
+
+    class transmutation:
+        def __init__(self):
+            self.commutative = False
+
+        def __call__(self, x, y):
+            return x * 3 - y * 2
+
+
+    class volatilization:
+        def __init__(self):
+            self.commutative = True
+
+        def __call__(self, x, y):
+            if (y + 1) == 0:
+                y += 1e-7
+            return (x * 10) / (y + 1)
+
 
 
 # The following should not be callable classes
@@ -133,13 +594,14 @@ def div(x, y):
 
 
 def get_symbolic_expr_code_var_map(expr):
+    from Arithmetic.convert_to_string import Stringifiable
     local_env = {
         "calcination": lambda x, y: calcination()(Stringifiable(x), Stringifiable(y)),
         "dissolution": lambda x, y: dissolution()(Stringifiable(x), Stringifiable(y)),
         "separation": lambda x, y: separation()(Stringifiable(x), Stringifiable(y)),
         "conjunction": lambda x, y: conjunction()(Stringifiable(x), Stringifiable(y)),
         "fermentation": lambda x, y, z: fermentation()(Stringifiable(x), Stringifiable(y), Stringifiable(z)),
-        # "add": add,
+        # ""
     }
 
     expr = expr[:-1]

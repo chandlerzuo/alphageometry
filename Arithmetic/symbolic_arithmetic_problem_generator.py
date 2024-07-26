@@ -35,11 +35,12 @@ class SymArithmeticProbGen:
     def acquire_symbols(self):
         """Acquire symbols from the defs module, instantiating callable classes."""
         for name, obj in inspect.getmembers(self.defs, inspect.isclass):
-            instance = obj()  # Instantiate each class
-            args = inspect.signature(instance.__call__).parameters
-            arity = len(args)
-            ret_count = self.estimate_return_count(instance, arity)
-            self.functions[name] = (arity, ret_count, instance)
+            if name != 'Stringifiable':
+                instance = obj()  # Instantiate each class
+                args = inspect.signature(instance.__call__).parameters
+                arity = len(args)
+                ret_count = self.estimate_return_count(instance, arity)
+                self.functions[name] = (arity, ret_count, instance)
 
     def generate_expression(self, depth=0):
         """Recursively generates a random arithmetic expression using AST nodes."""

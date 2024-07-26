@@ -165,7 +165,7 @@ class Verbalization(AbstractVerbalization):
 
 		if '?' in fl_statement: # questions are parsed separately
 			q = self.parse_question(fl_statement)
-			assert q.query in vocab, f'Unknown variable: {q.query}'
+			assert q.query in vocab, f'Unknown variable: {q.query} for formal expression: {fl_statement}'
 			return Controller(q)
 
 		tree = ast.parse(fl_statement) # valid python syntax

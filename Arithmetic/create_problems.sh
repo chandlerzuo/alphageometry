@@ -12,13 +12,40 @@ fi
 # Use $(( )) for arithmetic calculations
 seed_value=$(($1 * samples_per_run / 100))
 
+# Base path for the Python environment and output directory
+python_env="/home/pghosh/miniconda3/envs/alpha_geo/bin/python"
+output_base="/is/cluster/scratch/pghosh/dataset/alpha_geo/arithmetic"
+
 # Run the Python script
-/home/pghosh/miniconda3/envs/alpha_geo/bin/python demo.py \
---out /is/cluster/scratch/pghosh/dataset/alpha_geo/arithmetic/$1.csv \
+expr_depth=1
+for i in 5 25 45 65
+do
+  export NUM_FUNCS_TO_USE=$i
+  out_dir="${output_base}/arithmetic_probs_depth_${expr_depth}_base_funcs_${NUM_FUNCS_TO_USE}"
+  mkdir -p "$out_dir"  # Create the directory if it does not exist
+  if ! $python_env demo.py \
+  --out ${out_dir}/$1.csv \
+  --n $samples_per_run \
+  --seed $seed_value \
+  --pbar False \
+  --depth $expr_depth \
+  --overwrite True; then
+      echo "Python script failed at depth 1 with NUM_FUNCS_TO_USE $i"
+      exit 1
+  fi
+done
+
+expr_depth=2
+export NUM_FUNCS_TO_USE=65
+out_dir="${output_base}/arithmetic_probs_depth_${expr_depth}_base_funcs_${NUM_FUNCS_TO_USE}"
+mkdir -p "$out_dir"  # Create the directory if it does not exist
+if ! $python_env demo.py \
+--out ${out_dir}/$1.csv \
 --n $samples_per_run \
 --seed $seed_value \
 --pbar False \
---overwrite True
-
-## Echo the command with variables expanded to show which command was executed
-#echo "/home/pghosh/miniconda3/envs/alpha_geo/bin/python demo.py --out /is/cluster/scratch/pghosh/dataset/alpha_geo/arithmetic/$1.csv -n $samples_per_run --seed $seed_value --pbar False --overwrite True"
+--depth $expr_depth \
+--overwrite True; then
+    echo "Python script failed at depth 2"
+    exit 1
+fi
