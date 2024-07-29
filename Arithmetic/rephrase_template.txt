@@ -1,28 +1,7 @@
 # Guidelines for Rephrasing Text
 
-1. **Preserve Key Information:**
-   - Ensure that all specific numbers, terms, and descriptors are accurately retained.
-   - Avoid introducing new elements that might change the original meaning or detail.
-   - Don't forget to include the question at the end, but feel free to reword the question as well.
-   - The only kind of details you can change are the names or descriptions of the people that do things. You can replace the description of people or use pronouns. However, don't change any details of items or objects that are involved in the story.
-
-2. **Enhance Language and Theme:**
-   - Use vivid and thematic language that matches the context of the original text.
-   - Incorporate metaphors or literary devices where appropriate to make the text more engaging.
-   - Change the subjects to improve consistency: choose 1-2 of the people involved in the story and change the sentences to involve only those selected people. You can mix it which character is involved each sentence, as long as it is clear who is involved in each sentence.
-
-3. **Improve Structural Flow:**
-   - Combine sentences to reduce redundancy and improve coherence.
-   - Rearrange sentences to create a logical progression of ideas. For sentences that are about some process that produces a product, occasionally you should rearrange that sentence to mention the product first and then describe the process and ingredients after.
-   - Where appropriate, rearrange phrases and clauses in the sentence for more diverse and complex sentence structures.
-
-4. **Maintain Clarity with Pronouns:**
-   - Use pronouns to avoid repetition, but ensure that it’s always clear which nouns the pronouns are referring to.
-   - Introduce the noun clearly before using a pronoun and avoid using multiple pronouns back-to-back that could refer to different subjects.
-
-5. **Check for Consistency:**
-   - Ensure that the tone and style are consistent throughout the text.
-   - Review the text to make sure that thematic elements introduced are maintained consistently across the rephrased version.
+Retain all specific details of ingredients and substances, avoid adding new elements or numbers. Ensure that each sentence is understood to unambiguously and consistently refer to either addition, subtraction, multiplication, or division.
+Use vivid, thematic language, incorporating metaphors and literary devices. Combine and rearrange sentences for coherence, use diverse sentence structures, simplify the characters involved to just 1-2, and maintain clear pronoun references across sentences. Make sure to end with the question (which may be reworded).
 
 # Using the suggestions above, rewrite the story below. Answer only with the rewritten story:
 
