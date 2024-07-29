@@ -23,9 +23,12 @@ def load_existing_codes(path: Path) -> set[str]:
 
 @fig.script('rephrase')
 def rephrase(cfg: fig.Configuration):
+
+    show_prompt = False
     dry_run = cfg.pull('dry-run', False)
     if dry_run:
         print(f'Dry run: not actually saving anything.')
+        show_prompt = True
 
     pbar = cfg.pull('pbar', True, silent=True)
 
@@ -108,6 +111,9 @@ def rephrase(cfg: fig.Configuration):
                 continue
 
             prompt = template.format(**item)
+            if show_prompt:
+                print(f'Prompt:\n\n{prompt}\n\n')
+                show_prompt = False
 
             if dry_run:
                 # print(f'Prompt: {prompt}')
