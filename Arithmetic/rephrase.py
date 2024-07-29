@@ -27,6 +27,8 @@ def rephrase(cfg: fig.Configuration):
     if dry_run:
         print(f'Dry run: not actually saving anything.')
 
+    pbar = cfg.pull('pbar', True, silent=True)
+
     api_key = cfg.pull('api-key', os.environ.get('OPENAI_API_KEY', None), silent=True)
     if api_key is None:
         raise ValueError(f'No OPENAI API key found, pass argument using "--api-key" or set env var "OPENAI_API_KEY"')
@@ -95,7 +97,7 @@ def rephrase(cfg: fig.Configuration):
         writer = outpath.open('a')
 
         # item_itr = tqdm(df.iterrows(), total=len(df)) if pbar and len(paths) == 1 else df.iterrows()
-        item_itr = tqdm(df.iterrows(), total=len(df) if max_num is None else min(max_num-n, len(df)))
+        item_itr = tqdm(df.iterrows(), total=len(df) if max_num is None else min(max_num-n, len(df))) if pbar else df.iterrows()
         for i, item in item_itr:
             item = item.to_dict()
             assert overwrite or 'rephrase' not in item, 'Item has already been rephrased'
