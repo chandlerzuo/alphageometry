@@ -134,6 +134,7 @@ def rephrase(cfg: fig.Configuration):
             item['md5_item_code'] = code
 
             writer.write(json.dumps(item) + '\n')
+            writer.flush()
             n += 1
 
             if print_freq and n % print_freq == 0:
