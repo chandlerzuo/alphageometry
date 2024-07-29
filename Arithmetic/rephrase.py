@@ -31,6 +31,7 @@ def rephrase(cfg: fig.Configuration):
         show_prompt = True
 
     pbar = cfg.pull('pbar', True, silent=True)
+    print_freq = 0 if pbar else cfg.pull('print-freq', 10)
 
     api_key = cfg.pull('api-key', os.environ.get('OPENAI_API_KEY', None), silent=True)
     if api_key is None:
@@ -134,6 +135,9 @@ def rephrase(cfg: fig.Configuration):
 
             writer.write(json.dumps(item) + '\n')
             n += 1
+
+            if print_freq and n % print_freq == 0:
+                print(f'Processed {n} items')
 
             if max_num <= n:
                 print(f'Reached the max responses {max_num}')
