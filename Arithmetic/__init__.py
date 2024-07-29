@@ -1,2 +1,2 @@
 from . import demo
-# from . import rephrase
+from . import rephrase

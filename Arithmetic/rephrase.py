@@ -7,7 +7,7 @@ import pandas as pd
 import hashlib
 import omnifig as fig
 
-from .verb import repo_root
+from Arithmetic.verb import repo_root
 
 def hash_item(item: dict[str, str]) -> str:
     if 'md5_item_code' in item:
