@@ -25,7 +25,6 @@ def load_existing_codes(path: Path) -> set[str]:
 def rephrase(cfg: fig.Configuration):
     dry_run = cfg.pull('dry-run', False)
     if dry_run:
-        print(f'Will save rephrases of {len(paths)} file/s')
         print(f'Dry run: not actually saving anything.')
 
     api_key = cfg.pull('api-key', os.environ.get('OPENAI_API_KEY', None), silent=True)
