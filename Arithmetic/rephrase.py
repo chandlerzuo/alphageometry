@@ -23,6 +23,10 @@ def load_existing_codes(path: Path) -> set[str]:
 
 @fig.script('rephrase')
 def rephrase(cfg: fig.Configuration):
+    dry_run = cfg.pull('dry-run', False)
+    if dry_run:
+        print(f'Will save rephrases of {len(paths)} file/s')
+        print(f'Dry run: not actually saving anything.')
 
     api_key = cfg.pull('api-key', os.environ.get('OPENAI_API_KEY', None), silent=True)
     if api_key is None:
@@ -104,14 +108,18 @@ def rephrase(cfg: fig.Configuration):
 
             prompt = template.format(**item)
 
-            response = client.chat.completions.create(
-                messages=[{"role": "system", "content": "You are a helpful assistant."},
-                          {"role": "user", "content": prompt}],
-                # model="gpt-3.5-turbo",
-                model=model_name,
-                max_tokens=max_tokens,
-            )
-            rephrased = response.choices[0].message.content
+            if dry_run:
+                # print(f'Prompt: {prompt}')
+                rephrased = 'Dry run: no rephrased text'
+            else:
+                response = client.chat.completions.create(
+                    messages=[{"role": "system", "content": "You are a helpful assistant."},
+                            {"role": "user", "content": prompt}],
+                    # model="gpt-3.5-turbo",
+                    model=model_name,
+                    max_tokens=max_tokens,
+                )
+                rephrased = response.choices[0].message.content
 
             item['rephrase'] = rephrased.replace('\n', ' ')
 
