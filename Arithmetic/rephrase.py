@@ -50,7 +50,7 @@ def rephrase(cfg: fig.Configuration):
 
     overwrite = cfg.pull('overwrite', False)
 
-    template_path = cfg.pull('template-path', str(repo_root() / 'Arithmetic' / 'rephrase_template.txt'))
+    template_path = cfg.pull('template-path') # str(repo_root() / 'Arithmetic' / 'rephrase_template.txt')
     template_path = Path(template_path)
     template = template_path.read_text()
 
