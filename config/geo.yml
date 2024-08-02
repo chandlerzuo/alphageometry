@@ -2,7 +2,7 @@
 
 # outpattern: '{path.parent}/rephrased-{path.stem}.jsonl'
 
-path: /is/cluster/scratch/fleeb/alphageo/geomtry/nl_fl_dataset_*.csv
+path: /is/cluster/scratch/fleeb/alphageo/geomtry/
 
 
 template-path: verb/rephrase_geo_template.txt
