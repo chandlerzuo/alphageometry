@@ -102,8 +102,10 @@ def rephrase(cfg: fig.Configuration):
         writer = outpath.open('a')
 
         # item_itr = tqdm(df.iterrows(), total=len(df)) if pbar and len(paths) == 1 else df.iterrows()
-        item_itr = tqdm(df.iterrows(), total=len(df) if max_num is None else min(max_num-n, len(df))) if pbar else df.iterrows()
-        for i, item in item_itr:
+        item_itr = (item for _, item in df.iterrows() if hash_item(item) not in existing_codes)
+        if pbar:
+            item_itr = tqdm(item_itr, total=len(df) if max_num is None else min(max_num-n, len(df)))
+        for item in item_itr:
             item = item.to_dict()
             assert overwrite or 'rephrase' not in item, 'Item has already been rephrased'
 
