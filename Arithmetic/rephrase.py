@@ -30,8 +30,8 @@ def rephrase(cfg: fig.Configuration):
         print(f'Dry run: not actually saving anything.')
         show_prompt = True
 
-    pbar = cfg.pull('pbar', True, silent=True)
-    print_freq = 0 if pbar else cfg.pull('print-freq', 10)
+    use_pbar = cfg.pull('pbar', True, silent=True)
+    print_freq = 0 if use_pbar else cfg.pull('print-freq', 10)
 
     api_key = cfg.pull('api-key', os.environ.get('OPENAI_API_KEY', None), silent=True)
     if api_key is None:
@@ -102,10 +102,9 @@ def rephrase(cfg: fig.Configuration):
         writer = outpath.open('a')
 
         # item_itr = tqdm(df.iterrows(), total=len(df)) if pbar and len(paths) == 1 else df.iterrows()
-        item_itr = (item for _, item in df.iterrows() if hash_item(item) not in existing_codes)
-        if pbar:
-            item_itr = tqdm(item_itr, total=len(df) if max_num is None else min(max_num-n, len(df)))
-        for item in item_itr:
+        
+        pbar = tqdm(total=len(df) if max_num is None else min(max_num, len(df))) if use_pbar else None
+        for i, item in df.iterrows():
             item = item.to_dict()
             assert overwrite or 'rephrase' not in item, 'Item has already been rephrased'
 
@@ -142,6 +141,8 @@ def rephrase(cfg: fig.Configuration):
 
             if print_freq and n % print_freq == 0:
                 print(f'Processed {n} items')
+            if pbar:
+                pbar.update(1)
 
             if max_num <= n:
                 print(f'Reached the max responses {max_num}')
