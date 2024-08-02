@@ -50,7 +50,7 @@ def rephrase(cfg: fig.Configuration):
 
     overwrite = cfg.pull('overwrite', False)
 
-    template_path = cfg.pull('template_path', str(repo_root() / 'Arithmetic' / 'rephrase_template.txt'))
+    template_path = cfg.pull('template-path', str(repo_root() / 'Arithmetic' / 'rephrase_template.txt'))
     template_path = Path(template_path)
     template = template_path.read_text()
 
@@ -88,6 +88,7 @@ def rephrase(cfg: fig.Configuration):
     n = 0
     path_itr = paths
     for path in path_itr:
+        path = path.expanduser().absolute()
         if len(paths) == 1:
             print(f'Loading {path}')
         df = pd.read_csv(path)

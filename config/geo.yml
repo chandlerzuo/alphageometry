@@ -1,0 +1,8 @@
+
+
+# outpattern: '{path.parent}/rephrased-{path.stem}.jsonl'
+
+path: /is/cluster/scratch/fleeb/alphageo/geomtry/nl_fl_dataset_0.csv
+
+
+template-path: verb/rephrase_geo_template.txt
