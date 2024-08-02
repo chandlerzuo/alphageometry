@@ -28,7 +28,7 @@ def eval_formal(formal_problem: str, functions: Optional[Iterable[Callable]] = N
         fn_info = acquire_symbols()
         context = {name: fn for name, (arity, fn) in fn_info.items()}
     else:
-        context = {fn.__name__: fn for name, fn in functions}
+        context = {fn.__name__: fn for fn in functions}
     
     # Split the commands on ';'
     commands = formal_problem.split(';')
