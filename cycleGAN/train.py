@@ -7,14 +7,10 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, get_scheduler, G
 from accelerate import Accelerator
 from data_loader.csv_loader import NLFLDatasetFromCSV
 from frozen_discriminator import PerplexityCalculator
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 # from transformers.models.gpt2.modeling_gpt2 import GPT2Block
 
-def main():
-    num_epochs = 10
-    validate_every = 100
-    valid_for_batches = 10
-    batch_size = 8
+
+def main(args):
     valid_recon_save_path = '/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/'
 
     # Initialize Accelerator
@@ -37,15 +33,21 @@ def main():
     decoder.to(device)
 
     # Wrap models with FSDP
-    encoder = FSDP(encoder)
-    decoder = FSDP(decoder)
+    if args.use_FSDP:
+        from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+        encoder = FSDP(encoder)
+        decoder = FSDP(decoder)
 
     # Prepare dataset and dataloader
-    dataset = NLFLDatasetFromCSV('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='train')
-    train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    dataset = \
+        NLFLDatasetFromCSV('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='train',
+                           overfitting=args.overfitting)
+    train_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 
-    valid_dataset = NLFLDatasetFromCSV('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='validation')
-    valid_dataloader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
+    valid_dataset = \
+        NLFLDatasetFromCSV('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='validation',
+                           overfitting=args.overfitting)
+    valid_dataloader = DataLoader(valid_dataset, batch_size=args.batch_size, shuffle=False)
 
     # Move models to device
     encoder, decoder, perplexity_calculator = accelerator.prepare(encoder, decoder, perplexity_calculator)
@@ -54,7 +56,7 @@ def main():
     auto_enc_opt = AdamW(list(encoder.parameters()) + list(decoder.parameters()), lr=2e-5)
 
     # Learning rate scheduler
-    num_training_steps = num_epochs * len(train_dataloader)
+    num_training_steps = args.num_epochs * len(train_dataloader)
     lr_scheduler = get_scheduler(
         name="linear",
         optimizer=auto_enc_opt,
@@ -65,7 +67,7 @@ def main():
     # Training loop
     encoder.train()
     decoder.train()
-    for epoch in range(num_epochs):
+    for epoch in range(args.num_epochs):
         pbar = tqdm.tqdm(train_dataloader)
         for batch_idx, batch in enumerate(pbar):
             formal_texts = batch['formal']
@@ -91,7 +93,7 @@ def main():
             lr_scheduler.step()
             auto_enc_opt.zero_grad()
 
-            if batch_idx % validate_every == 0:
+            if batch_idx % args.validate_every == 0:
                 # Validation
                 encoder.eval()
                 decoder.eval()
@@ -100,7 +102,7 @@ def main():
                     val_recon_loss = 0
                     val_log_perplexity_loss = 0
                     for i, val_batch in enumerate(valid_iterator):
-                        if i > valid_for_batches:
+                        if i > args.valid_for_batches:
                             break
                         val_formal_texts = val_batch['formal']
                         val_natural_texts = val_batch['natural']
@@ -132,8 +134,8 @@ def main():
                             file_name = f'{epoch}_{batch_idx}_fl_fl.csv'
                             df.to_csv(os.path.join(valid_recon_save_path, file_name), index=False, encoding='utf-8')
 
-                val_update = f'Average val_rec_l: {val_recon_loss / valid_for_batches:.3f}, ' \
-                             f'Average val_log_perp_l: {val_log_perplexity_loss / valid_for_batches:.3f}'
+                val_update = f'Average val_rec_l: {val_recon_loss / args.valid_for_batches:.3f}, ' \
+                             f'Average val_log_perp_l: {val_log_perplexity_loss / args.valid_for_batches:.3f}'
 
             pbar.set_description(f'{val_update} log_perplexity_loss:{log_perplexity_loss:.3f}, recon_loss:{recon_loss:.3f}')
             encoder.train()
@@ -143,4 +145,14 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument('--num_epochs', type=int, default=10)
+    parser.add_argument('--validate_every', type=int, default=100)
+    parser.add_argument('--valid_for_batches', type=int, default=10)
+    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--use_FSDP', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
+    parser.add_argument('--overfitting', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
+
+    args = parser.parse_args()
+    main(args)

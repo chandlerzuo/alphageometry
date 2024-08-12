@@ -4,7 +4,9 @@ from sklearn.model_selection import train_test_split
 
 
 class NLFLDatasetFromCSV(Dataset):
-    def __init__(self, csv_file, split='train', test_size=0.1, random_state=42):
+    def __init__(self, csv_file, split='train', overfitting=False, test_size=0.1, random_state=42):
+        self.overfitting = overfitting
+
         # Load the dataset from the CSV file
         data = pd.read_csv(csv_file)
 
@@ -15,7 +17,7 @@ class NLFLDatasetFromCSV(Dataset):
         validation_data, test_data = train_test_split(temp_data, test_size=0.5, random_state=random_state)
 
         # Assign data according to the split parameter
-        if split == 'train':
+        if split == 'train' or self.overfitting:  # If overfitting, use the train data for all splits
             self.data = train_data
         elif split == 'validation':
             self.data = validation_data
@@ -30,6 +32,9 @@ class NLFLDatasetFromCSV(Dataset):
 
     def __getitem__(self, idx):
         # Fetch the formal and natural text from the DataFrame
+        if self.overfitting:
+            idx = idx % 1  # if overfitting return the same 8 samples
+
         formal_text = self.data.iloc[idx]['fl_statement']
         natural_text = self.data.iloc[idx]['nl_statement']
         return {'formal': formal_text, 'natural': natural_text}
