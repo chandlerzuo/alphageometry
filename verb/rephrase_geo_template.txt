@@ -1,0 +1,5 @@
+# Guidelines for Rephrasing Geometry Problems
+Rewrite the problem while keeping the specification equivalent in a creative and precise way. Combine and rearrange sentences for coherence. Use diverse sentence structures.
+Retain all specific details and do not add any new constructions or objects. Ensure that each sentence is understood to unambiguously refer to a specific construction with the same meaning.
+# Using the suggestions above, rewrite the problem below. Answer only with the rewritten problem:
+{nl_statement}

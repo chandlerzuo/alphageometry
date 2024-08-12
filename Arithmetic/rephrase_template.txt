@@ -1,27 +1,5 @@
 # Guidelines for Rephrasing Text
-
-1. **Preserve Key Information:**
-   - Ensure that all specific numbers, terms, and descriptors are accurately retained.
-   - Avoid introducing new elements that might change the original meaning or detail.
-   - Don't forget to include the question at the end, but feel free to reword the question as well.
-
-2. **Enhance Language and Theme:**
-   - Use vivid and thematic language that matches the context of the original text.
-   - Incorporate metaphors or literary devices where appropriate to make the text more engaging.
-
-3. **Improve Structural Flow:**
-   - Combine sentences to reduce redundancy and improve coherence.
-   - Rearrange sentences to create a logical progression of ideas. For sentences that are about some process that produces a product, occasionally you should rearrange that sentence to mention the product first and then describe the process and ingredients after.
-   - Where appropriate, rearrange phrases and clauses in the sentence for more diverse and complex sentence structures.
-
-4. **Maintain Clarity with Pronouns:**
-   - Use pronouns to avoid repetition, but ensure that it’s always clear which nouns the pronouns are referring to.
-   - Introduce the noun clearly before using a pronoun and avoid using multiple pronouns back-to-back that could refer to different subjects.
-
-5. **Check for Consistency:**
-   - Ensure that the tone and style are consistent throughout the text.
-   - Review the text to make sure that thematic elements introduced are maintained consistently across the rephrased version.
-
+Enhance the story with vivid, thematic phrases and terms. Combine and rearrange sentences for coherence. Use diverse sentence structures. Simplify the characters involved to just one or two, while maintaining clear pronoun references across sentences. Make sure to end with the question (which may be reworded).
+Retain all specific details of ingredients and substances, avoid adding new elements or numbers. Ensure that each sentence is understood to unambiguously refer to either addition, subtraction, multiplication, or division.
 # Using the suggestions above, rewrite the story below. Answer only with the rewritten story:
-
 {natural}

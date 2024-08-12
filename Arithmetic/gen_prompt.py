@@ -1,4 +1,5 @@
 import argparse
+from typing import Iterable, Callable, Optional
 import pandas as pd
 import inspect
 import defs
@@ -18,6 +19,57 @@ def acquire_symbols():
             functions[name] = (arity, instance)
 
     return functions
+
+
+def eval_formal(formal_problem: str, functions: Optional[Iterable[Callable]] = None):
+    # Define a context dictionary to store variables and functions
+
+    if functions is None:
+        fn_info = acquire_symbols()
+        context = {name: fn for name, (arity, fn) in fn_info.items()}
+    else:
+        context = {fn.__name__: fn for fn in functions}
+    
+    # Split the commands on ';'
+    commands = formal_problem.split(';')
+    
+    # Process each command
+    for command in commands:
+        # Trim whitespace
+        command = command.strip()
+        
+        if command.endswith('?'):
+            # If the command ends with '?', it's a query for a variable's value
+            query_variable = command[:-1].strip()
+            return eval(query_variable, context)
+        elif '=' in command:
+            # If the command includes '=', it's an assignment
+            var_name, expr = command.split('=')
+            var_name = var_name.strip()
+            expr = expr.strip()
+            
+            # Execute the assignment
+            exec(f"{var_name} = {expr}", context)
+
+
+def test_eval_formal():
+
+    raw = 'A = rubedo(1, 5); B = transmutation(7, 5); C = quintessence(A, B); C ?'
+
+    result = eval_formal(raw)
+    assert 162 == result
+
+    raw = "A = precipitation(7, 5); B = deliquescence(9, 1, 8); C = lunation(A, B); C ?"
+    print()
+    result = eval_formal(raw)
+    assert 31.5 == result
+
+    raw = "A = incrustation(9, 1); B = calcinization(6, 5); C = congelation(A, B); C ?"
+
+    result = eval_formal(raw)
+    assert 26.995102040816327 == result
+
+
 
 
 def get_symbolic_func_exp(func, num_args):
