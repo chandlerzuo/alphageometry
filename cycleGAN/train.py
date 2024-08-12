@@ -3,11 +3,14 @@ import torch
 import tqdm
 import pandas as pd
 from torch.utils.data import DataLoader
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, AdamW, get_scheduler, GPT2Config
+
 from accelerate import Accelerator
 from data_loader.csv_loader import NLFLDatasetFromCSV
 from frozen_discriminator import PerplexityCalculator
-# from transformers.models.gpt2.modeling_gpt2 import GPT2Block
+from model_preperation import load_model
+from transformers import AdamW, get_scheduler
+from torch.utils.data.distributed import DistributedSampler
+from my_utils import get_process_cuda_memory_info, prit_proc0
 
 
 def main(args):
@@ -15,17 +18,11 @@ def main(args):
 
     # Initialize Accelerator
     accelerator = Accelerator()
-    model_name = 'gpt2'
 
     perplexity_calculator = PerplexityCalculator()
 
     # Load tokenizer and models
-    tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-    tokenizer.pad_token = tokenizer.eos_token
-
-    config = GPT2Config()
-    encoder = GPT2LMHeadModel(config=config)
-    decoder = GPT2LMHeadModel(config=config)
+    tokenizer, encoder, decoder = load_model(args.model_name, use_pretrained=args.is_pretrained)
 
     # Move models to GPU before wrapping with FSDP
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -38,19 +35,25 @@ def main(args):
         encoder = FSDP(encoder)
         decoder = FSDP(decoder)
 
+    # Move models to device
+    encoder, decoder, perplexity_calculator = accelerator.prepare(encoder, decoder, perplexity_calculator)
+
     # Prepare dataset and dataloader
     dataset = \
         NLFLDatasetFromCSV('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='train',
                            overfitting=args.overfitting)
-    train_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+    # Create a DistributedSampler for the dataset
+    train_sampler = DistributedSampler(dataset, num_replicas=accelerator.num_processes, rank=accelerator.process_index)
+    train_dataloader = DataLoader(dataset, batch_size=args.batch_size, sampler=train_sampler)
 
     valid_dataset = \
         NLFLDatasetFromCSV('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='validation',
                            overfitting=args.overfitting)
-    valid_dataloader = DataLoader(valid_dataset, batch_size=args.batch_size, shuffle=False)
 
-    # Move models to device
-    encoder, decoder, perplexity_calculator = accelerator.prepare(encoder, decoder, perplexity_calculator)
+    # Validation dataset (can use a different or similar sampler depending on the setup)
+    valid_sampler = DistributedSampler(valid_dataset, num_replicas=accelerator.num_processes,
+                                       rank=accelerator.process_index)
+    valid_dataloader = DataLoader(valid_dataset, batch_size=args.batch_size, sampler=valid_sampler)
 
     # Optimizers
     auto_enc_opt = AdamW(list(encoder.parameters()) + list(decoder.parameters()), lr=2e-5)
@@ -75,6 +78,7 @@ def main(args):
 
             # Encode formal to natural
             enc_inputs = tokenizer(formal_texts, return_tensors='pt', padding=True, truncation=True, max_length=512)
+
             enc_inputs = {k: v.to(accelerator.device) for k, v in enc_inputs.items()}  # Ensure inputs are on the right device
             enc_outputs = encoder(**enc_inputs, output_hidden_states=True)
 
@@ -115,12 +119,13 @@ def main(args):
 
                         # Decode natural to formal
                         val_rec_outputs = decoder(inputs_embeds=val_enc_outputs.hidden_states[-1],
-                                              labels=val_enc_inputs['input_ids'])
+                                                  labels=val_enc_inputs['input_ids'])
                         val_recon_loss += val_rec_outputs.loss
 
                         val_log_perplexity_loss += perplexity_calculator(val_enc_outputs.logits)
 
                         if i == 0:
+                            # print(get_process_cuda_memory_info())
                             # Convert logits to predicted token IDs
                             recon_token_ids = torch.argmax(val_rec_outputs.logits, dim=-1)
                             # import ipdb; ipdb.set_trace()
@@ -151,8 +156,14 @@ if __name__ == "__main__":
     parser.add_argument('--validate_every', type=int, default=100)
     parser.add_argument('--valid_for_batches', type=int, default=10)
     parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--model_name', type=str, default='meta-llama/Llama-2-7b-hf',
+                        help="Model name to load, e.g., 'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl',"
+                                                       "'meta-llama/Meta-Llama-3.1-8B', "
+                                                       "'meta-llama/Llama-2-7b-hf'")
     parser.add_argument('--use_FSDP', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
     parser.add_argument('--overfitting', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
+    parser.add_argument('--is_pretrained', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
 
     args = parser.parse_args()
+    prit_proc0(args)
     main(args)

@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
@@ -34,7 +35,7 @@ class NLFLDatasetFromCSV(Dataset):
         # Fetch the formal and natural text from the DataFrame
         if self.overfitting:
             idx = idx % 1  # if overfitting return the same 8 samples
-
+        # print(f"Rank {os.environ.get('LOCAL_RANK', '0')}, Index: {idx}")
         formal_text = self.data.iloc[idx]['fl_statement']
         natural_text = self.data.iloc[idx]['nl_statement']
         return {'formal': formal_text, 'natural': natural_text}
