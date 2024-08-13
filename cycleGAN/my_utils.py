@@ -40,6 +40,23 @@ def prit_proc0(msg):
         print(msg)
 
 
+def print_model_device_distribution(accelerator, model, model_name):
+    device_params_count = {}  # Dictionary to hold device counts
+
+    # Iterate through all parameters and count them per device
+    for parameter in model.parameters():
+        device = parameter.device
+        if device in device_params_count:
+            device_params_count[device] += parameter.numel()  # Add number of elements in parameter
+        else:
+            device_params_count[device] = parameter.numel()
+
+    # Print the process rank and distribution of parameters across devices
+    print(f"Rank: {accelerator.state.process_index}, {model_name} is distributed across the following devices:")
+    for device, count in device_params_count.items():
+        print(f"Device: {device}, Number of Parameters: {count:,}")
+
+
 if __name__ == '__main__':
     # Example usage
     gpu_memory_info = get_process_cuda_memory_info()
