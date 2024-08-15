@@ -10,31 +10,23 @@ constant:
 ingredient:
 
   rules:
-    unit: {type: literal, args: ['measure', 'portion', 'quantity']}
-
-    humanoid: {type: literal, args: ['giant', 'dwarf', 'troll', 'goblin', 'elf', 'fairy', 'ogre', 'centaur']}
-    bird: {type: literal, args: ['phoenix', 'gryphon']}
-    reptile: {type: literal, args: ['basilisk', 'chimera', 'dragon', 'hydra']}
-    fish: {type: literal, args: ['mermaid', 'siren']}
-    animal: {type: literal, args: ['chimera', 'unicorn', 'centaur']}
-    source: {type: literal, args: ['sun', 'moon']}
-
-    human_body: {type: literal, args: ['beard', 'tooth', 'tear']}
-    bird_body: {type: literal, args: ['feather', 'beak', 'claw']}
-    reptile_body: {type: literal, args: ['scale', 'fang']}
-    animal_body: {type: literal, args: ['horn', 'hoof', 'mane', 'tear']}
-    fish_body: {type: literal, args: ['scale', 'fin']}
-    continuum: {type: literal, args: ['juice', 'extract', 'essence', 'blood', 'earwax']}
-
-    powder: {type: literal, args: ['powdered', 'crushed', 'ground']}
-    processed: {type: literal, args: ['distilled', 'extracted', 'fermented']}
-    stone: {type: literal, args: ['stone', 'gem', 'crystal']}
-
+    potion: {type: literal, args: [potion, elixir, draught, tonic, brew, serum, extract, infusion, concoction]}
+    adjective: {type: literal, args: [eternal, whispering, blazing, icy, stormy, fading, frosted, arcane, forgotten, cursed, radiant, darkened, glimmering, ethereal, sacred, twisting, roaring]}
+    element: {type: literal, args: [fire, water, lightning, ice, shadow, wind, earth, light, time, spirit]}
+    source: {type: literal, args: [dragon, kraken, serpent, titan, siren, unicorn, hydra, basilisk, ogre]}
+    effect: {type: literal, args: [strength, wisdom, harmony, fury, silence, rebirth, reflection, wrath, grace, agility, resolve, endurance, awakening, frostbite]}
+    
   templates:
-    - "{humanoid}'s {human_body}"
-    - "{bird} {bird_body}"
-    - "{source} {stone}"
-    - "{unit} of {animal} {continuum}"
-    - "{unit} of {humanoid} {continuum}"
+    - ["{source}'s {potion}", "{potion} of {source}"]
+    - ["{potion} of {effect}", "{effect} {potion}"]
+    - "{potion} of {source}'s' {effect}"
+    - "{potion} of {element}"
+    - "{potion} of {adjective} {source}"
+    - "{potion} of {adjective} {element}"
+    - "{potion} of {adjective} {effect}"
+
+
+
+
 
 
