@@ -10,7 +10,11 @@ from frozen_discriminator import PerplexityCalculator
 from model_preperation import load_model
 from transformers import AdamW, get_scheduler
 from torch.utils.data.distributed import DistributedSampler
-from my_utils import get_process_cuda_memory_info, prit_proc0
+from my_utils import get_process_cuda_memory_info, prit_proc0, print_model_device_distribution
+
+from torch.distributed.device_mesh import init_device_mesh
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP, ShardingStrategy
+
 
 
 def main(args):
@@ -24,19 +28,9 @@ def main(args):
     # Load tokenizer and models
     tokenizer, encoder, decoder = load_model(args.model_name, use_pretrained=args.is_pretrained)
 
-    # Move models to GPU before wrapping with FSDP
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    encoder.to(device)
-    decoder.to(device)
-
-    # Wrap models with FSDP
-    if args.use_FSDP:
-        from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-        encoder = FSDP(encoder)
-        decoder = FSDP(decoder)
-
     # Move models to device
-    encoder, decoder, perplexity_calculator = accelerator.prepare(encoder, decoder, perplexity_calculator)
+    encoder, decoder, tokenizer, perplexity_calculator = \
+        accelerator.prepare(encoder, decoder, tokenizer, perplexity_calculator)
 
     # Prepare dataset and dataloader
     dataset = \
@@ -79,8 +73,10 @@ def main(args):
             # Encode formal to natural
             enc_inputs = tokenizer(formal_texts, return_tensors='pt', padding=True, truncation=True, max_length=512)
 
-            enc_inputs = {k: v.to(accelerator.device) for k, v in enc_inputs.items()}  # Ensure inputs are on the right device
             enc_outputs = encoder(**enc_inputs, output_hidden_states=True)
+
+            print_model_device_distribution(accelerator, encoder, 'encoder')
+            # exit(-1)
 
             # Decode natural to formal
             rec_outputs = decoder(inputs_embeds=enc_outputs.hidden_states[-1], labels=enc_inputs['input_ids'])
