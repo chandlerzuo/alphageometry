@@ -1,10 +1,12 @@
 _base: [secrets]
 
-_meta.script_name: rephrase
-
+#_meta.script_name: rephrase
+_meta.script_name: generate-arithmetic
 #outdir: data/new
 
 skip-confirm: yes
+
+overwrite: yes
 
 n: 8
 

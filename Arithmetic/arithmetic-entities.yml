@@ -17,9 +17,13 @@ ingredient:
     effect: {type: literal, args: [strength, wisdom, harmony, fury, silence, rebirth, reflection, wrath, grace, agility, resolve, endurance, awakening, frostbite]}
     
   templates:
-    - ["{source}'s {potion}", "{potion} of {source}"]
-    - ["{potion} of {effect}", "{effect} {potion}"]
-    - "{potion} of {source}'s' {effect}"
+    - "{source}'s {potion}"
+    - "{potion} of {source}"
+
+    - "{potion} of {effect}"
+    - "{effect} {potion}"
+
+    - "{potion} of {source}'s {effect}"
     - "{potion} of {element}"
     - "{potion} of {adjective} {source}"
     - "{potion} of {adjective} {element}"

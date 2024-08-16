@@ -218,18 +218,21 @@ class Verbalization(AbstractVerbalization):
 		return ctx['statement']
 
 
-	def parse_problem(self, fl_problem: str, *, seed: int = None) -> Controller:
+	def parse_problem(self, fl_problem: str, *, rng: 'random.RandomState' = None) -> Controller:
 		'''
 		Top level method to verbalize a full problem (using the planner)
 		'''
-		if seed is not None:
-			raise NotImplementedError
+		# if seed is not None:
+		# 	raise NotImplementedError
 		statements = fl_problem.split(';')
 
 		vocab = {}
 		ctxs = [self.parse_fl(statement.strip(), vocab=vocab) for i, statement in enumerate(statements)]
+		if rng is not None:
+			for ctx in ctxs:
+				ctx.rng = rng
 
-		return self.planner.connect(ctxs, vocab=vocab)
+		return self.planner.connect(ctxs, vocab=vocab, rng=rng)
 
 
 	def problem_fl_2_nl(self, fl_problem: str, *, seed: int = None) -> str:

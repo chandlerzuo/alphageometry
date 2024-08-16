@@ -13,25 +13,27 @@ add: # z = add(x, y)
     mixture: {type: literal, args: [mixture, blend, combination, compound, concoction, solution, emulsion, tincture, elixir, potion, brew, distillation]}
     aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to it as, which some know it as]}
     produces: {type: literal, args: [produces, creates, makes, forms, yields, results in]}
+    produce: {type: literal, args: [produce, create, make, form, yield, result in]}
+    producing: {type: literal, args: [producing, creating, making, forming, yielding, resulting in]}
     produced: {type: literal, args: [produced, created, made, formed]}
     odor: {type: literal, args: [smell, aroma, fragrance, scent, whiff, tang]}
     appearance: {type: literal, args: [appearance, look, color, hue, shade, tint]}
 
   templates:
     - "when {mixing} {ingredient1} and {ingredient2}, {produces} a {color} colored {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {color} colored {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {color} {appearance}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {color} colored {mixture} {aka} {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {color} {appearance}."
     - "{out} is {produced} by {ingredient1} and {ingredient2} leaving a {mixture} of {color} {appearance}."
     
     - "when {ingredient1} and {ingredient2} are {mixed} together, a {texture} {mixture} is {produced} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {texture} {mixture} {aka} {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {texture} {mixture} {aka} {out}."
     - "{mixing} {ingredient1} and {ingredient2} {produces} a {texture} {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {texture} {appearance}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {texture} {appearance}."
 
     - "{mixing} {ingredient1} and {ingredient2} {produces} a {smell} {odor} and {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {smell} {odor}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {smell} {odor}."
     - "watch out for a {smell} {odor} when {ingredient1} and {ingredient2} are {mixed} together, {producing} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {smell} {odor} and {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {smell} {odor} and {out}."
 
 
 mul: # z = multiply(x, y)
@@ -48,25 +50,27 @@ mul: # z = multiply(x, y)
     mixture: {type: literal, args: [mixture, blend, combination, compound, concoction, solution, emulsion, tincture, elixir, potion, brew, distillation]}
     aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to it as, which some know it as]}
     produces: {type: literal, args: [produces, creates, makes, forms, yields, results in]}
+    produce: {type: literal, args: [produce, create, make, form, yield, result in]}
+    producing: {type: literal, args: [producing, creating, making, forming, yielding, resulting in]}
     produced: {type: literal, args: [produced, created, made, formed]}
     odor: {type: literal, args: [smell, aroma, fragrance, scent, whiff, tang]}
     appearance: {type: literal, args: [appearance, look, color, hue, shade, tint]}
 
   templates:
     - "when {mixing} {ingredient1} and {ingredient2}, {produces} a {color} colored {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {color} colored {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {color} {appearance}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {color} colored {mixture} {aka} {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {color} {appearance}."
     - "{out} is {produced} by {ingredient1} and {ingredient2} leaving a {mixture} of {color} {appearance}."
-    
+
     - "when {ingredient1} and {ingredient2} are {mixed} together, a {texture} {mixture} is {produced} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {texture} {mixture} {aka} {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {texture} {mixture} {aka} {out}."
     - "{mixing} {ingredient1} and {ingredient2} {produces} a {texture} {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {texture} {appearance}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {texture} {appearance}."
 
     - "{mixing} {ingredient1} and {ingredient2} {produces} a {smell} {odor} and {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {smell} {odor}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {smell} {odor}."
     - "watch out for a {smell} {odor} when {ingredient1} and {ingredient2} are {mixed} together, {producing} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {smell} {odor} and {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {smell} {odor} and {out}."
 
 
 minus: # z = subtract(x, y)
@@ -83,25 +87,27 @@ minus: # z = subtract(x, y)
     mixture: {type: literal, args: [mixture, blend, combination, compound, concoction, solution, emulsion, tincture, elixir, potion, brew, distillation]}
     aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to it as, which some know it as]}
     produces: {type: literal, args: [produces, creates, makes, forms, yields, results in]}
+    produce: {type: literal, args: [produce, create, make, form, yield, result in]}
+    producing: {type: literal, args: [producing, creating, making, forming, yielding, resulting in]}
     produced: {type: literal, args: [produced, created, made, formed]}
     odor: {type: literal, args: [smell, aroma, fragrance, scent, whiff, tang]}
     appearance: {type: literal, args: [appearance, look, color, hue, shade, tint]}
 
   templates:
     - "when {mixing} {ingredient1} and {ingredient2}, {produces} a {color} colored {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {color} colored {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {color} {appearance}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {color} colored {mixture} {aka} {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {color} {appearance}."
     - "{out} is {produced} by {ingredient1} and {ingredient2} leaving a {mixture} of {color} {appearance}."
-    
+
     - "when {ingredient1} and {ingredient2} are {mixed} together, a {texture} {mixture} is {produced} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {texture} {mixture} {aka} {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {texture} {mixture} {aka} {out}."
     - "{mixing} {ingredient1} and {ingredient2} {produces} a {texture} {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {texture} {appearance}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {texture} {appearance}."
 
     - "{mixing} {ingredient1} and {ingredient2} {produces} a {smell} {odor} and {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {smell} {odor}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {smell} {odor}."
     - "watch out for a {smell} {odor} when {ingredient1} and {ingredient2} are {mixed} together, {producing} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {smell} {odor} and {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {smell} {odor} and {out}."
 
 
 div: # z = divide(x, y)
@@ -118,29 +124,31 @@ div: # z = divide(x, y)
     mixture: {type: literal, args: [mixture, blend, combination, compound, concoction, solution, emulsion, tincture, elixir, potion, brew, distillation]}
     aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to it as, which some know it as]}
     produces: {type: literal, args: [produces, creates, makes, forms, yields, results in]}
+    produce: {type: literal, args: [produce, create, make, form, yield, result in]}
+    producing: {type: literal, args: [producing, creating, making, forming, yielding, resulting in]}
     produced: {type: literal, args: [produced, created, made, formed]}
     odor: {type: literal, args: [smell, aroma, fragrance, scent, whiff, tang]}
     appearance: {type: literal, args: [appearance, look, color, hue, shade, tint]}
 
   templates:
     - "when {mixing} {ingredient1} and {ingredient2}, {produces} a {color} colored {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {color} colored {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {color} {appearance}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {color} colored {mixture} {aka} {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {color} {appearance}."
     - "{out} is {produced} by {ingredient1} and {ingredient2} leaving a {mixture} of {color} {appearance}."
-    
+
     - "when {ingredient1} and {ingredient2} are {mixed} together, a {texture} {mixture} is {produced} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {texture} {mixture} {aka} {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {texture} {mixture} {aka} {out}."
     - "{mixing} {ingredient1} and {ingredient2} {produces} a {texture} {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {texture} {appearance}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {texture} {appearance}."
 
     - "{mixing} {ingredient1} and {ingredient2} {produces} a {smell} {odor} and {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {smell} {odor}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {smell} {odor}."
     - "watch out for a {smell} {odor} when {ingredient1} and {ingredient2} are {mixed} together, {producing} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {smell} {odor} and {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {smell} {odor} and {out}."
 
 
 pow: # Z = a ** b
-    args: [ingredient1, ingredient2]
+  args: [ingredient1, ingredient2]
 
   rules:
     color: {type: literal, args: [amber, gold, yellow, topaz, honey, saffron]}
@@ -154,21 +162,23 @@ pow: # Z = a ** b
     aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to it as, which some know it as]}
     produces: {type: literal, args: [produces, creates, makes, forms, yields, results in]}
     produced: {type: literal, args: [produced, created, made, formed]}
+    produce: {type: literal, args: [produce, create, make, form, yield, result in]}
+    producing: {type: literal, args: [producing, creating, making, forming, yielding, resulting in]}
     odor: {type: literal, args: [smell, aroma, fragrance, scent, whiff, tang]}
     appearance: {type: literal, args: [appearance, look, color, hue, shade, tint]}
 
   templates:
     - "when {mixing} {ingredient1} and {ingredient2}, {produces} a {color} colored {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {color} colored {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {color} {appearance}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {color} colored {mixture} {aka} {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {color} {appearance}."
     - "{out} is {produced} by {ingredient1} and {ingredient2} leaving a {mixture} of {color} {appearance}."
-    
+
     - "when {ingredient1} and {ingredient2} are {mixed} together, a {texture} {mixture} is {produced} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {texture} {mixture} {aka} {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {texture} {mixture} {aka} {out}."
     - "{mixing} {ingredient1} and {ingredient2} {produces} a {texture} {mixture} {aka} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {texture} {appearance}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {texture} {appearance}."
 
     - "{mixing} {ingredient1} and {ingredient2} {produces} a {smell} {odor} and {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {mixture} {aka} {out} with a {smell} {odor}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {mixture} {aka} {out} with a {smell} {odor}."
     - "watch out for a {smell} {odor} when {ingredient1} and {ingredient2} are {mixed} together, {producing} {out}."
-    - "{ingredient1} and {ingredient2} {mixed} together {produces} a {smell} {odor} and {out}."
+    - "{ingredient1} and {ingredient2} {mixed} together {produce} a {smell} {odor} and {out}."
