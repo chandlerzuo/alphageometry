@@ -11,7 +11,7 @@ add: # z = add(x, y)
     mixing: {type: literal, args: [mixing, combining, blending, uniting]}
     mixed: {type: literal, args: [mixed, combined, blended, united]}
     mixture: {type: literal, args: [mixture, blend, combination, compound, concoction, solution, emulsion, tincture, elixir, potion, brew, distillation]}
-    aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to it as, which some know it as]}
+    aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to as, which some know as]}
     produces: {type: literal, args: [produces, creates, makes, forms, yields, results in]}
     produce: {type: literal, args: [produce, create, make, form, yield, result in]}
     producing: {type: literal, args: [producing, creating, making, forming, yielding, resulting in]}
@@ -48,7 +48,7 @@ mul: # z = multiply(x, y)
     mixing: {type: literal, args: [mixing, combining, blending, uniting]}
     mixed: {type: literal, args: [mixed, combined, blended, united]}
     mixture: {type: literal, args: [mixture, blend, combination, compound, concoction, solution, emulsion, tincture, elixir, potion, brew, distillation]}
-    aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to it as, which some know it as]}
+    aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to as, which some know as]}
     produces: {type: literal, args: [produces, creates, makes, forms, yields, results in]}
     produce: {type: literal, args: [produce, create, make, form, yield, result in]}
     producing: {type: literal, args: [producing, creating, making, forming, yielding, resulting in]}
@@ -85,7 +85,7 @@ minus: # z = subtract(x, y)
     mixing: {type: literal, args: [mixing, combining, blending, uniting]}
     mixed: {type: literal, args: [mixed, combined, blended, united]}
     mixture: {type: literal, args: [mixture, blend, combination, compound, concoction, solution, emulsion, tincture, elixir, potion, brew, distillation]}
-    aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to it as, which some know it as]}
+    aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to as, which some know as]}
     produces: {type: literal, args: [produces, creates, makes, forms, yields, results in]}
     produce: {type: literal, args: [produce, create, make, form, yield, result in]}
     producing: {type: literal, args: [producing, creating, making, forming, yielding, resulting in]}
@@ -122,7 +122,7 @@ div: # z = divide(x, y)
     mixing: {type: literal, args: [mixing, combining, blending, uniting]}
     mixed: {type: literal, args: [mixed, combined, blended, united]}
     mixture: {type: literal, args: [mixture, blend, combination, compound, concoction, solution, emulsion, tincture, elixir, potion, brew, distillation]}
-    aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to it as, which some know it as]}
+    aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to as, which some know as]}
     produces: {type: literal, args: [produces, creates, makes, forms, yields, results in]}
     produce: {type: literal, args: [produce, create, make, form, yield, result in]}
     producing: {type: literal, args: [producing, creating, making, forming, yielding, resulting in]}
@@ -159,7 +159,7 @@ pow: # Z = a ** b
     mixing: {type: literal, args: [mixing, combining, blending, uniting]}
     mixed: {type: literal, args: [mixed, combined, blended, united]}
     mixture: {type: literal, args: [mixture, blend, combination, compound, concoction, solution, emulsion, tincture, elixir, potion, brew, distillation]}
-    aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to it as, which some know it as]}
+    aka: {type: literal, args: [also known as, also called, known as, called, referred to as, termed, which is, which is known as, which is called, which is referred to as, which is termed, which some call, which some refer to as, some know as, which some refer to as, which some know as]}
     produces: {type: literal, args: [produces, creates, makes, forms, yields, results in]}
     produced: {type: literal, args: [produced, created, made, formed]}
     produce: {type: literal, args: [produce, create, make, form, yield, result in]}

@@ -10,7 +10,7 @@ constant:
 ingredient:
 
   rules:
-    potion: {type: literal, args: [potion, elixir, draught, tonic, brew, serum, extract, infusion, concoction]}
+    potion: {type: literal, args: [potion, elixir, draught, tonic, brew, serum, extract, infusion, concoction, portion, measure, dose]}
     adjective: {type: literal, args: [eternal, whispering, blazing, icy, stormy, fading, frosted, arcane, forgotten, cursed, radiant, darkened, glimmering, ethereal, sacred, twisting, roaring]}
     element: {type: literal, args: [fire, water, lightning, ice, shadow, wind, earth, light, time, spirit]}
     source: {type: literal, args: [dragon, kraken, serpent, titan, siren, unicorn, hydra, basilisk, ogre]}
