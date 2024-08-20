@@ -29,8 +29,10 @@ class IndependentStatements(ProblemPlanner):
 		self.force_unique = force_unique
 
 		
-	def connect(self, ctxs: Iterable[Controller], vocab=None) -> Controller:
+	def connect(self, ctxs: Iterable[Controller], vocab=None, rng=None) -> Controller:
 		prob_ctx = Controller()
+		if rng is not None:
+			prob_ctx.rng = rng
 		q = None
 		for i, ctx in enumerate(ctxs):
 			for vendor in ctx.vendors():

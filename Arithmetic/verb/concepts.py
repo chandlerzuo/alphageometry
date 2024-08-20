@@ -65,7 +65,8 @@ class Question(Statement):
 
 	@tool('question')
 	def statement(self, query: str):
-		return f'How many {query} remain?'
+		# return f'How many {query} remain?'
+		return f'What is the potency of the resulting {query}?'
 
 
 

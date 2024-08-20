@@ -56,6 +56,10 @@ class Entity(Concept):
 		'child': 'children', 'person': 'people', 'foot': 'feet', 'tooth': 'teeth',
 		'goose': 'geese', 'mouse': 'mice', 'man': 'men', 'woman': 'women',
 		'ox': 'oxen', 'louse': 'lice', 'die': 'dice', 'portion': 'portions',
+		'potion': 'potions', 'criterion': 'criteria', 'phenomenon': 'phenomena',
+		'infusion': 'infusions', 'radius': 'radii', 'focus': 'foci', 'fungus': 'fungi',
+		'concoction': 'concoctions', 'formula': 'formulae', 'index': 'indices',
+		'serum': 'serums',
 	}
 	@tool('plural')
 	@classmethod

@@ -5,7 +5,7 @@ import random
 import ast
 import inspect
 from Arithmetic.constant_replacement import CodeConstTransformer
-import signal
+import signal, threading
 
 
 class TimeoutException(Exception):
@@ -202,8 +202,17 @@ class GetAlternativeCode:
 
     def __call__(self, code_string):
         # Set the timeout handler
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(10)  # Set the alarm for 10 seconds
+        # signal.signal(signal.SIGALRM, timeout_handler)
+        # signal.alarm(10)  # Set the alarm for 10 seconds
+
+        if hasattr(signal, 'SIGALRM'):
+            # Safe to use SIGALRM
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(10)  # Example for setting alarm
+        else:
+            timer = threading.Timer(10, timeout_handler)
+            timer.start()
+            # print("SIGALRM not available on this platform")
 
         try:
             code_string, key_var = get_code_last_var(code_string)
@@ -228,7 +237,10 @@ class GetAlternativeCode:
             final_code = code_string
 
         finally:
-            signal.alarm(0)  # Disable the alarm
+            if hasattr(signal, 'SIGALRM'):
+                signal.alarm(0)
+            else:
+                timer.cancel()
 
         return explanation, final_code
 
