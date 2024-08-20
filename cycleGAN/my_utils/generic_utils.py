@@ -1,5 +1,30 @@
 import torch
 import os
+import tqdm
+
+
+class ProgressBar:
+    def __init__(self, iterable_obj, accelerator):
+        self.accelerator = accelerator
+        self.local_rank = accelerator.state.process_index
+        if self.local_rank == 0:
+            self.pbar = tqdm.tqdm(iterable_obj)
+        else:
+            self.pbar = iterable_obj
+
+    def __iter__(self):
+        return self.pbar.__iter__()
+
+    def __next__(self):
+        return self.pbar.__next__()
+
+    def update(self, n=1):
+        if self.local_rank == 0:
+            self.pbar.update(n)
+
+    def set_description(self, desc):
+        if self.local_rank == 0:
+            self.pbar.set_description(desc)
 
 
 def get_process_cuda_memory_info():
@@ -52,6 +77,8 @@ def print_model_device_distribution(accelerator, model, model_name):
             device_params_count[device] = parameter.numel()
 
     # Print the process rank and distribution of parameters across devices
+    if accelerator.distributed_type.lower() == 'deepspeed':
+        print('WARNING: Parameter distribution will not be visible like this!')
     print(f"Rank: {accelerator.state.process_index}, {model_name} is distributed across the following devices:")
     for device, count in device_params_count.items():
         print(f"Device: {device}, Number of Parameters: {count:,}")

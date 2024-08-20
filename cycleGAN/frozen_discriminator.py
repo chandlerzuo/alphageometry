@@ -3,10 +3,9 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config
 
 
 class PerplexityCalculator(torch.nn.Module):
-    def __init__(self, model_name='gpt2'):
+    def __init__(self, perplex_model):
         super().__init__()
-        self.model = GPT2LMHeadModel.from_pretrained(model_name)
-        self.model.eval()  # Set the model to evaluation mode
+        self.model = perplex_model
         self.perplexity_criterion = torch.nn.CrossEntropyLoss()
 
     def forward(self, input_logits):
@@ -18,8 +17,9 @@ class PerplexityCalculator(torch.nn.Module):
             # Calculate loss without gradient updates
             outputs = self.model(input_ids)
 
-        log_perplexity = self.perplexity_criterion(input_logits.view(batch * time_steps, vocab_size),
-                                                   torch.argmax(outputs.logits, dim=-1).view(batch * time_steps,))
+        log_perplexity = self.perplexity_criterion(
+            input_logits.view(batch * time_steps, vocab_size),
+            torch.argmax(outputs.logits.detach(), dim=-1).view(batch * time_steps,))
 
         return log_perplexity
 
