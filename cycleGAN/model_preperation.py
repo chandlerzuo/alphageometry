@@ -9,10 +9,11 @@ class AutoEncoderLLM(torch.nn.Module):
         self.encoder = encoder
         self.decoder = decoder
         # prepare perplexity calculator. keep it frozen!
-        # self.perplexity_calculator = perplexity_calculator
+        self.perplexity_calculator = perplexity_calculator
         # Ensure perplexity_calculator remains frozen
-        # for param in self.perplexity_calculator.parameters():
-        #     param.requires_grad = False
+        if perplexity_calculator is not None:
+            for param in self.perplexity_calculator.parameters():
+                param.requires_grad = False
 
     def _encode(self, **enc_inputs):
         return self.encoder(**enc_inputs)
@@ -23,9 +24,13 @@ class AutoEncoderLLM(torch.nn.Module):
     def forward(self, recon_target, encoder_target, decode_natural=None, **enc_inputs):
         encoder_outputs = self._encode(**enc_inputs, labels=encoder_target)
         decoder_outputs = self._decode(inputs_embeds=encoder_outputs.hidden_states[-1], labels=recon_target)
-        # self.perplexity_calculator.eval() # should be but deepspeed complains!
-        # log_perplexity_loss = self.perplexity_calculator(encoder_outputs.logits)
-        log_perplexity_loss = 0
+        if self.perplexity_calculator is None:
+            log_perplexity_loss = 0
+        else:
+            # self.perplexity_calculator.eval()  # should be but deepspeed complains!
+            # TODO: Also remove the leading <w> tokens? because perplexity on those tokens are weird to compute?
+            log_perplexity_loss = self.perplexity_calculator(encoder_outputs.logits)
+
         if decode_natural is not None:
             decoded_from_natural = self._decode(**decode_natural)
         else:
@@ -76,5 +81,8 @@ def load_model(model_name, wait_token='<w>', use_pretrained=True):
     encoder.resize_token_embeddings(len(tokenizer))
     decoder.resize_token_embeddings(len(tokenizer))
 
-    perplexity_calculator = None  # TODO: remove this line
+    # perplexity_calculator = None  # TODO: remove this line
+    if perplexity_calculator is not None:
+        perplexity_calculator.resize_token_embeddings(len(tokenizer))
+
     return AutoEncoderLLM(encoder, decoder, perplexity_calculator), tokenizer, wait_id

@@ -12,6 +12,7 @@ from my_utils.training_utils import compute_validation, introduce_waiting_tokens
 
 
 def main(args):
+    enc_loss_weight = 2
     wait_token = '<w>'
     valid_recon_save_path = '/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/'
 
@@ -97,9 +98,9 @@ def main(args):
             recon_loss = rec_outputs.loss
 
             # Total loss
-            total_loss = recon_loss + 0 * log_perplexity_loss
+            total_loss = recon_loss + log_perplexity_loss
             if enc_outputs.loss is not None:
-                total_loss += enc_outputs.loss
+                total_loss += enc_loss_weight * enc_outputs.loss
                 enc_loss = enc_outputs.loss.item()
             else:
                 enc_loss = 0

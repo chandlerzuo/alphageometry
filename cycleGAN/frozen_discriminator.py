@@ -1,12 +1,13 @@
 import torch
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config
-
 
 class PerplexityCalculator(torch.nn.Module):
     def __init__(self, perplex_model):
         super().__init__()
         self.model = perplex_model
         self.perplexity_criterion = torch.nn.CrossEntropyLoss()
+
+    def resize_token_embeddings(self, logit_len):
+        self.model.resize_token_embeddings(logit_len)
 
     def forward(self, input_logits):
         batch, time_steps, vocab_size = input_logits.size()
@@ -25,6 +26,7 @@ class PerplexityCalculator(torch.nn.Module):
 
 
 if __name__ == '__main__':
+    from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config
     # Example usage
     perplexity_calculator = PerplexityCalculator()
 

@@ -61,11 +61,16 @@ def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer,
                 val_formal_texts_2_save = tokenizer.batch_decode(val_recon_target, skip_special_tokens=False)
                 val_natural_target = tokenizer.batch_decode(val_encoder_target, skip_special_tokens=False)
                 df = pd.DataFrame({
-                    'formal_target': batch_compress_text_forwaiting_and_eot_tokens(val_formal_texts_2_save),
-                    'formal_reconstructed': batch_compress_text_forwaiting_and_eot_tokens(recon_texts),
-                    'natural_created': batch_compress_text_forwaiting_and_eot_tokens(enc_texts),
-                    'natural_target': batch_compress_text_forwaiting_and_eot_tokens(val_natural_target),
-                    'formal_generated': batch_compress_text_forwaiting_and_eot_tokens(decoded_frm_nl_texts)
+                    'formal_target': batch_compress_text_forwaiting_and_eot_tokens(val_formal_texts_2_save,
+                                                                                   eot_token=tokenizer.eos_token),
+                    'formal_reconstructed': batch_compress_text_forwaiting_and_eot_tokens(
+                        recon_texts, eot_token=tokenizer.eos_token),
+                    'natural_created': batch_compress_text_forwaiting_and_eot_tokens(enc_texts,
+                                                                                     eot_token=tokenizer.eos_token),
+                    'natural_target': batch_compress_text_forwaiting_and_eot_tokens(val_natural_target,
+                                                                                    eot_token=tokenizer.eos_token),
+                    'formal_generated': batch_compress_text_forwaiting_and_eot_tokens(decoded_frm_nl_texts,
+                                                                                      eot_token=tokenizer.eos_token)
                 })
                 # Save the DataFrame to a CSV file
                 file_name = f'{epoch}_{batch_idx}_fl_fl.csv'
