@@ -1,4 +1,4 @@
-import numpy as np
+import math
 from torch.utils.data import DataLoader
 
 from accelerate import Accelerator
@@ -75,7 +75,8 @@ def main(args):
             enc_inputs = {k: v.to(accelerator.device) for k, v in
                           enc_inputs.items()}  # Ensure inputs are on the right device
 
-            if np.random.rand() < args.drop_grounding_prob:
+            # This has to be deterministic else some process will wait for the others!
+            if batch_idx % math.ceil(1/(args.grounding_prob + 1e-7)) == 0:
                 enc_label = tokenizer(natural_texts, return_tensors='pt', padding=True, truncation=True, max_length=512)
                 enc_label = {k: v.to(accelerator.device) for k, v in
                               enc_label.items()}  # Ensure inputs are on the right device
@@ -87,7 +88,7 @@ def main(args):
 
             # import ipdb;ipdb.set_trace()
             # encode and decode
-            enc_outputs, rec_outputs, log_perplexity_loss = \
+            enc_outputs, rec_outputs, log_perplexity_loss, _ = \
                 ae_model(**enc_inputs, output_hidden_states=True, encoder_target=encoder_target,
                          recon_target=recon_target)
 
@@ -125,8 +126,7 @@ if __name__ == "__main__":
     parser.add_argument('--validate_every', type=int, default=100)
     parser.add_argument('--valid_for_batches', type=int, default=10)
     parser.add_argument('--batch_size', type=int, default=32, help='Batch per GPU!')
-    parser.add_argument('--drop_grounding_prob', type=float, default=10, help='probability of dropping encoder'
-                                                                               ' grounding!')
+    parser.add_argument('--grounding_prob', type=float, default=0.5, help='probability of encoder grounding!')
     parser.add_argument('--model_name', type=str, default='meta-llama/Llama-2-7b-hf',
                         help="Model name to load, e.g., 'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl',"
                                                        "'meta-llama/Meta-Llama-3.1-8B', "

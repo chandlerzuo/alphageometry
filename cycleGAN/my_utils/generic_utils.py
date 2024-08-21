@@ -1,6 +1,7 @@
 import torch
 import os
 import tqdm
+import re
 
 
 class ProgressBar:
@@ -25,6 +26,38 @@ class ProgressBar:
     def set_description(self, desc):
         if self.local_rank == 0:
             self.pbar.set_description(desc)
+
+
+def compress_text_forwaiting_and_eot_tokens(input_text, wait_token='<w>', eot_token='<|endoftext|>'):
+    """
+    Compresses texts by counting leading <w> tokens and trailing <eot> tokens,
+    and then formats the string accordingly.
+
+    Example:
+        input: '<w> <w> A B C = Triangle A B C <|endoftext|><|endoftext|><|endoftext|>'
+        output: '2<w> A B C = Triangle A B C 3<|endoftext|>'
+    """
+    # Adjusted regex to properly match the required pattern
+    # Using non-capturing groups for tokens and capturing groups for counts and main text
+    pattern = r'^(' + re.escape(wait_token) + r'\s+)+'
+    match = re.match(pattern, input_text)
+
+    if match:
+        # Count occurrences of each token type
+        wait_section = match.group() or ''  # Captured leading wait tokens section
+        count_w = wait_section.count(wait_token)  # Count occurrences of wait_token
+        rest_of_text = input_text[match.span()[1]:]  # Extract the main text content
+        count_eot = (len(rest_of_text) - len(rest_of_text.rstrip(eot_token))) // len(eot_token)
+
+        # Format output string with counts
+        result_text = f"{count_w}{wait_token} {rest_of_text.rstrip(eot_token)} {count_eot}{eot_token}"
+        return result_text
+
+    return input_text  # Return original text if no matches
+
+
+def batch_compress_text_forwaiting_and_eot_tokens(input_list_text, wait_token='<w>', eot_token='<|endoftext|>'):
+    return [compress_text_forwaiting_and_eot_tokens(text, wait_token, eot_token) for text in input_list_text]
 
 
 def get_process_cuda_memory_info():
@@ -86,6 +119,9 @@ def print_model_device_distribution(accelerator, model, model_name):
 
 if __name__ == '__main__':
     # Example usage
-    gpu_memory_info = get_process_cuda_memory_info()
-    print(gpu_memory_info)
+    # gpu_memory_info = get_process_cuda_memory_info()
+    # print(gpu_memory_info)
+
+    print(compress_text_forwaiting_and_eot_tokens(
+        '<w> <w> <w> A B C = Triangle A B C <|endoftext|><|endoftext|><|endoftext|>'))
 

@@ -2,6 +2,10 @@ import torch
 import pandas as pd
 import os
 import torch.nn.functional as F
+try:
+    from .generic_utils import batch_compress_text_forwaiting_and_eot_tokens
+except ImportError:
+    from generic_utils import batch_compress_text_forwaiting_and_eot_tokens
 
 
 def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer,
@@ -23,7 +27,7 @@ def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer,
             enc_label = {k: v.to(accelerator.device) for k, v in
                          enc_label.items()}  # Ensure inputs are on the right device
 
-            # Encode formal to natural
+            # Encode formal to natural and then back
             val_enc_inputs = tokenizer(val_formal_texts, return_tensors='pt', padding=True, truncation=True,
                                        max_length=512)
             val_enc_inputs = {k: v.to(accelerator.device) for k, v in val_enc_inputs.items()}
@@ -31,9 +35,15 @@ def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer,
             val_enc_inputs, val_encoder_target, val_recon_target = introduce_waiting_tokens_for_ae(
                 val_enc_inputs, enc_label, wait_id, padding_id=tokenizer.pad_token_id)
 
-            val_enc_outputs, val_rec_outputs, val_log_perplexity_loss_batch = \
+            dec_natural, _ = \
+                introduce_waiting_tokens(enc_label, enc_label, wait_id, padding_id=tokenizer.pad_token_id)
+
+            val_enc_outputs, val_rec_outputs, val_log_perplexity_loss_batch, decoded_from_natural = \
                 ae_model(**val_enc_inputs, output_hidden_states=True, recon_target=val_recon_target,
-                         encoder_target=val_encoder_target)
+                         encoder_target=val_encoder_target, decode_natural=dec_natural)
+
+            decoded_token_ids = torch.argmax(decoded_from_natural.logits, dim=-1)
+            decoded_frm_nl_texts = tokenizer.batch_decode(decoded_token_ids, skip_special_tokens=False)
 
             val_recon_loss += val_rec_outputs.loss
             val_enc_loss += val_enc_outputs.loss
@@ -48,10 +58,14 @@ def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer,
                 # Get encoded text
                 enc_tok_ids = torch.argmax(val_enc_outputs.logits, dim=-1)
                 enc_texts = tokenizer.batch_decode(enc_tok_ids, skip_special_tokens=False)
+                val_formal_texts_2_save = tokenizer.batch_decode(val_recon_target, skip_special_tokens=False)
+                val_natural_target = tokenizer.batch_decode(val_encoder_target, skip_special_tokens=False)
                 df = pd.DataFrame({
-                    'original': val_formal_texts,
-                    'reconstructed': recon_texts,
-                    'enc_texts': enc_texts
+                    'formal_target': batch_compress_text_forwaiting_and_eot_tokens(val_formal_texts_2_save),
+                    'formal_reconstructed': batch_compress_text_forwaiting_and_eot_tokens(recon_texts),
+                    'natural_created': batch_compress_text_forwaiting_and_eot_tokens(enc_texts),
+                    'natural_target': batch_compress_text_forwaiting_and_eot_tokens(val_natural_target),
+                    'formal_generated': batch_compress_text_forwaiting_and_eot_tokens(decoded_frm_nl_texts)
                 })
                 # Save the DataFrame to a CSV file
                 file_name = f'{epoch}_{batch_idx}_fl_fl.csv'
@@ -77,7 +91,8 @@ def introduce_waiting_tokens(inputs, targets, wait_token_id, padding_id):
                                        device=inputs['input_ids'].device))
         padding_len = target_ids[-1].shape[0] - inputs['input_ids'][data_id].shape[0]
         padded_inp_ids.append(inputs['input_ids'][data_id].tolist() + [padding_id] * padding_len)
-        padded_inp_masks.append(inputs['attention_mask'][data_id].tolist() + [0] * padding_len)
+        # one end of text or end of sentence token must be included.
+        padded_inp_masks.append(inputs['attention_mask'][data_id].tolist() + [1] + [0] * (padding_len - 1))
     return {'input_ids': torch.tensor(padded_inp_ids, dtype=torch.long, device=inputs['input_ids'].device),
             'attention_mask': torch.tensor(padded_inp_masks, dtype=torch.long, device=inputs['input_ids'].device)}, \
         torch.stack(target_ids, dim=0)

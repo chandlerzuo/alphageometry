@@ -1,25 +1,27 @@
 compute_environment: LOCAL_MACHINE
-debug: true
+debug: false  # Set to true only when debugging specific issues
 deepspeed_config:
   deepspeed_hostfile: 'accelerate_configs/hostfile.txt'
-  # pdsh doesn't work. Wrongly launches all jobs independently!
-  deepspeed_multinode_launcher: standard # pdsh # standard| openmpi | mvapich | mpich | pdsh
-  gradient_accumulation_steps: 2
-  offload_optimizer_device: none
-  offload_param_device: none
+  # pdsh # standard| openmpi | mvapich | mpich | pdsh
+  deepspeed_multinode_launcher: standard  # Consider exploring 'openmpi' for potential improvements in multi-node setups
+  gradient_accumulation_steps: 2  # Increased to allow larger effective batch sizes and reduce memory pressure
+#  offload_optimizer_device: 'cpu'  # Offloads optimizer states to CPU to save GPU memory
+  offload_optimizer_device: 'none'  # Offloads optimizer states to CPU to save GPU memory
+#  offload_param_device: 'cpu'  # Offloads parameters to CPU as needed, especially beneficial in Zero Stage 3
+  offload_param_device: 'none'  # Offloads parameters to CPU as needed, especially beneficial in Zero Stage 3
   zero3_init_flag: true
-  zero_stage: 3
+  zero_stage: 3  # Ensures maximal memory efficiency by partitioning and offloading model states
 distributed_type: DEEPSPEED
 fsdp_config: {}
 downcast_bf16: 'no'
-enable_cpu_affinity: false
+enable_cpu_affinity: true  # Enable to improve CPU utilization and potentially enhance performance
 machine_rank: 0
 main_process_ip: 0.0.0.0
 main_process_port: 3630
 main_training_function: main
-mixed_precision: 'no'
+mixed_precision: 'fp16'  # Enables mixed precision training to reduce memory usage and potentially speed up training
 num_machines: 1
-num_processes: 8 # total number of processes. Not process per node!
+num_processes: 8  # Total number of processes. This remains unchanged but ensure it matches your GPU count
 rdzv_backend: static
 same_network: true
 tpu_env: []

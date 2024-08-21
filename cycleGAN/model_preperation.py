@@ -20,13 +20,17 @@ class AutoEncoderLLM(torch.nn.Module):
     def _decode(self, **decoder_inps):
         return self.decoder(**decoder_inps)
 
-    def forward(self, recon_target, encoder_target, **enc_inputs):
+    def forward(self, recon_target, encoder_target, decode_natural=None, **enc_inputs):
         encoder_outputs = self._encode(**enc_inputs, labels=encoder_target)
         decoder_outputs = self._decode(inputs_embeds=encoder_outputs.hidden_states[-1], labels=recon_target)
         # self.perplexity_calculator.eval() # should be but deepspeed complains!
         # log_perplexity_loss = self.perplexity_calculator(encoder_outputs.logits)
         log_perplexity_loss = 0
-        return encoder_outputs, decoder_outputs, log_perplexity_loss
+        if decode_natural is not None:
+            decoded_from_natural = self._decode(**decode_natural)
+        else:
+            decoded_from_natural = None
+        return encoder_outputs, decoder_outputs, log_perplexity_loss, decoded_from_natural
 
 
 def load_model(model_name, wait_token='<w>', use_pretrained=True):
