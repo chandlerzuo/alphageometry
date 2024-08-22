@@ -1,31 +1,45 @@
+import os
 import math
 from torch.utils.data import DataLoader
 
 from accelerate import Accelerator
 from data_loader.csv_loader import NLFLDatasetFromCSV
+from data_loader.json_loader import NLFLDatasetFromJSONL
 from model_preperation import load_model
 from transformers import AdamW, get_scheduler
 from torch.utils.data.distributed import DistributedSampler
 from my_utils.generic_utils import get_process_cuda_memory_info, prit_proc0, print_model_device_distribution, \
     ProgressBar
-from my_utils.training_utils import compute_validation, introduce_waiting_tokens_for_ae
+from my_utils.training_utils import compute_validation, introduce_waiting_tokens_for_ae, introduce_waiting_tokens, \
+    Checkpointer
 
 
 def main(args):
-    enc_loss_weight = 2
     wait_token = '<w>'
-    valid_recon_save_path = '/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/'
+    mdl_dir = args.model_name
+    if args.decoder_only:
+        mdl_dir += 'dec_only'
+    mdl_output_home = os.path.join(args.output_path, mdl_dir)
+    valid_recon_save_path = os.path.join(mdl_output_home, 'validation_outputs')
+    chkpt_dir = os.path.join(mdl_output_home, 'checkpoints')
+
+    checkpointer = Checkpointer(chkpt_dir)
 
     # Initialize Accelerator
     accelerator = Accelerator()
-    # this microbatching might not be optimal!
+    if accelerator.is_main_process:
+        os.makedirs(valid_recon_save_path, exist_ok=True)
+        os.makedirs(chkpt_dir, exist_ok=True)
+
+    # this micro batching might not be optimal!
     if accelerator.distributed_type.lower() == 'deepspeed':
         accelerator.state.deepspeed_plugin.deepspeed_config['train_micro_batch_size_per_gpu'] \
             = args.batch_size // accelerator.num_processes
 
-
     # Load tokenizer and models
-    ae_model, tokenizer, wait_id = load_model(args.model_name, wait_token=wait_token, use_pretrained=args.is_pretrained)
+    ae_model, tokenizer, wait_id = load_model(args.model_name, wait_token=wait_token, use_pretrained=args.is_pretrained,
+                                              use_perplexity_loss=args.use_perplexity_loss,
+                                              decoder_only=args.decoder_only)
 
     # Prepare dataset and dataloader
     dataset = \
@@ -38,15 +52,22 @@ def main(args):
     valid_dataset = \
         NLFLDatasetFromCSV('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='validation',
                            overfitting=args.overfitting)
+    v_rephrased_dat = \
+        NLFLDatasetFromJSONL(
+            '/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/rephrased-nl_fl_dataset_all.jsonl',
+            split='validation', overfitting=args.overfitting)
 
     # Validation dataset (can use a different or similar sampler depending on the setup)
     valid_sampler = DistributedSampler(valid_dataset, num_replicas=accelerator.num_processes,
                                        rank=accelerator.process_index)
+    v_rephrased_samp = DistributedSampler(v_rephrased_dat, num_replicas=accelerator.num_processes,
+                                       rank=accelerator.process_index)
     valid_dataloader = DataLoader(valid_dataset, batch_size=args.batch_size, sampler=valid_sampler)
+    v_rephrased_ldr = DataLoader(v_rephrased_dat, batch_size=args.batch_size, sampler=v_rephrased_samp)
 
     # Optimizers
     # auto_enc_opt = AdamW(list(encoder.parameters()) + list(decoder.parameters()), lr=2e-5)
-    auto_enc_opt = AdamW(ae_model.parameters(), lr=2e-5)
+    auto_enc_opt = AdamW(ae_model.parameters(), lr=2e-5 * 4)
 
     # Learning rate scheduler
     num_training_steps = args.num_epochs * len(train_dataloader)
@@ -66,6 +87,8 @@ def main(args):
     # Training loop
     ae_model.train()
     val_update = f'val_update: None'
+    ae_inputs = {'input_ids': None, 'attention_mask': None}
+    enc_loss = 0
     for epoch in range(args.num_epochs):
         pbar = ProgressBar(train_dataloader, accelerator)
         for batch_idx, batch in enumerate(pbar):
@@ -84,14 +107,18 @@ def main(args):
             else:
                 enc_label = None
 
-            enc_inputs, encoder_target, recon_target = introduce_waiting_tokens_for_ae(
-                enc_inputs, enc_label, wait_id, padding_id=tokenizer.pad_token_id)
+            if args.decoder_only:
+                encoder_target, ae_target = introduce_waiting_tokens(enc_label, enc_inputs, wait_id,
+                                                                     padding_id=tokenizer.pad_token_id)
+            else:
+                ae_inputs, encoder_target, ae_target = introduce_waiting_tokens_for_ae(
+                    enc_inputs, enc_label, wait_id, padding_id=tokenizer.pad_token_id)
 
             # import ipdb;ipdb.set_trace()
             # encode and decode
             enc_outputs, rec_outputs, log_perplexity_loss, _ = \
-                ae_model(**enc_inputs, output_hidden_states=True, encoder_target=encoder_target,
-                         recon_target=recon_target)
+                ae_model(**ae_inputs, output_hidden_states=True, encoder_target=encoder_target,
+                         recon_target=ae_target)
 
             # print_model_device_distribution(accelerator, ae_model, 'ae_model')
             # exit(-1)
@@ -99,20 +126,20 @@ def main(args):
 
             # Total loss
             total_loss = recon_loss + log_perplexity_loss
-            if enc_outputs.loss is not None:
-                total_loss += enc_loss_weight * enc_outputs.loss
+            if enc_outputs is not None:
+                total_loss += args.enc_loss_weight * enc_outputs.loss
                 enc_loss = enc_outputs.loss.item()
-            else:
-                enc_loss = 0
+
             # Backpropagation
             accelerator.backward(total_loss)
             auto_enc_opt.step()
             lr_scheduler.step()
             auto_enc_opt.zero_grad()
 
-            if batch_idx % args.validate_every == 0:
-                val_update = compute_validation(accelerator, ae_model, args, batch_idx, epoch,
-                                                tokenizer, valid_dataloader, valid_recon_save_path, wait_id)
+            if batch_idx % args.validate_every == args.validate_every - 1:
+                val_update = compute_validation(accelerator, ae_model, args, epoch * len(train_dataloader) + batch_idx,
+                                                epoch, tokenizer, valid_dataloader, v_rephrased_ldr,
+                                                valid_recon_save_path, wait_id, args.chkpt_bst_mdl_every, checkpointer)
 
             pbar.set_description(f'{val_update} log_perp_loss:{log_perplexity_loss:.3f}, '
                                  f'recon_loss:{recon_loss:.3f}, enc_loss:{enc_loss:.3f}')
@@ -127,14 +154,28 @@ if __name__ == "__main__":
     parser.add_argument('--validate_every', type=int, default=100)
     parser.add_argument('--valid_for_batches', type=int, default=10)
     parser.add_argument('--batch_size', type=int, default=32, help='Batch per GPU!')
+    parser.add_argument('--chkpt_bst_mdl_every', type=int, default=10,
+                        help='Checkpoint model every these many validation steps if validation result improved. '
+                             'Negative value skips this')
+    parser.add_argument('--output_path', type=str,
+                        default='/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/',
+                        help='path to save training stats and models')
     parser.add_argument('--grounding_prob', type=float, default=0.5, help='probability of encoder grounding!')
+    parser.add_argument('--enc_loss_weight', type=float, default=2, help='probability of encoder grounding!')
     parser.add_argument('--model_name', type=str, default='meta-llama/Llama-2-7b-hf',
                         help="Model name to load, e.g., 'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl',"
                                                        "'meta-llama/Meta-Llama-3.1-8B', "
                                                        "'meta-llama/Llama-2-7b-hf'")
     parser.add_argument('--overfitting', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
     parser.add_argument('--is_pretrained', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
+    parser.add_argument('--decoder_only', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
+    parser.add_argument('--use_perplexity_loss',
+                        type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
 
     args = parser.parse_args()
+    args.chkpt_bst_mdl_every *= args.validate_every
+    if args.decoder_only:
+        assert not args.use_perplexity_loss
+        assert args.grounding_prob >= 1  # you need the grounding always as these are the inputs
     prit_proc0(args)
     main(args)
