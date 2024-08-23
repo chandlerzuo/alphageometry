@@ -70,7 +70,7 @@ for f in splits/split_*; do rsync -a --files-from="$f" /is/cluster/scratch/pghos
 echo "dummy" > alpha_geo_header.csv
 head -n 1 alpha_geo/nl_fl_dataset_1.csv >> alpha_geo_header.csv
 cat alpha_geo_header.csv
-## tail -q -n +2 alpha_geo_header.csv alpha_geo/nl_fl_dataset_{1..2000}.csv > alpha_geo_fewer/chunks1.csv
+## tail -q -n +2 alpha_geo_header.csv alpha_geo/nl_fl_dataset_{1..2000}.csv > alpha_geo_fewer_chunks/chunks1.csv
 
 ls -1 alpha_geo | wc -l # --> 31952
 

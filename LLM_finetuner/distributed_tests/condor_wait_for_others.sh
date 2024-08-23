@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+# script to launch multi-node jobs and wait until all jobs are ready
+
 set -eux
 
 ##CONDOR request_cpus=1

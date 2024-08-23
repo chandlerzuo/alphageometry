@@ -6,12 +6,14 @@ import contextlib
 
 @contextlib.contextmanager
 def set_padding_side_cm(tokenizer, padding_side):
+    """context manager temporarily set the padding side of the tokenizer"""
     old_padding_side = tokenizer.padding_side
     tokenizer.padding_side = padding_side
     yield
     tokenizer.padding_side = old_padding_side
 
 def model_generate_on_batch(batch, model, tokenizer):
+    """make generations on a batch"""
     with set_padding_side_cm(tokenizer, "left"):
         encoded_inputs = tokenizer(batch["text"], return_tensors="pt", padding=True, truncation=True)
         encoded_inputs = encoded_inputs.to(model.device)

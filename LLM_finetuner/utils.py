@@ -29,6 +29,7 @@ def infer_checkpoint(checkpoint_dir):
     return checkpoint_dir if x is None else x
 
 def get_model_name_from_name_or_path(model_name_or_path):
+    """create a nice model name from the model_name_or_path, by taking the last component of the path"""
     model_name_or_path = str(model_name_or_path)
     if model_name_or_path.endswith("/"):
         model_name_or_path = model_name_or_path[:-1]
