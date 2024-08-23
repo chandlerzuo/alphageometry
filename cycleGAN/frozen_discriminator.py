@@ -1,3 +1,4 @@
+#%%
 import torch
 
 from utils import freeze_params
@@ -32,7 +33,7 @@ class PerplexityCalculator(torch.nn.Module):
 
         return log_perplexity
 
-
+#%%
 if __name__ == '__main__':
     from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config
     # Example usage
@@ -53,3 +54,5 @@ if __name__ == '__main__':
         print(f"Log perplexity of text1 generated logits: {perplexity_calculator(outputs.logits)}")
 
 
+
+# %%

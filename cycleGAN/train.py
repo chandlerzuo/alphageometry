@@ -3,8 +3,7 @@ import math
 from torch.utils.data import DataLoader
 
 from accelerate import Accelerator
-from data_loader.csv_loader import NLFLDatasetFromCSV
-from data_loader.json_loader import NLFLDatasetFromJSONL
+from data_loader.custom_dataset import CustomDataset
 from model_preperation import load_model
 from transformers import AdamW, get_scheduler
 from torch.utils.data.distributed import DistributedSampler
@@ -43,19 +42,19 @@ def main(args):
 
     # Prepare dataset and dataloader
     dataset = \
-        NLFLDatasetFromCSV('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='train',
-                           overfitting=args.overfitting)
+        CustomDataset.load('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='train',
+                           overfitting=args.overfitting, nrows_nonrephrased=args.nrows_nonrephrased)
     # Create a DistributedSampler for the dataset
     train_sampler = DistributedSampler(dataset, num_replicas=accelerator.num_processes, rank=accelerator.process_index)
     train_dataloader = DataLoader(dataset, batch_size=args.batch_size, sampler=train_sampler)
 
     valid_dataset = \
-        NLFLDatasetFromCSV('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='validation',
-                           overfitting=args.overfitting)
+        CustomDataset.load('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='validation',
+                           overfitting=args.overfitting, nrows_nonrephrased=args.nrows_nonrephrased)
     v_rephrased_dat = \
-        NLFLDatasetFromJSONL(
+        CustomDataset.load(
             '/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/rephrased-nl_fl_dataset_all.jsonl',
-            split='validation', overfitting=args.overfitting)
+            split='validation', overfitting=args.overfitting, nrows=args.nrows_rephrased)
 
     # Validation dataset (can use a different or similar sampler depending on the setup)
     valid_sampler = DistributedSampler(valid_dataset, num_replicas=accelerator.num_processes,
@@ -151,11 +150,11 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('--num_epochs', type=int, default=10)
-    parser.add_argument('--validate_every', type=int, default=100)
-    parser.add_argument('--valid_for_batches', type=int, default=10)
-    parser.add_argument('--batch_size', type=int, default=32, help='Batch per GPU!')
+    parser.add_argument('--validate_every', type=int, default=100, help='Validate every these many steps')
+    parser.add_argument('--valid_for_batches', type=int, default=10, help='Validate for these many batches')
+    parser.add_argument('--batch_size', type=int, default=32, help='Batch size per GPU!')
     parser.add_argument('--chkpt_bst_mdl_every', type=int, default=10,
-                        help='Checkpoint model every these many validation steps if validation result improved. '
+                        help='Checkpoint model every these many validation (!) steps if validation result improved. '
                              'Negative value skips this')
     parser.add_argument('--output_path', type=str,
                         default='/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/',
@@ -166,11 +165,13 @@ if __name__ == "__main__":
                         help="Model name to load, e.g., 'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl',"
                                                        "'meta-llama/Meta-Llama-3.1-8B', "
                                                        "'meta-llama/Llama-2-7b-hf'")
-    parser.add_argument('--overfitting', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
+    parser.add_argument('--overfitting', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False, help="whether to overfit on a single batch (same across all GPUs)")
     parser.add_argument('--is_pretrained', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
     parser.add_argument('--decoder_only', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
     parser.add_argument('--use_perplexity_loss',
                         type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
+    parser.add_argument('--nrows_nonrephrased', type=int, default=None, help='Number of rows to load from the non-rephrased dataset, defaults to all')
+    parser.add_argument('--nrows_rephrased', type=int, default=None, help='Number of rows to load from the rephrased dataset, defaults to all')
 
     args = parser.parse_args()
     args.chkpt_bst_mdl_every *= args.validate_every
