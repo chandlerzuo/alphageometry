@@ -45,3 +45,10 @@ def load_pretrained_config_from_scratch(*args, auto_model_class=None, **kwargs):
     config._name_or_path = "invalid"  # just to be sure
     model = auto_model_class.from_config(config)
     return model
+
+def freeze_params(model):
+    for param in model.parameters():
+        param.requires_grad = False
+        
+def is_frozen(model):
+    return all(param.requires_grad == False for param in model.parameters())

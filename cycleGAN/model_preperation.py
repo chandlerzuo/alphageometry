@@ -2,8 +2,9 @@
 import functools
 import os
 from pathlib import Path
+import tempfile
 import torch
-from utils import create_dir, load_pretrained_config_from_scratch, save_model, save_tokenizer
+from utils import create_dir, is_frozen, load_pretrained_config_from_scratch, save_model, save_tokenizer
 from frozen_discriminator import PerplexityCalculator
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config, AutoTokenizer, AutoModelForCausalLM, AutoModel
 import textwrap
@@ -22,16 +23,16 @@ class AutoEncoderLLM(torch.nn.Module):
         self.perplexity_calculator = perplexity_calculator
         self.padding_token_id = padding_token_id
         
-        # todo: move to PerplexityCalculator
-        # prepare perplexity calculator. keep it frozen!
-        # Ensure perplexity_calculator remains frozen
-        if perplexity_calculator is not None:
-            for param in self.perplexity_calculator.parameters():
-                param.requires_grad = False
-
+        if self.perplexity_calculator is not None:
+            assert is_frozen(self.perplexity_calculator.model)
+        
     def _encode(self, **enc_inputs):
         assert self.encoder is not None
         return self.encoder(**enc_inputs)
+    
+    def __eq__(self, other):
+        """check for equal classes for encoder, decoder, perplexity_calculator"""
+        return self.model_name == other.model_name and self.encoder.__class__ == other.encoder.__class__ and self.decoder.__class__ == other.decoder.__class__ and self.perplexity_calculator.__class__ == other.perplexity_calculator.__class__ and self.padding_token_id == other.padding_token_id
     
     def short_info(self):
         # encoder class name, decoder class name, perplexity_calculator class name, padding_token_id
@@ -178,14 +179,25 @@ def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity
     return AutoEncoderLLM(model_name, encoder, decoder, perplexity_calculator, tokenizer.pad_token), tokenizer, wait_id
 
 #%%
-def test():
-    autoencoder, tokenizer, wait_id = load_model("gpt2", use_pretrained=True, use_perplexity_loss=False, decoder_only=True)
-    print("Short info1:", autoencoder.short_info())
-    autoencoder.save_pretrained("/tmp/autoencoder")
-    autoencoder = AutoEncoderLLM.from_pretrained("/tmp/autoencoder")
-    print()
-    print("Short info2:", autoencoder.short_info())
+def test(*args, **kwargs):
+    tmp_dir = tempfile.mkdtemp()
+    autoencoder, tokenizer, wait_id = load_model("gpt2", *args, **kwargs)
+    # print("Short info1:", autoencoder.short_info())
+    autoencoder.save_pretrained(tmp_dir)
+    autoencoder2 = AutoEncoderLLM.from_pretrained(tmp_dir)
+    # print()
+    # print("Short info2:", autoencoder2.short_info())
+    
+    assert autoencoder == autoencoder2, f"autoencoder: {autoencoder.short_info()}\nautoencoder2: {autoencoder2.short_info()}"
 if __name__ == "__main__":
-    test()
+    for use_pretrained in [True, False]:
+        for use_perplexity_loss in [True, False]:
+            for decoder_only in [True, False]:
+                if decoder_only and use_perplexity_loss:
+                    continue
+                print(f"use_pretrained={use_pretrained}, use_perplexity_loss={use_perplexity_loss}, decoder_only={decoder_only}")
+                test(use_pretrained=use_pretrained, use_perplexity_loss=use_perplexity_loss, decoder_only=decoder_only)
+                
+    # test(use_pretrained=True, use_perplexity_loss=False, decoder_only=True)
 
 # %%

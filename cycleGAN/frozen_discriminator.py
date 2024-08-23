@@ -1,9 +1,16 @@
 import torch
 
+from utils import freeze_params
+
 class PerplexityCalculator(torch.nn.Module):
     def __init__(self, perplex_model):
         super().__init__()
         self.model = perplex_model
+        
+        # prepare perplexity calculator. keep it frozen!
+        # Ensure perplexity_calculator remains frozen
+        freeze_params(self.model)
+        
         self.perplexity_criterion = torch.nn.CrossEntropyLoss()
 
     # don't offer save_pretrained because it is frozen
