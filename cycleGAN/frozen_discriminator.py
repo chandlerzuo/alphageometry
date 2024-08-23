@@ -6,6 +6,7 @@ class PerplexityCalculator(torch.nn.Module):
         self.model = perplex_model
         self.perplexity_criterion = torch.nn.CrossEntropyLoss()
 
+    # don't offer save_pretrained because it is frozen
     def resize_token_embeddings(self, logit_len):
         self.model.resize_token_embeddings(logit_len)
 
