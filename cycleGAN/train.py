@@ -7,15 +7,19 @@ from torch.utils.data import DataLoader
 from accelerate import Accelerator
 from data_loader.custom_dataset import CustomDataset
 from hf_dataset import AlwaysSameElementDataset, CombinedDataset, MixedDatasetSampler, prepare_data
-from model_preperation import load_model
+from model_preparation import load_model
 from transformers import get_scheduler
 from torch.optim import AdamW
 from torch.utils.data.distributed import DistributedSampler
 from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, print_model_device_distribution, \
     ProgressBar
-from my_utils.training_utils import compute_validation, introduce_waiting_tokens_for_ae, introduce_waiting_tokens, \
+from my_utils.training_utils import compute_validation, create_metrics_string, introduce_waiting_tokens_for_ae, introduce_waiting_tokens, \
     Checkpointer
 import accelerate
+
+import wandb
+os.environ.setdefault("WANDB_PROJECT", "alphageom_new")
+wandb.require("core")
 
 from utils import get_comma_separated_strings, get_hostname
 
@@ -31,7 +35,8 @@ def main(args):
     checkpointer = Checkpointer(chkpt_dir)
 
     # Initialize Accelerator
-    accelerator = Accelerator()
+    accelerator = Accelerator(log_with="all")
+    accelerator.init_trackers("alphageom_autoencoder", config=vars(args))
     seed = 42
     accelerate.utils.set_seed(seed)
     if accelerator.is_main_process:
@@ -100,7 +105,7 @@ def main(args):
     #                                    rank=accelerator.process_index)
     v_rephrased_samp = None
     valid_dataloader = DataLoader(valid_dataset, batch_size=args.batch_size, sampler=valid_sampler, pin_memory=True, shuffle=False)
-    v_rephrased_loader = DataLoader(v_rephrased_dat, batch_size=args.batch_size, sampler=v_rephrased_samp)
+    v_rephrased_dataloader = DataLoader(v_rephrased_dat, batch_size=args.batch_size, sampler=v_rephrased_samp)
 
     # Optimizers
     # auto_enc_opt = AdamW(list(encoder.parameters()) + list(decoder.parameters()), lr=2e-5)
@@ -116,15 +121,15 @@ def main(args):
     )
 
     # import ipdb; ipdb.set_trace()
-    ae_model, auto_enc_opt, lr_scheduler, train_dataloader, valid_dataloader, v_rephrased_loader = accelerator.prepare(
-        ae_model, auto_enc_opt, lr_scheduler, train_dataloader, valid_dataloader, v_rephrased_loader
+    ae_model, auto_enc_opt, lr_scheduler, train_dataloader, valid_dataloader, v_rephrased_dataloader = accelerator.prepare(
+        ae_model, auto_enc_opt, lr_scheduler, train_dataloader, valid_dataloader, v_rephrased_dataloader
     )
     # encoder, tokenizer, auto_enc_opt, lr_scheduler, train_dataloader = \
     #     accelerator.prepare([encoder, tokenizer, auto_enc_opt, lr_scheduler, train_dataloader])
 
     # Training loop
     ae_model.train()
-    val_update = f'val_update: None'
+    val_update_str = f'val_update: None'
     ae_inputs = {'input_ids': None, 'attention_mask': None}
     enc_loss = 0
     for epoch in range(args.num_epochs):
@@ -175,13 +180,25 @@ def main(args):
             auto_enc_opt.zero_grad()
 
             if batch_idx % args.validate_every == args.validate_every - 1:
-                val_update = compute_validation(accelerator, ae_model, args, epoch * len(train_dataloader) + batch_idx,
-                                                epoch, tokenizer, valid_dataloader, v_rephrased_loader,
+                val_metrics = compute_validation(accelerator, ae_model, args, epoch * len(train_dataloader) + batch_idx,
+                                                epoch, tokenizer, valid_dataloader, v_rephrased_dataloader,
                                                 valid_recon_save_path, wait_id, args.chkpt_bst_mdl_every, checkpointer)
-
-            pbar.set_description(f'Epoch {epoch+1}/{args.num_epochs}: {val_update} log_perp_loss:{log_perplexity_loss:.3f}, '
+                
+                val_update_str = create_metrics_string(val_metrics)
+                train_metrics = {
+                    "log_perp_loss": log_perplexity_loss, "recon_loss": recon_loss, "enc_loss": enc_loss
+                }
+                accelerator.log(
+                    {f"val/{k}": v for k, v in val_metrics.items()}
+                    |
+                    {f"train/{k}": v for k, v in train_metrics.items()}
+                    |
+                    {f"epoch": epoch + batch_idx / len(train_dataloader), "step": epoch * len(train_dataloader) + batch_idx}
+                )
+            pbar.set_description(f'Epoch {epoch+1}/{args.num_epochs}: {val_update_str} log_perp_loss:{log_perplexity_loss:.3f}, '
                                  f'recon_loss:{recon_loss:.3f}, enc_loss:{enc_loss:.3f}')
 
+    accelerator.end_training()
     print(f"Training completed. A total of {epoch+1} epoch(s)")
 
 
@@ -193,7 +210,7 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('--num_epochs', type=int, default=10)
-    parser.add_argument('--validate_every', type=int, default=100, help='Validate every these many training steps')
+    parser.add_argument('--validate_every', type=int, default=100, help='Validate every these many training steps (reset per epoch)')
     parser.add_argument('--valid_for_batches', type=int, default=10, help='Validate for these many batches')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size per GPU! when deepspeed is enabled (for model pipelining), it is divided by the number of gpus for microbatching')
     parser.add_argument('--dataset_dir', type=Path, default=None, help='Path to dataset directory')

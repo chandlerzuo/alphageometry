@@ -2,6 +2,13 @@
 import itertools
 import json
 
+from model_preparation import AutoEncoderLLM
+
+model = AutoEncoderLLM.from_pretrained("runs/gpt2dec_only/checkpoints")
+#%%
+model
+#%%
+
 
 def check_keys_in_jsonl(file_path, nrows=None):
     keys = None
@@ -20,3 +27,13 @@ check_keys_in_jsonl(filename)#, nrows=10)
 xx = train_datasets[1]
 indices = np.array([391, 117, 330, 275, 396, 380, 325, 95]) - len(train_datasets[0])
 xx[[i for i in indices if i >= 0]]
+
+#%%
+
+
+#%%
+from transformers import AutoModel
+model = AutoModel.from_pretrained("gpt2")
+#%%
+?model.save_pretrained()
+# %%

@@ -60,3 +60,7 @@ def get_comma_separated_strings(lst):
 def get_hostname():
     import socket
     return socket.gethostname()
+
+def get_username():
+    import getpass
+    return getpass.getuser()

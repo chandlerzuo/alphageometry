@@ -10,6 +10,7 @@ except ImportError:
 
 
 class Checkpointer:
+    """Save model, but only if it is better than the previous best model"""
     def __init__(self, output_dir):
         self.prev_validation_loss = 9999999999
         self.output_dir = output_dir
@@ -23,17 +24,22 @@ class Checkpointer:
         # The model name saved is `pytorch_model.bin`
         if validation_loss < self.prev_validation_loss:
             self.prev_validation_loss = validation_loss
-            print(f'Model saved in {self.output_dir}')
-            unwrapped_model.decoder.save_pretrained(
+            unwrapped_model.save_pretrained(
                 self.output_dir,
-                is_main_process=accelerator.is_main_process,
-                save_function=accelerator.save,
-                state_dict=accelerator.get_state_dict(model)
+                # is_main_process=accelerator.is_main_process,
+                # save_function=accelerator.save,
+                # state_dict=accelerator.get_state_dict(model)
             )
+            print(f'Model saved in {self.output_dir}')
 
 
+def create_metrics_string(metrics):
+    return f'v_rec_l/rf: {metrics["recon_loss"]:.3f}/ {metrics["rf_recon_loss"]:.3f}, ' \
+            f'v_enc_l/rf: {metrics["enc_loss"]:.3f}/ {metrics["rf_enc_loss"]:.3f}, ' \
+            f'v_perp_l/rf: {metrics["log_perplexity_loss"]:.3f}/ {metrics["rf_log_perplexity_loss"]:.3f}'
+            
 def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer, valid_dataloader,
-                       v_rephrased_ldr, valid_recon_save_path, wait_id, chkpt_bst_mdl_every, checkpointer):
+                       v_rephrased_dataloader, valid_recon_save_path, wait_id, chkpt_bst_mdl_every, checkpointer):
     # Validation
     ae_model.eval()
     val_ae_inputs = {'input_ids': None, 'attention_mask': None}
@@ -42,11 +48,16 @@ def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer,
             accelerator, ae_model, args, tokenizer, val_ae_inputs, iter(valid_dataloader), wait_id)
 
         v_rf_enc_loss, v_rf_log_perplexity_loss, v_rf_recon_loss, df_rf = validate_given_data_loader(
-            accelerator, ae_model, args, tokenizer, val_ae_inputs, iter(v_rephrased_ldr), wait_id)
+            accelerator, ae_model, args, tokenizer, val_ae_inputs, iter(v_rephrased_dataloader), wait_id)
 
-        val_update = f'v_rec_l/rf: {val_recon_loss:.3f}/ {v_rf_recon_loss:.3f}, ' \
-                     f'v_enc_l/rf: {val_enc_loss:.3f}/ {v_rf_enc_loss:.3f}, ' \
-                     f'v_perp_l/rf: {val_log_perplexity_loss:.3f}/ {v_rf_log_perplexity_loss:.3f}'
+        metrics = {
+            "recon_loss": val_recon_loss, "enc_loss": val_enc_loss, "log_perplexity_loss": val_log_perplexity_loss,
+            # todo: what does rf stand for?
+            "rf_recon_loss": v_rf_recon_loss, "rf_enc_loss": v_rf_enc_loss, "rf_log_perplexity_loss": v_rf_log_perplexity_loss
+        }
+        # val_update = f'v_rec_l/rf: {val_recon_loss:.3f}/ {v_rf_recon_loss:.3f}, ' \
+        #              f'v_enc_l/rf: {val_enc_loss:.3f}/ {v_rf_enc_loss:.3f}, ' \
+        #              f'v_perp_l/rf: {val_log_perplexity_loss:.3f}/ {v_rf_log_perplexity_loss:.3f}'
 
         # Save the DataFrame to a CSV file
         # Create a marker DataFrame with one row that indicates the start of the second DataFrame
@@ -64,7 +75,7 @@ def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer,
         ae_model.train()
         if batch_idx % chkpt_bst_mdl_every == (chkpt_bst_mdl_every - 1):
             checkpointer.checkpoint(accelerator, ae_model, val_recon_loss)
-    return val_update
+    return metrics
 
 
 def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_inputs, valid_iterator, wait_id):
