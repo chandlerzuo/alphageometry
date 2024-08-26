@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 
 from accelerate import Accelerator
 from data_loader.custom_dataset import CustomDataset
+from hf_dataset import AlwaysSameElementDataset, CombinedDataset, MixedDatasetSampler, prepare_data
 from model_preperation import load_model
 from transformers import get_scheduler
 from torch.optim import AdamW
@@ -13,7 +14,7 @@ from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, pr
     ProgressBar
 from my_utils.training_utils import compute_validation, introduce_waiting_tokens_for_ae, introduce_waiting_tokens, \
     Checkpointer
-
+import accelerate
 
 def main(args):
     wait_token = '<w>'
@@ -28,6 +29,8 @@ def main(args):
 
     # Initialize Accelerator
     accelerator = Accelerator()
+    seed = 42
+    accelerate.utils.set_seed(seed)
     if accelerator.is_main_process:
         os.makedirs(valid_recon_save_path, exist_ok=True)
         os.makedirs(chkpt_dir, exist_ok=True)
@@ -43,21 +46,40 @@ def main(args):
                                               use_perplexity_loss=args.use_perplexity_loss,
                                               decoder_only=args.decoder_only)
 
+    wrap_dataset = AlwaysSameElementDataset if args.overfitting else lambda x: x
     # Prepare dataset and dataloader
-    dataset = \
-        CustomDataset.load(args.dataset_dir / 'nl_fl.csv', split='train',
-                           overfitting=args.overfitting, nrows=args.nrows_nonrephrased)
+    non_rephrased_dataset = prepare_data(args.dataset_dir / 'nl_fl.csv', seed=seed, nrows=args.nrows_nonrephrased)
+    rephrased_dataset = prepare_data(args.dataset_dir / 'rephrased-nl_fl_dataset_all.jsonl', seed=seed, nrows=args.nrows_rephrased)
+    
+    
+    if args.rephrased_ratio > 0:
+        print(f"Using {args.rephrased_ratio} rephrased data")
+        train_dataset = CombinedDataset(
+            non_rephrased_dataset["train"],
+            rephrased_dataset["train"],
+        )
+    else:
+        train_dataset = non_rephrased_dataset["train"]
+    train_dataset = wrap_dataset(train_dataset)
+    
+    # MixedDatasetSampler
+    # train_dataset = wrap_dataset(non_rephrased_dataset["train"])
+    # train_dataset = \
+    #     CustomDataset.load(args.dataset_dir / 'nl_fl.csv', split='train',
+    #                        overfitting=args.overfitting, nrows=args.nrows_nonrephrased)
     # Create a DistributedSampler for the dataset
-    train_sampler = DistributedSampler(dataset, num_replicas=accelerator.num_processes, rank=accelerator.process_index)
-    train_dataloader = DataLoader(dataset, batch_size=args.batch_size, sampler=train_sampler)
+    train_sampler = DistributedSampler(train_dataset, num_replicas=accelerator.num_processes, rank=accelerator.process_index)
+    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_sampler)
 
-    valid_dataset = \
-        CustomDataset.load(args.dataset_dir / 'nl_fl.csv', split='validation',
-                           overfitting=args.overfitting, nrows=args.nrows_nonrephrased)
-    v_rephrased_dat = \
-        CustomDataset.load(
-            args.dataset_dir / 'rephrased-nl_fl_dataset_all.jsonl',
-            split='validation', overfitting=args.overfitting, nrows=args.nrows_rephrased)
+    valid_dataset = wrap_dataset(non_rephrased_dataset["validation"])
+    # valid_dataset = \
+    #     CustomDataset.load(args.dataset_dir / 'nl_fl.csv', split='validation',
+    #                        overfitting=args.overfitting, nrows=args.nrows_nonrephrased)
+    v_rephrased_dat = wrap_dataset(rephrased_dataset["validation"])
+    # v_rephrased_dat = \
+    #     CustomDataset.load(
+    #         args.dataset_dir / 'rephrased-nl_fl_dataset_all.jsonl',
+    #         split='validation', overfitting=args.overfitting, nrows=args.nrows_rephrased)
 
     # Validation dataset (can use a different or similar sampler depending on the setup)
     valid_sampler = DistributedSampler(valid_dataset, num_replicas=accelerator.num_processes,
@@ -81,8 +103,9 @@ def main(args):
     )
 
     # import ipdb; ipdb.set_trace()
-    ae_model, auto_enc_opt, tokenizer, lr_scheduler = accelerator.prepare(ae_model, auto_enc_opt, tokenizer,
-                                                                          lr_scheduler)
+    ae_model, auto_enc_opt, lr_scheduler, train_dataloader, val_dataloader = accelerator.prepare(
+        ae_model, auto_enc_opt, lr_scheduler, train_dataloader, val_dataloader
+    )
     # encoder, tokenizer, auto_enc_opt, lr_scheduler, train_dataloader = \
     #     accelerator.prepare([encoder, tokenizer, auto_enc_opt, lr_scheduler, train_dataloader])
 
@@ -146,7 +169,7 @@ def main(args):
             pbar.set_description(f'Epoch {epoch+1}/{args.num_epochs}: {val_update} log_perp_loss:{log_perplexity_loss:.3f}, '
                                  f'recon_loss:{recon_loss:.3f}, enc_loss:{enc_loss:.3f}')
 
-    print(f"Training completed. A total of {epoch} epoch(s)")
+    print(f"Training completed. A total of {epoch+1} epoch(s)")
 
 
 if __name__ == "__main__":
@@ -174,8 +197,9 @@ if __name__ == "__main__":
     parser.add_argument('--decoder_only', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
     parser.add_argument('--use_perplexity_loss',
                         type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
-    parser.add_argument('--nrows_nonrephrased', type=int, default=None, help='Number of rows to load from the non-rephrased dataset, defaults to all')
-    parser.add_argument('--nrows_rephrased', type=int, default=None, help='Number of rows to load from the rephrased dataset, defaults to all')
+    parser.add_argument('--nrows_nonrephrased', type=int, default=None, help='Number of rows to load from the non-rephrased dataset before splitting into train/val/test, defaults to all')
+    parser.add_argument('--nrows_rephrased', type=int, default=None, help='Number of rows to load from the rephrased dataset before splitting into train/val/test, defaults to all')
+    parser.add_argument('--rephrased_ratio', type=float, default=0, help='Ratio of picking from rephrased dataset')
 
     args = parser.parse_args()
     
@@ -185,6 +209,8 @@ if __name__ == "__main__":
         print(f"Output path not provided, using {args.output_path}")
     if args.dataset_dir is None:
         args.dataset_dir = Path(os.environ.get("ALPHA_GEOM_DATASET", '/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/'))
+    
+    assert 0 <= args.rephrased_ratio <= 1, f"got invalid {args.rephrased_ratio=}"
     
     args.chkpt_bst_mdl_every *= args.validate_every
     if args.decoder_only:
