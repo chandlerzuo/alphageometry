@@ -20,7 +20,7 @@ import wandb
 os.environ.setdefault("WANDB_PROJECT", "alphageom_new")
 wandb.require("core")
 
-from utils import get_comma_separated_strings, get_hostname
+from utils import get_comma_separated_strings, get_hostname, get_username
 
 def main(args):
     wait_token = '<w>'
@@ -94,25 +94,25 @@ def main(args):
     # train_sampler = DistributedSampler(train_dataset, num_replicas=accelerator.num_processes, rank=accelerator.process_index)
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_sampler, pin_memory=True, shuffle=False)
 
-    valid_dataset = wrap_dataset(non_rephrased_dataset["validation"])
-    # valid_dataset = \
+    val_dataset = wrap_dataset(non_rephrased_dataset["validation"])
+    # val_dataset = \
     #     CustomDataset.load(args.dataset_dir / 'nl_fl.csv', split='validation',
     #                        overfitting=args.overfitting, nrows=args.nrows_nonrephrased)
-    v_rephrased_dat = wrap_dataset(rephrased_dataset["validation"])
-    # v_rephrased_dat = \
+    val_rephrased_dat = wrap_dataset(rephrased_dataset["validation"])
+    # val_rephrased_dat = \
     #     CustomDataset.load(
     #         args.dataset_dir / 'rephrased-nl_fl_dataset_all.jsonl',
     #         split='validation', overfitting=args.overfitting, nrows=args.nrows_rephrased)
 
     # Validation dataset (can use a different or similar sampler depending on the setup)
-    # valid_sampler = DistributedSampler(valid_dataset, num_replicas=accelerator.num_processes,
+    # valid_sampler = DistributedSampler(val_dataset, num_replicas=accelerator.num_processes,
     #                                    rank=accelerator.process_index)
     valid_sampler = None # not needed, handled by accelerate
-    # v_rephrased_samp = DistributedSampler(v_rephrased_dat, num_replicas=accelerator.num_processes,
+    # val_rephrased_samp = DistributedSampler(val_rephrased_dat, num_replicas=accelerator.num_processes,
     #                                    rank=accelerator.process_index)
-    v_rephrased_samp = None
-    valid_dataloader = DataLoader(valid_dataset, batch_size=args.batch_size, sampler=valid_sampler, pin_memory=True, shuffle=False)
-    v_rephrased_dataloader = DataLoader(v_rephrased_dat, batch_size=args.batch_size, sampler=v_rephrased_samp)
+    val_rephrased_samp = None
+    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, sampler=valid_sampler, pin_memory=True, shuffle=False)
+    val_rephrased_dataloader = DataLoader(val_rephrased_dat, batch_size=args.batch_size, sampler=val_rephrased_samp)
 
     # Optimizers
     # auto_enc_opt = AdamW(list(encoder.parameters()) + list(decoder.parameters()), lr=2e-5)
@@ -129,8 +129,8 @@ def main(args):
     )
 
     # import ipdb; ipdb.set_trace()
-    ae_model, auto_enc_opt, lr_scheduler, train_dataloader, valid_dataloader, v_rephrased_dataloader = accelerator.prepare(
-        ae_model, auto_enc_opt, lr_scheduler, train_dataloader, valid_dataloader, v_rephrased_dataloader
+    ae_model, auto_enc_opt, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader = accelerator.prepare(
+        ae_model, auto_enc_opt, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader
     )
     # encoder, tokenizer, auto_enc_opt, lr_scheduler, train_dataloader = \
     #     accelerator.prepare([encoder, tokenizer, auto_enc_opt, lr_scheduler, train_dataloader])
@@ -189,7 +189,7 @@ def main(args):
 
             if batch_idx % args.validate_every == args.validate_every - 1:
                 val_metrics = compute_validation(accelerator, ae_model, args, epoch * len(train_dataloader) + batch_idx,
-                                                epoch, tokenizer, valid_dataloader, v_rephrased_dataloader,
+                                                epoch, tokenizer, val_dataloader, val_rephrased_dataloader,
                                                 valid_recon_save_path, wait_id, args.chkpt_bst_mdl_every, checkpointer)
                 
                 val_update_str = create_metrics_string(val_metrics)
@@ -248,7 +248,7 @@ if __name__ == "__main__":
     
     if args.output_path is None:
         args.output_path = os.environ.get("ALPHA_GEOM_OUTPUT_PATH", '/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/')
-        if get_hostname() == "mikado":
+        if get_username() == "mmordig":
             args.output_path = "runs/"
         print(f"Output path not provided, using {args.output_path}")
 

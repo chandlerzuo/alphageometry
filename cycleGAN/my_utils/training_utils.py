@@ -35,31 +35,36 @@ class Checkpointer:
 
 
 def create_metrics_string(metrics):
-    return f'v_rec_l/rf: {metrics["recon_loss"]:.3f}/ {metrics["rf_recon_loss"]:.3f}, ' \
-            f'v_enc_l/rf: {metrics["enc_loss"]:.3f}/ {metrics["rf_enc_loss"]:.3f}, ' \
-            f'v_perp_l/rf: {metrics["log_perplexity_loss"]:.3f}/ {metrics["rf_log_perplexity_loss"]:.3f}'
+    return f'val_rec_l/rf: {metrics["recon_loss"]:.3f}/ {metrics["rf_recon_loss"]:.3f}, ' \
+            f'val_enc_l/rf: {metrics["enc_loss"]:.3f}/ {metrics["rf_enc_loss"]:.3f}, ' \
+            f'val_perp_l/rf: {metrics["log_perplexity_loss"]:.3f}/ {metrics["rf_log_perplexity_loss"]:.3f}'
 
 
-def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer, valid_dataloader,
-                       v_rephrased_dataloader, valid_recon_save_path, wait_id, chkpt_bst_mdl_every, checkpointer):
+def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer, val_dataloader,
+                       val_rephrased_dataloader, valid_recon_save_path, wait_id, chkpt_bst_mdl_every, checkpointer):
+    """
+    Compute metrics on two data loaders, 
+    save data frames,
+    checkpoint model
+    """
     # Validation
     ae_model.eval()
     val_ae_inputs = {'input_ids': None, 'attention_mask': None}
     with torch.no_grad():
         val_enc_loss, val_log_perplexity_loss, val_recon_loss, df = validate_given_data_loader(
-            accelerator, ae_model, args, tokenizer, val_ae_inputs, iter(valid_dataloader), wait_id)
+            accelerator, ae_model, args, tokenizer, val_ae_inputs, iter(val_dataloader), wait_id)
 
-        v_rf_enc_loss, v_rf_log_perplexity_loss, v_rf_recon_loss, df_rf = validate_given_data_loader(
-            accelerator, ae_model, args, tokenizer, val_ae_inputs, iter(v_rephrased_dataloader), wait_id)
+        # rf = rephrased
+        val_rf_enc_loss, val_rf_log_perplexity_loss, val_rf_recon_loss, df_rf = validate_given_data_loader(
+            accelerator, ae_model, args, tokenizer, val_ae_inputs, iter(val_rephrased_dataloader), wait_id)
 
         metrics = {
             "recon_loss": val_recon_loss, "enc_loss": val_enc_loss, "log_perplexity_loss": val_log_perplexity_loss,
-            # todo: what does rf stand for?
-            "rf_recon_loss": v_rf_recon_loss, "rf_enc_loss": v_rf_enc_loss, "rf_log_perplexity_loss": v_rf_log_perplexity_loss
+            "rf_recon_loss": val_rf_recon_loss, "rf_enc_loss": val_rf_enc_loss, "rf_log_perplexity_loss": val_rf_log_perplexity_loss
         }
-        # val_update = f'v_rec_l/rf: {val_recon_loss:.3f}/ {v_rf_recon_loss:.3f}, ' \
-        #              f'v_enc_l/rf: {val_enc_loss:.3f}/ {v_rf_enc_loss:.3f}, ' \
-        #              f'v_perp_l/rf: {val_log_perplexity_loss:.3f}/ {v_rf_log_perplexity_loss:.3f}'
+        # val_update = f'val_rec_l/rf: {val_recon_loss:.3f}/ {val_rf_recon_loss:.3f}, ' \
+        #              f'val_enc_l/rf: {val_enc_loss:.3f}/ {val_rf_enc_loss:.3f}, ' \
+        #              f'val_perp_l/rf: {val_log_perplexity_loss:.3f}/ {val_rf_log_perplexity_loss:.3f}'
 
         # Save the DataFrame to a CSV file
         # Create a marker DataFrame with one row that indicates the start of the second DataFrame
@@ -82,6 +87,7 @@ def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer,
 
 
 def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_inputs, valid_iterator, wait_id):
+    """Compute validation loss"""
     val_recon_loss = 0
     val_enc_loss = 0
     val_log_perplexity_loss = val_log_perplexity_loss_batch = 0
