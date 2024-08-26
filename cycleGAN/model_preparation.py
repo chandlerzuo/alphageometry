@@ -102,12 +102,12 @@ class AutoEncoderLLM(torch.nn.Module):
         model_name = extra_args["model_name"]
         padding_token_id = extra_args["padding_token_id"]
         uses_perplexity_loss = extra_args["uses_perplexity_loss"]
-        perplexity_calculator = get_perplexity_calculator(model_name) if uses_perplexity_loss else None
         
         # AutoModel.from_pretrained loads wrong model if it is AutoModelForCausalLM, so we load this class as well
         encoder = AutoModelForCausalLM.from_pretrained(output_dir / "encoder") if (output_dir / "encoder").exists() else None
         decoder = AutoModelForCausalLM.from_pretrained(output_dir / "decoder")
         # tokenizer = AutoTokenizer.from_pretrained(output_dir / "tokenizer")
+        perplexity_calculator = get_perplexity_calculator(model_name) if uses_perplexity_loss else None
         
         return cls(model_name=model_name, encoder=encoder, decoder=decoder, perplexity_calculator=perplexity_calculator, padding_token_id=padding_token_id)
 
@@ -187,11 +187,14 @@ def test(*args, **kwargs):
 if __name__ == "__main__":
     for use_pretrained in [True, False]:
         for use_perplexity_loss in [True, False]:
-            for decoder_only in [True, False]:
-                if decoder_only and use_perplexity_loss:
-                    continue
-                print(f"use_pretrained={use_pretrained}, use_perplexity_loss={use_perplexity_loss}, decoder_only={decoder_only}")
-                test(use_pretrained=use_pretrained, use_perplexity_loss=use_perplexity_loss, decoder_only=decoder_only)
+            for use_decoder in [True, False]:
+                for use_encoder in [True, False]:
+                    if not use_decoder and not use_encoder:
+                        continue
+                    if use_perplexity_loss and not use_encoder:
+                        continue
+                    print(f"use_pretrained={use_pretrained}, use_perplexity_loss={use_perplexity_loss}, {use_decoder=}, {use_encoder=}")
+                    test(use_pretrained=use_pretrained, use_perplexity_loss=use_perplexity_loss, use_decoder=use_decoder, use_encoder=use_encoder)
                 
     # test(use_pretrained=True, use_perplexity_loss=False, decoder_only=True)
 
