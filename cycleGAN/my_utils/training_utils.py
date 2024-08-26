@@ -151,7 +151,7 @@ def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_in
         enc_tok_ids = torch.argmax(val_enc_outputs.logits, dim=-1)
         enc_texts = tokenizer.batch_decode(enc_tok_ids, skip_special_tokens=False)
 
-        val_formal_texts_2_save = tokenizer.batch_decode(val_ae_inputs, skip_special_tokens=False)
+        val_formal_texts_2_save = tokenizer.batch_decode(val_ae_inputs['input_ids'], skip_special_tokens=False)
 
     if isinstance(val_encoder_target, dict):
         val_encoder_target = val_encoder_target['input_ids']
