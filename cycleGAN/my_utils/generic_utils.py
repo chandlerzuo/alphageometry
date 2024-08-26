@@ -2,6 +2,7 @@ import torch
 import os
 import tqdm
 import re
+import pandas as pd
 
 
 class ProgressBar:
@@ -54,6 +55,8 @@ def compress_text_forwaiting_and_eot_tokens(input_text, wait_token='<w>', eot_to
 
 
 def batch_compress_text_forwaiting_and_eot_tokens(input_list_text, wait_token='<w>', eot_token='<|endoftext|>'):
+    if input_list_text is None:
+        return None
     return [compress_text_forwaiting_and_eot_tokens(text.replace('\n', '<nl>'),
                                                     wait_token, eot_token) for text in input_list_text]
 
@@ -94,6 +97,33 @@ def prit_proc0(msg):
     local_rank = int(os.environ.get('LOCAL_RANK', '0'))
     if local_rank == 0:
         print(msg)
+
+
+def make_pandas_dataframe(**kwargs):
+    data_dict = {}
+    max_length = 0
+
+    # First pass to replace None and determine maximum list length
+    for key, value in kwargs.items():
+        if value is None:
+            data_dict[key] = "_"
+        else:
+            # Replace list Nones and find max length
+            if isinstance(value, list):
+                # Replace None in lists with '_'
+                cleaned_list = ['_' if v is None else v for v in value]
+                data_dict[key] = cleaned_list
+                max_length = max(max_length, len(cleaned_list))
+            else:
+                data_dict[key] = value
+
+    # Second pass to adjust lists to the maximum length
+    for key, value in data_dict.items():
+        if isinstance(value, list) and len(value) < max_length:
+            # Extend lists shorter than the max length with '_'
+            data_dict[key] = value + ['_'] * (max_length - len(value))
+
+    return pd.DataFrame(data_dict)
 
 
 def print_model_device_distribution(accelerator, model, model_name):

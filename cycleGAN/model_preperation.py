@@ -6,6 +6,9 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config, AutoTokeniz
 class AutoEncoderLLM(torch.nn.Module):
     def __init__(self, model_name, encoder, decoder, perplexity_calculator, padding_token_id):
         super().__init__()
+        assert not(encoder is None and decoder is None), 'you need at least one of encoder or decoder to be not None'
+        if encoder is None:  #Decoder only model
+            assert perplexity_calculator is None, f'No way to use perplexity loss in case of a decoder only model'
         self.padding_token_id = padding_token_id
         self.encoder = encoder
         self.decoder = decoder
@@ -22,6 +25,7 @@ class AutoEncoderLLM(torch.nn.Module):
         return self.encoder(**enc_inputs)
 
     def _decode(self, **decoder_inps):
+        assert self.decoder is not None
         return self.decoder(**decoder_inps)
 
     def forward(self, recon_target, encoder_target, decode_natural=None, **enc_inputs):
@@ -31,12 +35,17 @@ class AutoEncoderLLM(torch.nn.Module):
         then teh decoder turn it into a formal language.
         In case of decoder only operation, the encoder_target is assumed to be the natural language input
         """
-        if self.encoder is None:
+        # import ipdb; ipdb.set_trace()
+        if self.encoder is None:  # decoder only model
             encoder_outputs = None
             decoder_outputs = self._decode(**encoder_target, labels=recon_target)
-        else:
+        elif self.decoder is None:  # encoder only model
+            decoder_outputs = None
+            encoder_outputs = self._encode(**enc_inputs, labels=encoder_target)
+        else:  # autoencoder model
             encoder_outputs = self._encode(**enc_inputs, labels=encoder_target)
             decoder_outputs = self._decode(inputs_embeds=encoder_outputs.hidden_states[-1], labels=recon_target)
+
         if self.perplexity_calculator is None:
             log_perplexity_loss = 0
         else:
@@ -44,14 +53,15 @@ class AutoEncoderLLM(torch.nn.Module):
             # TODO: Also remove the leading <w> tokens? because perplexity on those tokens are weird to compute?
             log_perplexity_loss = self.perplexity_calculator(encoder_outputs.logits)
 
-        if decode_natural is not None:
+        if decode_natural is not None and self.decoder is not None:
             decoded_from_natural = self._decode(**decode_natural)
         else:
             decoded_from_natural = None
         return encoder_outputs, decoder_outputs, log_perplexity_loss, decoded_from_natural
 
 
-def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity_loss=True, decoder_only=False):
+def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity_loss=True, decoder_only=False,
+               encoder_only=False):
     """
     Load a model with the option to initialize with pretrained weights or randomly.
 
@@ -63,7 +73,8 @@ def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity
     tuple: A tuple containing the tokenizer and the model.
     """
     perplexity_calculator = None
-    encoder = None
+    encoder = decoder = None
+    assert not(encoder_only and decoder_only), f'Can not have both encoder only and decoder only at hte same time!'
     if decoder_only:
         assert not use_perplexity_loss, 'No real use case of using perplexity loss when there is no encoder.'
     if "llama" in model_name.lower():
@@ -73,13 +84,15 @@ def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity
         if use_pretrained:
             if not decoder_only:
                 encoder = AutoModelForCausalLM.from_pretrained(model_name)
-            decoder = AutoModelForCausalLM.from_pretrained(model_name)
+            if not encoder_only:
+                decoder = AutoModelForCausalLM.from_pretrained(model_name)
         else:
             # Load model with configuration from a pretrained model but without the pretrained weights
             config = AutoModelForCausalLM.from_pretrained(model_name).config
             if not decoder_only:
                 encoder = AutoModelForCausalLM(config)
-            decoder = AutoModelForCausalLM(config)
+            if not encoder_only:
+                decoder = AutoModelForCausalLM(config)
     elif "gpt2" in model_name.lower():  # Default to GPT2
         tokenizer = GPT2Tokenizer.from_pretrained(model_name)
         if use_perplexity_loss:
@@ -87,13 +100,15 @@ def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity
         if use_pretrained:
             if not decoder_only:
                 encoder = GPT2LMHeadModel.from_pretrained(model_name)
-            decoder = GPT2LMHeadModel.from_pretrained(model_name)
+            if not encoder_only:
+                decoder = GPT2LMHeadModel.from_pretrained(model_name)
         else:
             # Initialize GPT2 with random weights using its configuration
             config = GPT2Config()
             if not decoder_only:
                 encoder = GPT2LMHeadModel(config)
-            decoder = GPT2LMHeadModel(config)
+            if not encoder_only:
+                decoder = GPT2LMHeadModel(config)
     else:
         raise ValueError("Model name must contain 'llama' or 'gpt2'.")
 
@@ -103,7 +118,8 @@ def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity
 
     if not decoder_only:
         encoder.resize_token_embeddings(len(tokenizer))
-    decoder.resize_token_embeddings(len(tokenizer))
+    if not encoder_only:
+        decoder.resize_token_embeddings(len(tokenizer))
 
     if perplexity_calculator is not None:
         perplexity_calculator.resize_token_embeddings(len(tokenizer))

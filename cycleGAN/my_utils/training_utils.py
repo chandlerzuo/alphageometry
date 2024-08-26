@@ -3,9 +3,9 @@ import pandas as pd
 import os
 import torch.nn.functional as F
 try:
-    from .generic_utils import batch_compress_text_forwaiting_and_eot_tokens
+    from .generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe
 except ImportError:
-    from generic_utils import batch_compress_text_forwaiting_and_eot_tokens
+    from generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe
 
 
 class Checkpointer:
@@ -23,12 +23,20 @@ class Checkpointer:
         if validation_loss < self.prev_validation_loss:
             self.prev_validation_loss = validation_loss
             print(f'Model saved in {self.output_dir}')
-            unwrapped_model.decoder.save_pretrained(
-                self.output_dir,
-                is_main_process=accelerator.is_main_process,
-                save_function=accelerator.save,
-                state_dict=accelerator.get_state_dict(model)
-            )
+            if unwrapped_model.decoder is not None:
+                unwrapped_model.decoder.save_pretrained(
+                    self.output_dir,
+                    is_main_process=accelerator.is_main_process,
+                    save_function=accelerator.save,
+                    state_dict=accelerator.get_state_dict(model)
+                )
+            else:
+                unwrapped_model.encoder.save_pretrained(
+                    self.output_dir,
+                    is_main_process=accelerator.is_main_process,
+                    save_function=accelerator.save,
+                    state_dict=accelerator.get_state_dict(model)
+                )
 
 
 def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer, valid_dataloader,
@@ -62,15 +70,15 @@ def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer,
 
         ae_model.train()
         if batch_idx % chkpt_bst_mdl_every == (chkpt_bst_mdl_every - 1):
-            checkpointer.checkpoint(accelerator, ae_model, val_recon_loss)
+            checkpointer.checkpoint(accelerator, ae_model, val_recon_loss + val_enc_loss)
     return val_update
 
 
 def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_inputs, valid_iterator, wait_id):
     val_recon_loss = 0
     val_enc_loss = 0
-    val_log_perplexity_loss = 0
-    enc_texts = ['_']
+    val_log_perplexity_loss = val_log_perplexity_loss_batch = 0
+    enc_texts = recon_texts = val_formal_texts_2_save = None
     val_rec_outputs = val_enc_outputs = val_encoder_target = val_ae_target = decoded_frm_nl_texts = None
     for i, val_batch in enumerate(valid_iterator):
         if i > args.valid_for_batches:
@@ -87,12 +95,10 @@ def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_in
                                    max_length=512)
         val_enc_inputs = {k: v.to(accelerator.device) for k, v in val_enc_inputs.items()}
 
-        if ae_model.encoder is None:  # decoder only model!
-            val_encoder_target, val_ae_target = introduce_waiting_tokens(enc_label, val_enc_inputs, wait_id,
-                                                                         padding_id=tokenizer.pad_token_id)
-        else:
-            val_ae_inputs, val_encoder_target, val_ae_target = introduce_waiting_tokens_for_ae(
-                val_enc_inputs, enc_label, wait_id, padding_id=tokenizer.pad_token_id)
+        # perform padding as needed to the inputs and targets for validation data
+        val_ae_inputs, val_encoder_target, val_ae_target = prepare_inputs(
+            encoder_only=args.encoder_only, decoder_only=args.decoder_only, formal_lang=val_enc_inputs,
+            natural_lang=enc_label, wait_id=wait_id, pad_token_id=tokenizer.pad_token_id)
 
         dec_natural, _ = \
             introduce_waiting_tokens(enc_label, enc_label, wait_id, padding_id=tokenizer.pad_token_id)
@@ -104,14 +110,12 @@ def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_in
         if decoded_from_natural is not None:
             decoded_token_ids = torch.argmax(decoded_from_natural.logits, dim=-1)
             decoded_frm_nl_texts = tokenizer.batch_decode(decoded_token_ids, skip_special_tokens=False)
-        else:
-            decoded_frm_nl_texts = ''
 
-        val_recon_loss += val_rec_outputs.loss
+        if val_rec_outputs is not None:
+            val_recon_loss += val_rec_outputs.loss
         if val_enc_outputs is not None:
             val_enc_loss += val_enc_outputs.loss
         val_log_perplexity_loss += val_log_perplexity_loss_batch
-
 
     # print(get_process_cuda_memory_info())
     # Convert logits to predicted token IDs
@@ -119,29 +123,33 @@ def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_in
     val_log_perplexity_loss /= args.valid_for_batches
     val_recon_loss /= args.valid_for_batches
 
-    recon_token_ids = torch.argmax(val_rec_outputs.logits, dim=-1)
-    # Convert token IDs to text
-    recon_texts = tokenizer.batch_decode(recon_token_ids, skip_special_tokens=False)
+    if val_rec_outputs is not None:
+        recon_token_ids = torch.argmax(val_rec_outputs.logits, dim=-1)
+        # Convert token IDs to text
+        recon_texts = tokenizer.batch_decode(recon_token_ids, skip_special_tokens=False)
+        val_formal_texts_2_save = tokenizer.batch_decode(val_ae_target, skip_special_tokens=False)
+
     # Get encoded text
     if val_enc_outputs is not None:
         enc_tok_ids = torch.argmax(val_enc_outputs.logits, dim=-1)
         enc_texts = tokenizer.batch_decode(enc_tok_ids, skip_special_tokens=False)
-    val_formal_texts_2_save = tokenizer.batch_decode(val_ae_target, skip_special_tokens=False)
+
+        val_formal_texts_2_save = tokenizer.batch_decode(val_ae_inputs, skip_special_tokens=False)
+
     if isinstance(val_encoder_target, dict):
         val_encoder_target = val_encoder_target['input_ids']
     val_natural_target = tokenizer.batch_decode(val_encoder_target, skip_special_tokens=False)
-    # import ipdb; ipdb.set_trace()
-    df = pd.DataFrame({
-        'formal_target': batch_compress_text_forwaiting_and_eot_tokens(val_formal_texts_2_save,
-                                                                       eot_token=tokenizer.eos_token),
-        'formal_reconstructed': batch_compress_text_forwaiting_and_eot_tokens(
-            recon_texts, eot_token=tokenizer.eos_token),
-        'natural_created': batch_compress_text_forwaiting_and_eot_tokens(enc_texts * len(recon_texts),
+    df = make_pandas_dataframe(**{
+        'formal_target/(input_if_encoder_only)': batch_compress_text_forwaiting_and_eot_tokens(
+            val_formal_texts_2_save, eot_token=tokenizer.eos_token),
+        'formal_reconstructed (if decoder only: same as formal_generated)':
+            batch_compress_text_forwaiting_and_eot_tokens(recon_texts, eot_token=tokenizer.eos_token),
+        'natural_created': batch_compress_text_forwaiting_and_eot_tokens(enc_texts,
                                                                          eot_token=tokenizer.eos_token),
         'natural_target': batch_compress_text_forwaiting_and_eot_tokens(val_natural_target,
                                                                         eot_token=tokenizer.eos_token),
-        'formal_generated': batch_compress_text_forwaiting_and_eot_tokens(decoded_frm_nl_texts,
-                                                                          eot_token=tokenizer.eos_token),
+        'formal_generated (if decoder only: same as formal_reconstructed)':
+            batch_compress_text_forwaiting_and_eot_tokens(decoded_frm_nl_texts, eot_token=tokenizer.eos_token),
         'average_val_enc_loss': val_enc_loss,
         'average_val_log_perplexity_loss': val_log_perplexity_loss,
         'average_val_recon_loss': val_recon_loss
@@ -188,6 +196,24 @@ def introduce_waiting_tokens_for_ae(enc_inputs, enc_label, wait_id, padding_id):
         return enc_inputs_paded_as_recon_target, enc_target, recon_target
     else:
         return enc_inputs_paded_as_enc_target, enc_target, recon_target
+
+
+def prepare_inputs(encoder_only, decoder_only, formal_lang, natural_lang, wait_id, pad_token_id):
+    if decoder_only:
+        assert natural_lang is not None, f'For decoder we need a natural lang target'
+        encoder_target, ae_target = introduce_waiting_tokens(natural_lang, formal_lang, wait_id,
+                                                             padding_id=pad_token_id)
+        ae_inputs = {'input_ids': None, 'attention_mask': None}
+    elif encoder_only:
+        assert natural_lang is not None, f'For encoder we need a natural lang inputs'
+        ae_inputs, encoder_target = introduce_waiting_tokens(formal_lang, natural_lang, wait_id,
+                                                             padding_id=pad_token_id)
+        ae_target = None
+    else:
+        ae_inputs, encoder_target, ae_target = introduce_waiting_tokens_for_ae(
+            formal_lang, natural_lang, wait_id, padding_id=pad_token_id)
+
+    return ae_inputs, encoder_target, ae_target
 
 
 if __name__ == '__main__':

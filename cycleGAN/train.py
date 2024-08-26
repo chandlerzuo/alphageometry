@@ -11,14 +11,20 @@ from torch.utils.data.distributed import DistributedSampler
 from my_utils.generic_utils import get_process_cuda_memory_info, prit_proc0, print_model_device_distribution, \
     ProgressBar
 from my_utils.training_utils import compute_validation, introduce_waiting_tokens_for_ae, introduce_waiting_tokens, \
-    Checkpointer
+    Checkpointer, prepare_inputs
 
 
 def main(args):
     wait_token = '<w>'
     mdl_dir = args.model_name
     if args.decoder_only:
-        mdl_dir += 'dec_only'
+        mdl_dir += '_dec_only'
+    elif args.encoder_only:
+        mdl_dir += '_enc_only'
+    else:
+        mdl_dir += '_full_ae'
+    if args.use_perplexity_loss:
+        mdl_dir += '+perplexity'
     mdl_output_home = os.path.join(args.output_path, mdl_dir)
     valid_recon_save_path = os.path.join(mdl_output_home, 'validation_outputs')
     chkpt_dir = os.path.join(mdl_output_home, 'checkpoints')
@@ -33,13 +39,15 @@ def main(args):
 
     # this micro batching might not be optimal!
     if accelerator.distributed_type.lower() == 'deepspeed':
+        # accelerator.state.deepspeed_plugin.deepspeed_config['train_micro_batch_size_per_gpu'] \
+        #     = args.batch_size // accelerator.num_processes
         accelerator.state.deepspeed_plugin.deepspeed_config['train_micro_batch_size_per_gpu'] \
-            = args.batch_size // accelerator.num_processes
+            = 1
 
     # Load tokenizer and models
     ae_model, tokenizer, wait_id = load_model(args.model_name, wait_token=wait_token, use_pretrained=args.is_pretrained,
                                               use_perplexity_loss=args.use_perplexity_loss,
-                                              decoder_only=args.decoder_only)
+                                              decoder_only=args.decoder_only, encoder_only=args.encoder_only)
 
     # Prepare dataset and dataloader
     dataset = \
@@ -72,7 +80,8 @@ def main(args):
     # Learning rate scheduler
     num_training_steps = args.num_epochs * len(train_dataloader)
     lr_scheduler = get_scheduler(
-        name="linear",
+        # name="linear",
+        name="cosine",
         optimizer=auto_enc_opt,
         num_warmup_steps=0,
         num_training_steps=num_training_steps,
@@ -87,8 +96,7 @@ def main(args):
     # Training loop
     ae_model.train()
     val_update = f'val_update: None'
-    ae_inputs = {'input_ids': None, 'attention_mask': None}
-    enc_loss = 0
+    enc_loss = recon_loss = 0
     for epoch in range(args.num_epochs):
         pbar = ProgressBar(train_dataloader, accelerator)
         for batch_idx, batch in enumerate(pbar):
@@ -107,12 +115,10 @@ def main(args):
             else:
                 enc_label = None
 
-            if args.decoder_only:
-                encoder_target, ae_target = introduce_waiting_tokens(enc_label, enc_inputs, wait_id,
-                                                                     padding_id=tokenizer.pad_token_id)
-            else:
-                ae_inputs, encoder_target, ae_target = introduce_waiting_tokens_for_ae(
-                    enc_inputs, enc_label, wait_id, padding_id=tokenizer.pad_token_id)
+            # perform padding according to training mode
+            ae_inputs, encoder_target, ae_target = prepare_inputs(
+                encoder_only=args.encoder_only, decoder_only=args.decoder_only, formal_lang=enc_inputs,
+                natural_lang=enc_label, wait_id=wait_id, pad_token_id=tokenizer.pad_token_id)
 
             # import ipdb;ipdb.set_trace()
             # encode and decode
@@ -120,18 +126,20 @@ def main(args):
                 ae_model(**ae_inputs, output_hidden_states=True, encoder_target=encoder_target,
                          recon_target=ae_target)
 
-            # print_model_device_distribution(accelerator, ae_model, 'ae_model')
-            # exit(-1)
-            recon_loss = rec_outputs.loss
-
-            # Total loss
-            total_loss = recon_loss + log_perplexity_loss
+            # Total loss. This unfortunately can't be initialized to 0 and all others added! It complains about double
+            # backwardpass
+            total_loss = 0
+            if rec_outputs is not None:
+                recon_loss = rec_outputs.loss
+                total_loss = recon_loss
             if enc_outputs is not None:
                 total_loss += args.enc_loss_weight * enc_outputs.loss
                 enc_loss = enc_outputs.loss.item()
 
+            total_loss += log_perplexity_loss
             # Backpropagation
             accelerator.backward(total_loss)
+            # import ipdb; ipdb.set_trace()
             auto_enc_opt.step()
             lr_scheduler.step()
             auto_enc_opt.zero_grad()
@@ -168,7 +176,8 @@ if __name__ == "__main__":
                                                        "'meta-llama/Llama-2-7b-hf'")
     parser.add_argument('--overfitting', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
     parser.add_argument('--is_pretrained', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
-    parser.add_argument('--decoder_only', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
+    parser.add_argument('--decoder_only', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
+    parser.add_argument('--encoder_only', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
     parser.add_argument('--use_perplexity_loss',
                         type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
 
@@ -177,5 +186,7 @@ if __name__ == "__main__":
     if args.decoder_only:
         assert not args.use_perplexity_loss
         assert args.grounding_prob >= 1  # you need the grounding always as these are the inputs
+    if args.encoder_only:
+        assert args.grounding_prob >= 1, f'We need the natural language targets when using encoder only model.'
     prit_proc0(args)
     main(args)
