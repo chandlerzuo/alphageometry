@@ -6,6 +6,9 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 
 
+# # dataset that combines
+# class MergeDataset(Dataset):
+
 class CustomDataset(Dataset):
     def __init__(self, filename, split='train', overfitting=False, test_size=0.1, random_state=42, nrows=None):
         self.overfitting = overfitting
@@ -30,7 +33,7 @@ class CustomDataset(Dataset):
 
     @staticmethod
     def load(filename, *args, **kwargs):
-        DatasetClass = NLFLDatasetFromCSV if filename.endswith('.csv') else NLFLDatasetFromJSONL
+        DatasetClass = NLFLDatasetFromCSV if str(filename).endswith('.csv') else NLFLDatasetFromJSONL
         return DatasetClass(filename, *args, **kwargs)
     
     def load_file(self, filename, nrows=None):
@@ -49,7 +52,7 @@ class CustomDataset(Dataset):
         natural_text = self.data.iloc[idx]['nl_statement']
         return {'formal': formal_text, 'natural': natural_text}
 
-def load_jsonl(self, file_path, nrows=None):
+def load_jsonl(file_path, nrows=None):
     data = []
     with open(file_path, 'r', encoding='utf-8') as file:
         for line in itertools.islice(file, nrows):
@@ -60,7 +63,7 @@ class NLFLDatasetFromCSV(CustomDataset):
         return pd.read_csv(filename, nrows=nrows)
 class NLFLDatasetFromJSONL(CustomDataset):
     def load_file(self, filename, nrows=None):
-        return self.load_jsonl(filename, nrows=nrows)
+        return load_jsonl(filename, nrows=nrows)
     
 #%%
 if __name__ == '__main__':

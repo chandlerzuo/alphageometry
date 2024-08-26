@@ -1,13 +1,15 @@
 import os
 import math
+from pathlib import Path
 from torch.utils.data import DataLoader
 
 from accelerate import Accelerator
 from data_loader.custom_dataset import CustomDataset
 from model_preperation import load_model
-from transformers import AdamW, get_scheduler
+from transformers import get_scheduler
+from torch.optim import AdamW
 from torch.utils.data.distributed import DistributedSampler
-from my_utils.generic_utils import get_process_cuda_memory_info, prit_proc0, print_model_device_distribution, \
+from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, print_model_device_distribution, \
     ProgressBar
 from my_utils.training_utils import compute_validation, introduce_waiting_tokens_for_ae, introduce_waiting_tokens, \
     Checkpointer
@@ -43,18 +45,18 @@ def main(args):
 
     # Prepare dataset and dataloader
     dataset = \
-        CustomDataset.load('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='train',
-                           overfitting=args.overfitting, nrows_nonrephrased=args.nrows_nonrephrased)
+        CustomDataset.load(args.dataset_dir / 'nl_fl.csv', split='train',
+                           overfitting=args.overfitting, nrows=args.nrows_nonrephrased)
     # Create a DistributedSampler for the dataset
     train_sampler = DistributedSampler(dataset, num_replicas=accelerator.num_processes, rank=accelerator.process_index)
     train_dataloader = DataLoader(dataset, batch_size=args.batch_size, sampler=train_sampler)
 
     valid_dataset = \
-        CustomDataset.load('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='validation',
-                           overfitting=args.overfitting, nrows_nonrephrased=args.nrows_nonrephrased)
+        CustomDataset.load(args.dataset_dir / 'nl_fl.csv', split='validation',
+                           overfitting=args.overfitting, nrows=args.nrows_nonrephrased)
     v_rephrased_dat = \
         CustomDataset.load(
-            '/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/rephrased-nl_fl_dataset_all.jsonl',
+            args.dataset_dir / 'rephrased-nl_fl_dataset_all.jsonl',
             split='validation', overfitting=args.overfitting, nrows=args.nrows_rephrased)
 
     # Validation dataset (can use a different or similar sampler depending on the setup)
@@ -141,7 +143,7 @@ def main(args):
                                                 epoch, tokenizer, valid_dataloader, v_rephrased_ldr,
                                                 valid_recon_save_path, wait_id, args.chkpt_bst_mdl_every, checkpointer)
 
-            pbar.set_description(f'{val_update} log_perp_loss:{log_perplexity_loss:.3f}, '
+            pbar.set_description(f'Epoch {epoch+1}/{args.num_epochs}: {val_update} log_perp_loss:{log_perplexity_loss:.3f}, '
                                  f'recon_loss:{recon_loss:.3f}, enc_loss:{enc_loss:.3f}')
 
     print(f"Training completed. A total of {epoch} epoch(s)")
@@ -154,11 +156,12 @@ if __name__ == "__main__":
     parser.add_argument('--validate_every', type=int, default=100, help='Validate every these many training steps')
     parser.add_argument('--valid_for_batches', type=int, default=10, help='Validate for these many batches')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size per GPU! when deepspeed is enabled (for model pipelining), it is divided by the number of gpus for microbatching')
+    parser.add_argument('--dataset_dir', type=Path, default=None, help='Path to dataset directory')
     parser.add_argument('--chkpt_bst_mdl_every', type=int, default=10,
                         help='Checkpoint model every these many validation (!) steps if validation result improved. '
                              'Negative value skips this')
     parser.add_argument('--output_path', type=str,
-                        default='/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/',
+                        default=None,
                         help='path to save training stats and models')
     parser.add_argument('--grounding_prob', type=float, default=0.5, help='introduce encoder NL labels every ceil(1/x) batches')
     parser.add_argument('--enc_loss_weight', type=float, default=2, help='scale encoder loss by this factor')
@@ -175,9 +178,17 @@ if __name__ == "__main__":
     parser.add_argument('--nrows_rephrased', type=int, default=None, help='Number of rows to load from the rephrased dataset, defaults to all')
 
     args = parser.parse_args()
+    
+    if args.output_path is None:
+        # args.output_path = os.environ.get("ALPHA_GEOM_OUTPUT_PATH", '/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/')
+        args.output_path = "runs/"
+        print(f"Output path not provided, using {args.output_path}")
+    if args.dataset_dir is None:
+        args.dataset_dir = Path(os.environ.get("ALPHA_GEOM_DATASET", '/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/'))
+    
     args.chkpt_bst_mdl_every *= args.validate_every
     if args.decoder_only:
         assert not args.use_perplexity_loss
         assert args.grounding_prob >= 1  # you need the grounding always as these are the inputs
-    prit_proc0(args)
+    print_proc0(f"Got arguments: {args}")
     main(args)

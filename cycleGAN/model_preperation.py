@@ -30,7 +30,7 @@ class AutoEncoderLLM(torch.nn.Module):
         assert self.encoder is not None
         return self.encoder(**enc_inputs)
     
-    def __eq__(self, other):
+    def same_archs(self, other: 'AutoEncoderLLM'):
         """check for equal classes for encoder, decoder, perplexity_calculator"""
         return self.model_name == other.model_name and self.encoder.__class__ == other.encoder.__class__ and self.decoder.__class__ == other.decoder.__class__ and self.perplexity_calculator.__class__ == other.perplexity_calculator.__class__ and self.padding_token_id == other.padding_token_id
     
@@ -43,13 +43,14 @@ class AutoEncoderLLM(torch.nn.Module):
             PaddingTokenId: {self.padding_token_id}""")
 
     def _decode(self, **decoder_inps):
+        """run the decoder"""
         return self.decoder(**decoder_inps)
 
     def forward(self, recon_target, encoder_target, decode_natural=None, **enc_inputs):
         """
-        enc_input: Serves as the input to the Autoencode. In ususal operation mode i.e., when bot encoder and the
+        enc_input: Serves as the input to the autoencoder. In usual operation mode i.e., when both the encoder and the
         decoder are present this is a formal text. This goes into encoder that transforms it into natural language and
-        then teh decoder turn it into a formal language.
+        then the decoder turns it into a formal language.
         In case of decoder only operation, the encoder_target is assumed to be the natural language input
         """
         if self.encoder is None:
@@ -184,11 +185,12 @@ def test(*args, **kwargs):
     autoencoder, tokenizer, wait_id = load_model("gpt2", *args, **kwargs)
     # print("Short info1:", autoencoder.short_info())
     autoencoder.save_pretrained(tmp_dir)
+    list(autoencoder.parameters())
     autoencoder2 = AutoEncoderLLM.from_pretrained(tmp_dir)
     # print()
     # print("Short info2:", autoencoder2.short_info())
     
-    assert autoencoder == autoencoder2, f"autoencoder: {autoencoder.short_info()}\nautoencoder2: {autoencoder2.short_info()}"
+    assert autoencoder.same_archs(autoencoder2), f"autoencoder: {autoencoder.short_info()}\nautoencoder2: {autoencoder2.short_info()}"
 if __name__ == "__main__":
     for use_pretrained in [True, False]:
         for use_perplexity_loss in [True, False]:

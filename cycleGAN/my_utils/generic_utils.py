@@ -91,7 +91,7 @@ def get_process_cuda_memory_info():
     return memory_info
 
 
-def prit_proc0(msg):
+def print_proc0(msg):
     """print only on process 0"""
     local_rank = int(os.environ.get('LOCAL_RANK', '0'))
     if local_rank == 0:
