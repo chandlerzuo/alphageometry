@@ -3,6 +3,7 @@ from transformers import PreTrainedModel
 from transformers.utils import is_peft_available
 from peft import PeftModel
 
+
 def save_model(model, output_dir, state_dict=None, safe_serialization=True):
     # see HF Trainer._save
     supported_classes = (

@@ -25,11 +25,14 @@ class Checkpointer:
         if validation_loss < self.prev_validation_loss:
             self.prev_validation_loss = validation_loss
 
-            unwrapped_model.save_pretrained(
+            save_pretrained = unwrapped_model.encoder.save_pretrained if unwrapped_model.encoder is not None \
+                else unwrapped_model.decoder.save_pretrained
+
+            save_pretrained(
                 self.output_dir,
-                # is_main_process=accelerator.is_main_process,
-                # save_function=accelerator.save,
-                # state_dict=accelerator.get_state_dict(model)
+                is_main_process=accelerator.is_main_process,
+                save_function=accelerator.save,
+                state_dict=accelerator.get_state_dict(model)
             )
             print(f'Model saved in {self.output_dir}')
 

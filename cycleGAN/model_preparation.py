@@ -82,7 +82,8 @@ class AutoEncoderLLM(torch.nn.Module):
         output_dir = Path(output_dir)
         if self.encoder is not None:
             save_model(self.encoder, create_dir(output_dir / "encoder"))
-        save_model(self.decoder, create_dir(output_dir / "decoder"))
+        if self.decoder is not None:
+            save_model(self.decoder, create_dir(output_dir / "decoder"))
         # save_tokenizer(self.tokenizer, create_dir(output_dir / "tokenizer"))
 
         # # Good practice: save your training arguments together with the trained model
