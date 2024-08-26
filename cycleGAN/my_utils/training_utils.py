@@ -1,3 +1,4 @@
+#%%
 import torch
 import pandas as pd
 import os
@@ -5,10 +6,11 @@ import torch.nn.functional as F
 try:
     from .generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe
 except ImportError:
-    from generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe
+    from my_utils.generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe
 
 
 class Checkpointer:
+    """Save model, but only if it is better than the previous best model"""
     def __init__(self, output_dir):
         self.prev_validation_loss = 9999999999
         self.output_dir = output_dir
@@ -22,25 +24,24 @@ class Checkpointer:
         # The model name saved is `pytorch_model.bin`
         if validation_loss < self.prev_validation_loss:
             self.prev_validation_loss = validation_loss
+
+            unwrapped_model.save_pretrained(
+                self.output_dir,
+                # is_main_process=accelerator.is_main_process,
+                # save_function=accelerator.save,
+                # state_dict=accelerator.get_state_dict(model)
+            )
             print(f'Model saved in {self.output_dir}')
-            if unwrapped_model.decoder is not None:
-                unwrapped_model.decoder.save_pretrained(
-                    self.output_dir,
-                    is_main_process=accelerator.is_main_process,
-                    save_function=accelerator.save,
-                    state_dict=accelerator.get_state_dict(model)
-                )
-            else:
-                unwrapped_model.encoder.save_pretrained(
-                    self.output_dir,
-                    is_main_process=accelerator.is_main_process,
-                    save_function=accelerator.save,
-                    state_dict=accelerator.get_state_dict(model)
-                )
+
+
+def create_metrics_string(metrics):
+    return f'v_rec_l/rf: {metrics["recon_loss"]:.3f}/ {metrics["rf_recon_loss"]:.3f}, ' \
+            f'v_enc_l/rf: {metrics["enc_loss"]:.3f}/ {metrics["rf_enc_loss"]:.3f}, ' \
+            f'v_perp_l/rf: {metrics["log_perplexity_loss"]:.3f}/ {metrics["rf_log_perplexity_loss"]:.3f}'
 
 
 def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer, valid_dataloader,
-                       v_rephrased_ldr, valid_recon_save_path, wait_id, chkpt_bst_mdl_every, checkpointer):
+                       v_rephrased_dataloader, valid_recon_save_path, wait_id, chkpt_bst_mdl_every, checkpointer):
     # Validation
     ae_model.eval()
     val_ae_inputs = {'input_ids': None, 'attention_mask': None}
@@ -49,11 +50,16 @@ def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer,
             accelerator, ae_model, args, tokenizer, val_ae_inputs, iter(valid_dataloader), wait_id)
 
         v_rf_enc_loss, v_rf_log_perplexity_loss, v_rf_recon_loss, df_rf = validate_given_data_loader(
-            accelerator, ae_model, args, tokenizer, val_ae_inputs, iter(v_rephrased_ldr), wait_id)
+            accelerator, ae_model, args, tokenizer, val_ae_inputs, iter(v_rephrased_dataloader), wait_id)
 
-        val_update = f'v_rec_l/rf: {val_recon_loss:.3f}/ {v_rf_recon_loss:.3f}, ' \
-                     f'v_enc_l/rf: {val_enc_loss:.3f}/ {v_rf_enc_loss:.3f}, ' \
-                     f'v_perp_l/rf: {val_log_perplexity_loss:.3f}/ {v_rf_log_perplexity_loss:.3f}'
+        metrics = {
+            "recon_loss": val_recon_loss, "enc_loss": val_enc_loss, "log_perplexity_loss": val_log_perplexity_loss,
+            # todo: what does rf stand for?
+            "rf_recon_loss": v_rf_recon_loss, "rf_enc_loss": v_rf_enc_loss, "rf_log_perplexity_loss": v_rf_log_perplexity_loss
+        }
+        # val_update = f'v_rec_l/rf: {val_recon_loss:.3f}/ {v_rf_recon_loss:.3f}, ' \
+        #              f'v_enc_l/rf: {val_enc_loss:.3f}/ {v_rf_enc_loss:.3f}, ' \
+        #              f'v_perp_l/rf: {val_log_perplexity_loss:.3f}/ {v_rf_log_perplexity_loss:.3f}'
 
         # Save the DataFrame to a CSV file
         # Create a marker DataFrame with one row that indicates the start of the second DataFrame
@@ -71,7 +77,8 @@ def compute_validation(accelerator, ae_model, args, batch_idx, epoch, tokenizer,
         ae_model.train()
         if batch_idx % chkpt_bst_mdl_every == (chkpt_bst_mdl_every - 1):
             checkpointer.checkpoint(accelerator, ae_model, val_recon_loss + val_enc_loss)
-    return val_update
+
+    return metrics
 
 
 def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_inputs, valid_iterator, wait_id):
@@ -159,6 +166,15 @@ def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_in
 
 
 def introduce_waiting_tokens(inputs, targets, wait_token_id, padding_id):
+    """
+    Introduce waiting tokens for the decoder-only architecture
+    Given inputs and targets, shift the targets by wait tokens so they effectively start
+    once all the input is seen.
+    
+    Arguments:
+        inputs: tokenized natural texts, of shape (batch_size, seq_len)
+        targets: tokenized formal texts, of shape (batch_size, seq_len)
+    """
     target_ids = []
     padded_inp_ids = []
     padded_inp_masks = []
@@ -180,6 +196,13 @@ def introduce_waiting_tokens(inputs, targets, wait_token_id, padding_id):
 
 
 def introduce_waiting_tokens_for_ae(enc_inputs, enc_label, wait_id, padding_id):
+    """
+    introduce waiting tokens for the encoder-decoder architecture
+    
+    Arguments:
+        enc_inputs: tokenized formal texts, of shape (batch_size, seq_len)
+        enc_label: tokenized natural texts, of shape (batch_size, seq_len)
+    """
     enc_inputs_paded_as_recon_target, recon_target = \
         introduce_waiting_tokens(enc_inputs, enc_inputs, wait_id, padding_id)
 
@@ -217,6 +240,7 @@ def prepare_inputs(encoder_only, decoder_only, formal_lang, natural_lang, wait_i
 
 
 if __name__ == '__main__':
+    # inputs of length 6, targets of length 7
     inputs = {'input_ids': torch.tensor([[1, 2, 3, 4, 5, 6],
                                          [1, 2, 0, 0, 0, 0]], dtype=torch.long),
               'attention_mask': torch.tensor([[1, 1, 1, 1, 1, 1],
@@ -226,11 +250,20 @@ if __name__ == '__main__':
                'attention_mask': torch.tensor([[1, 1, 1, 1, 1, 1, 1],
                                                [1, 1, 1, 0, 0, 0, 0]], dtype=torch.long)}
     # inputs, targets = introduce_waiting_tokens(inputs, inputs, -1, 0)
+    
+    enc_in, enc_targets = introduce_waiting_tokens(inputs, targets, -1, 0)
+    print(enc_in)
+    print(enc_targets)
+    print()
+    
     enc_in, enc_targets, rec_target = introduce_waiting_tokens_for_ae(inputs, targets, -1, 0)
     print(enc_in)
     print(enc_targets)
     print(rec_target)
+    print()
 
+#%%
+    # inputs of length 6, targets of length 4
     inputs = {'input_ids': torch.tensor([[1, 2, 3, 4, 5, 6],
                                          [1, 2, 0, 0, 0, 0]], dtype=torch.long),
               'attention_mask': torch.tensor([[1, 1, 1, 1, 1, 1],
@@ -244,3 +277,5 @@ if __name__ == '__main__':
     print(enc_in)
     print(enc_targets)
     print(rec_target)
+
+# %%
