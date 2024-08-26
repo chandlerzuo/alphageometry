@@ -104,7 +104,8 @@ def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_in
 
         # perform padding as needed to the inputs and targets for validation data
         val_ae_inputs, val_encoder_target, val_ae_target = prepare_inputs(
-            encoder_only=args.encoder_only, decoder_only=args.decoder_only, formal_lang=val_enc_inputs,
+            encoder_only=(args.use_encoder and not args.use_decoder),
+            decoder_only=(args.use_decoder and not args.use_encoder), formal_lang=val_enc_inputs,
             natural_lang=enc_label, wait_id=wait_id, pad_token_id=tokenizer.pad_token_id)
 
         dec_natural, _ = \
