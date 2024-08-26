@@ -52,3 +52,11 @@ def freeze_params(model):
         
 def is_frozen(model):
     return all(param.requires_grad == False for param in model.parameters())
+
+def get_comma_separated_strings(lst):
+    # get_comma_separated_strings(["aaa", "bbb", "ccc"])
+    return ', '.join(f'"{x}"' for x in lst)
+
+def get_hostname():
+    import socket
+    return socket.gethostname()

@@ -14,12 +14,13 @@ def _detect_dataset_load_type(filename) -> str:
     else:
         raise ValueError(f"cannot handle file type for filename {filename}")
     
-def prepare_data(filename, test_size=0.1, seed=None, device=None, **kwargs) -> DatasetDict:
+def prepare_data(filename, test_size=0.1, seed=None, colnames=None, **kwargs) -> DatasetDict:
     """
     Given a data path, return a hf dataset (which can also be used like torch.Dataset)
     
     Args:
         kwargs: additional arguments to pass to load_dataset
+        colnames: maps formal and natural column names to the actual column names in the dataset
     """
     load_type = _detect_dataset_load_type(filename)
     nrows = None
@@ -30,8 +31,11 @@ def prepare_data(filename, test_size=0.1, seed=None, device=None, **kwargs) -> D
     if nrows is not None:
         dataset = dataset.select(min(len(dataset), range(nrows)))
     print(f"Dataset loaded, of size {len(dataset)}")
-    dataset = dataset.rename_columns(({"fl_statement": "formal", "nl_statement": "natural"}))
-    dataset = dataset.with_format("torch", device=device)
+    if colnames is None:
+        colnames = {"formal": "fl_statement", "natural": "nl_statement"}
+    dataset = dataset.rename_columns(({colnames["formal"]: "formal", colnames["natural"]: "natural"}))
+    dataset = dataset.select_columns(["formal", "natural"])
+    dataset = dataset.with_format("torch")
 
     generator = np.random.default_rng(seed)
     assert 0 <= 2 * test_size <= 1, f"got {test_size}"
@@ -85,6 +89,8 @@ class MixedDatasetSampler(torch.utils.data.WeightedRandomSampler):
     ):
         assert len(dataset_lens) == 2
         
+        print(f"Creating MixedDatasetSampler with lens {dataset_lens} and ratio {ratio}")
+        
         # threshold = 1/(1 + ratio) # ratio=2:1 -> threshold=1/3=prob to sample from dataset1
         ratio *= dataset_lens[0] / dataset_lens[1]
         weights = torch.tensor([1] * dataset_lens[0] + [ratio] * dataset_lens[1], dtype=torch.double)
@@ -119,7 +125,6 @@ if __name__ == "__main__":
     filename = "runs/datasets/arithmetic/nl_fl.csv"
     seed = 42
     test_size = 0.1
-    device = None
     
     ds = prepare_data(filename, test_size, seed)
     print(ds)
