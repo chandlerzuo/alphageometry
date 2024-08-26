@@ -32,6 +32,7 @@ def main(args):
 
     # this micro batching might not be optimal!
     if accelerator.distributed_type.lower() == 'deepspeed':
+        print("Using deepspeed")
         accelerator.state.deepspeed_plugin.deepspeed_config['train_micro_batch_size_per_gpu'] \
             = args.batch_size // accelerator.num_processes
 
@@ -150,17 +151,17 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('--num_epochs', type=int, default=10)
-    parser.add_argument('--validate_every', type=int, default=100, help='Validate every these many steps')
+    parser.add_argument('--validate_every', type=int, default=100, help='Validate every these many training steps')
     parser.add_argument('--valid_for_batches', type=int, default=10, help='Validate for these many batches')
-    parser.add_argument('--batch_size', type=int, default=32, help='Batch size per GPU!')
+    parser.add_argument('--batch_size', type=int, default=32, help='Batch size per GPU! when deepspeed is enabled (for model pipelining), it is divided by the number of gpus for microbatching')
     parser.add_argument('--chkpt_bst_mdl_every', type=int, default=10,
                         help='Checkpoint model every these many validation (!) steps if validation result improved. '
                              'Negative value skips this')
     parser.add_argument('--output_path', type=str,
                         default='/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/',
                         help='path to save training stats and models')
-    parser.add_argument('--grounding_prob', type=float, default=0.5, help='probability of encoder grounding!')
-    parser.add_argument('--enc_loss_weight', type=float, default=2, help='probability of encoder grounding!')
+    parser.add_argument('--grounding_prob', type=float, default=0.5, help='introduce encoder NL labels every ceil(1/x) batches')
+    parser.add_argument('--enc_loss_weight', type=float, default=2, help='scale encoder loss by this factor')
     parser.add_argument('--model_name', type=str, default='meta-llama/Llama-2-7b-hf',
                         help="Model name to load, e.g., 'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl',"
                                                        "'meta-llama/Meta-Llama-3.1-8B', "

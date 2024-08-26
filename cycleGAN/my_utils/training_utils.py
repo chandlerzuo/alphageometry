@@ -1,3 +1,4 @@
+#%%
 import torch
 import pandas as pd
 import os
@@ -5,7 +6,7 @@ import torch.nn.functional as F
 try:
     from .generic_utils import batch_compress_text_forwaiting_and_eot_tokens
 except ImportError:
-    from generic_utils import batch_compress_text_forwaiting_and_eot_tokens
+    from my_utils.generic_utils import batch_compress_text_forwaiting_and_eot_tokens
 
 
 class Checkpointer:
@@ -151,6 +152,15 @@ def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_in
 
 
 def introduce_waiting_tokens(inputs, targets, wait_token_id, padding_id):
+    """
+    Introduce waiting tokens for the decoder-only architecture
+    Given inputs and targets, shift the targets by wait tokens so they effectively start
+    once all the input is seen.
+    
+    Arguments:
+        inputs: tokenized natural texts, of shape (batch_size, seq_len)
+        targets: tokenized formal texts, of shape (batch_size, seq_len)
+    """
     target_ids = []
     padded_inp_ids = []
     padded_inp_masks = []
@@ -172,6 +182,13 @@ def introduce_waiting_tokens(inputs, targets, wait_token_id, padding_id):
 
 
 def introduce_waiting_tokens_for_ae(enc_inputs, enc_label, wait_id, padding_id):
+    """
+    introduce waiting tokens for the encoder-decoder architecture
+    
+    Arguments:
+        enc_inputs: tokenized formal texts, of shape (batch_size, seq_len)
+        enc_label: tokenized natural texts, of shape (batch_size, seq_len)
+    """
     enc_inputs_paded_as_recon_target, recon_target = \
         introduce_waiting_tokens(enc_inputs, enc_inputs, wait_id, padding_id)
 
@@ -189,8 +206,9 @@ def introduce_waiting_tokens_for_ae(enc_inputs, enc_label, wait_id, padding_id):
     else:
         return enc_inputs_paded_as_enc_target, enc_target, recon_target
 
-
+#%%
 if __name__ == '__main__':
+    # inputs of length 6, targets of length 7
     inputs = {'input_ids': torch.tensor([[1, 2, 3, 4, 5, 6],
                                          [1, 2, 0, 0, 0, 0]], dtype=torch.long),
               'attention_mask': torch.tensor([[1, 1, 1, 1, 1, 1],
@@ -200,11 +218,20 @@ if __name__ == '__main__':
                'attention_mask': torch.tensor([[1, 1, 1, 1, 1, 1, 1],
                                                [1, 1, 1, 0, 0, 0, 0]], dtype=torch.long)}
     # inputs, targets = introduce_waiting_tokens(inputs, inputs, -1, 0)
+    
+    enc_in, enc_targets = introduce_waiting_tokens(inputs, targets, -1, 0)
+    print(enc_in)
+    print(enc_targets)
+    print()
+    
     enc_in, enc_targets, rec_target = introduce_waiting_tokens_for_ae(inputs, targets, -1, 0)
     print(enc_in)
     print(enc_targets)
     print(rec_target)
+    print()
 
+#%%
+    # inputs of length 6, targets of length 4
     inputs = {'input_ids': torch.tensor([[1, 2, 3, 4, 5, 6],
                                          [1, 2, 0, 0, 0, 0]], dtype=torch.long),
               'attention_mask': torch.tensor([[1, 1, 1, 1, 1, 1],
@@ -218,3 +245,5 @@ if __name__ == '__main__':
     print(enc_in)
     print(enc_targets)
     print(rec_target)
+
+# %%
