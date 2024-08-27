@@ -136,9 +136,9 @@ def validate_given_data_loader(accelerator, ae_model, args, tokenizer, val_ae_in
 
     # print(get_process_cuda_memory_info())
     # Convert logits to predicted token IDs
-    val_enc_loss /= args.valid_for_batches
-    val_log_perplexity_loss /= args.valid_for_batches
-    val_recon_loss /= args.valid_for_batches
+    val_enc_loss /= i
+    val_log_perplexity_loss /= i
+    val_recon_loss /= i
 
     if val_rec_outputs is not None:
         recon_token_ids = torch.argmax(val_rec_outputs.logits, dim=-1)

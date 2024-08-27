@@ -105,7 +105,7 @@ class AutoEncoderLLM(torch.nn.Module):
         
         # AutoModel.from_pretrained loads wrong model if it is AutoModelForCausalLM, so we load this class as well
         encoder = AutoModelForCausalLM.from_pretrained(output_dir / "encoder") if (output_dir / "encoder").exists() else None
-        decoder = AutoModelForCausalLM.from_pretrained(output_dir / "decoder")
+        decoder = AutoModelForCausalLM.from_pretrained(output_dir / "decoder") if (output_dir / "encoder").exists() else None
         # tokenizer = AutoTokenizer.from_pretrained(output_dir / "tokenizer")
         perplexity_calculator = get_perplexity_calculator(model_name) if uses_perplexity_loss else None
         
