@@ -48,13 +48,13 @@ def main(args):
         os.makedirs(valid_recon_save_path, exist_ok=True)
         os.makedirs(chkpt_dir, exist_ok=True)
 
-    # this micro batching might not be optimal!
-    if accelerator.distributed_type.lower() == 'deepspeed':
-        # accelerator.state.deepspeed_plugin.deepspeed_config['train_micro_batch_size_per_gpu'] \
-        #     = args.batch_size // accelerator.num_processes
-        print("Using deepspeed")
-        accelerator.state.deepspeed_plugin.deepspeed_config['train_micro_batch_size_per_gpu'] \
-            = 1
+    # # this micro batching might not be optimal!
+    # if accelerator.distributed_type.lower() == 'deepspeed':
+    #     # accelerator.state.deepspeed_plugin.deepspeed_config['train_micro_batch_size_per_gpu'] \
+    #     #     = args.batch_size // accelerator.num_processes
+    #     print("Using deepspeed")
+    #     accelerator.state.deepspeed_plugin.deepspeed_config['train_micro_batch_size_per_gpu'] \
+    #         = 2
 
     # Load tokenizer and models
     ae_model, tokenizer, wait_id = load_model(args.model_name, wait_token=wait_token, use_pretrained=args.is_pretrained,
