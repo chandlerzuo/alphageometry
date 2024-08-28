@@ -2,7 +2,24 @@
 import itertools
 import json
 
+import numpy as np
+
 from model_preparation import AutoEncoderLLM
+
+#%%
+import torch
+a = torch.tensor([4.], requires_grad=True)
+b = torch.tensor([5.])
+c = torch.tensor([6.])
+d = torch.tensor([a,b,c])
+d.requires_grad
+
+#%%
+import torch
+aa = torch.arange(20).reshape(4, 5)
+indices = torch.tensor([1, 3, 2, 0])
+aa[indices:indices+10]
+#%%
 
 model = AutoEncoderLLM.from_pretrained("runs/gpt2dec_only/checkpoints")
 #%%
@@ -32,8 +49,33 @@ xx[[i for i in indices if i >= 0]]
 
 
 #%%
-from transformers import AutoModel
-model = AutoModel.from_pretrained("gpt2")
+from transformers import AutoModel, AutoTokenizer
+# model = AutoModel.from_pretrained("gpt2")
+
+# tokenizer = AutoTokenizer.from_pretrained("gpt2")
+tokenizer = AutoTokenizer.from_pretrained("facebook/bart-large-mnli")
+#%%
+tokenizer(
+    ["Hello how are you"], 
+    ["What are you doing right now?"]
+)
+#%%
+from transformers import Trainer
+#%%
+
+
+#%%
+?model
 #%%
 ?model.save_pretrained()
 # %%
+def combine_handling_none(x, new):
+    """append, handling None"""
+    if x is None:
+        return np.array([new])
+    return np.concatenate([x, [new]])
+xx = None
+xx = combine_handling_none(xx, 2.0); xx
+xx = combine_handling_none(xx, 2.1); xx
+
+# np.array([2]).shape
