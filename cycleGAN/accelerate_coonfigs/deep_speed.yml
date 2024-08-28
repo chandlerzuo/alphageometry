@@ -3,18 +3,19 @@ debug: false  # Set to true only when debugging specific issues
 deepspeed_config:
   deepspeed_hostfile: 'accelerate_configs/hostfile.txt'
   # pdsh # standard| openmpi | mvapich | mpich | pdsh
-  deepspeed_multinode_launcher: standard  # Consider exploring 'openmpi' for potential improvements in multi-node setups
-  gradient_accumulation_steps: 32  # Increased to allow larger effective batch sizes and reduce memory pressure
+  deepspeed_multinode_launcher: openmpi # standard  # Consider exploring 'openmpi' for potential improvements in multi-node setups
+  gradient_accumulation_steps: 16  # Increased to allow larger effective batch sizes and reduce memory pressure
   offload_optimizer_device: 'cpu'  # Offloads optimizer states to CPU to save GPU memory
 #  offload_optimizer_device: 'none'  # Offloads optimizer states to CPU to save GPU memory
-  offload_param_device: 'cpu'  # Offloads parameters to CPU as needed, especially beneficial in Zero Stage 3
-#  offload_param_device: 'none'  # Offloads parameters to CPU as needed, especially beneficial in Zero Stage 3
+#  offload_param_device: 'cpu'  # Offloads parameters to CPU as needed, especially beneficial in Zero Stage 3
+  offload_param_device: 'none'  # Offloads parameters to CPU as needed, especially beneficial in Zero Stage 3
   zero3_init_flag: true
   zero_stage: 3  # Ensures maximal memory efficiency by partitioning and offloading model states
 #  stage3_prefetch_bucket_size: 'none'
 #  stage3_max_live_parameters: 'none'
 #  stage3_max_reuse_distance: 'none'
 #  gradient_checkpointing: true
+  train_micro_batch_size_per_gpu: 1
   zero3_save_16bit_model: true
 distributed_type: DEEPSPEED
 fsdp_config: {}

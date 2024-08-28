@@ -8,7 +8,8 @@ from typing import Optional, Tuple
 import torch
 from utils import create_dir, is_frozen, load_pretrained_config_from_scratch, save_model, save_tokenizer
 from frozen_discriminator import PerplexityCalculator
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config, AutoTokenizer, AutoModelForCausalLM, AutoModel
+from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config, AutoTokenizer, AutoModelForCausalLM, \
+    PreTrainedModel, PretrainedConfig
 import textwrap
 from transformers.utils import ModelOutput
 
@@ -114,14 +115,14 @@ def introduce_waiting_tokens(inputs, labels, wait_token_id, pad_token_id):
 def print_once(*args, **kwargs):
     print(*args, **kwargs)
     
-class AutoEncoderLLM(torch.nn.Module):
+class AutoEncoderLLM(PreTrainedModel):
     """
     Encoder-decoder terminology is reversed from usual one!!!
     Decoder: natural to formal
     Encoder: formal to natural
     """
     def __init__(self, model_name, encoder, decoder, perplexity_calculator, padding_token_id):
-        super().__init__()
+        super().__init__(PretrainedConfig())
         self.model_name = model_name
         self.encoder = encoder
         self.decoder = decoder
@@ -255,22 +256,6 @@ class AutoEncoderLLM(torch.nn.Module):
     #         decoded_from_natural = None
     #     return encoder_outputs, decoder_outputs, log_perplexity_loss, decoded_from_natural
 
-    def save_pretrained(self, output_dir):
-        output_dir = Path(output_dir)
-        if self.encoder is not None:
-            save_model(self.encoder, create_dir(output_dir / "encoder"))
-        if self.decoder is not None:
-            save_model(self.decoder, create_dir(output_dir / "decoder"))
-        # save_tokenizer(self.tokenizer, create_dir(output_dir / "tokenizer"))
-
-        # # Good practice: save your training arguments together with the trained model
-        extra_args = {
-            "model_name": self.model_name,
-            "padding_token_id": self.padding_token_id,
-            "uses_perplexity_loss": self.perplexity_calculator is not None,
-        }
-        torch.save(extra_args, os.path.join(output_dir, "extra_args.json"))
-        
     @classmethod
     def from_pretrained(cls, output_dir):
         output_dir = Path(output_dir)
@@ -282,7 +267,7 @@ class AutoEncoderLLM(torch.nn.Module):
         
         # AutoModel.from_pretrained loads wrong model if it is AutoModelForCausalLM, so we load this class as well
         encoder = AutoModelForCausalLM.from_pretrained(output_dir / "encoder") if (output_dir / "encoder").exists() else None
-        decoder = AutoModelForCausalLM.from_pretrained(output_dir / "decoder")
+        decoder = AutoModelForCausalLM.from_pretrained(output_dir / "decoder") if (output_dir / "encoder").exists() else None
         # tokenizer = AutoTokenizer.from_pretrained(output_dir / "tokenizer")
         perplexity_calculator = get_perplexity_calculator(model_name) if uses_perplexity_loss else None
         

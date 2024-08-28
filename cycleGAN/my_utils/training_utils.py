@@ -31,10 +31,7 @@ class Checkpointer:
         if validation_loss < self.prev_validation_loss:
             self.prev_validation_loss = validation_loss
 
-            save_pretrained = unwrapped_model.encoder.save_pretrained if unwrapped_model.encoder is not None \
-                else unwrapped_model.decoder.save_pretrained
-
-            save_pretrained(
+            unwrapped_model.save_pretrained(
                 self.output_dir,
                 is_main_process=accelerator.is_main_process,
                 save_function=accelerator.save,
