@@ -5,12 +5,10 @@ import sys
 from torch.utils.data import DataLoader
 
 from accelerate import Accelerator
-from data_loader.custom_dataset import CustomDataset
 from hf_dataset import AlwaysSameElementDataset, CombinedDataset, MixedDatasetSampler, prepare_data
 from model_preparation import load_model
 from transformers import get_scheduler
 from torch.optim import AdamW
-from torch.utils.data.distributed import DistributedSampler
 from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, print_model_device_distribution, \
     ProgressBar, get_projrct_out_dir
 
@@ -25,6 +23,7 @@ wandb.require("core")
 
 from utils import get_comma_separated_strings, get_hostname, get_username
 
+
 def main(args):
     wait_token = '<w>'
 
@@ -33,9 +32,6 @@ def main(args):
     valid_recon_save_path, chkpt_dir = get_projrct_out_dir(args, accelerator.is_main_process)
     checkpointer = Checkpointer(chkpt_dir, args)
 
-    if get_username() == "mmordig":
-        # accelerator.init_trackers("alphageom_autoencoder", config=vars(args))
-        pass
     seed = 42
     accelerate.utils.set_seed(seed)
 
@@ -54,7 +50,6 @@ def main(args):
         colnames={"formal": "fl_statement", "natural": "rephrase"}
     )
     
-    
     if args.rephrased_ratio > 0:
         print(f"Using {args.rephrased_ratio} rephrased data")
         train_datasets = [non_rephrased_dataset["train"], rephrased_dataset["train"]]
@@ -69,36 +64,19 @@ def main(args):
         train_sampler = None
     train_dataset = wrap_dataset(train_dataset)
     
-    # train_dataset = wrap_dataset(non_rephrased_dataset["train"])
-    # train_dataset = \
-    #     CustomDataset.load(args.dataset_dir / 'nl_fl.csv', split='train',
-    #                        overfitting=args.overfitting, nrows=args.nrows_nonrephrased)
-    # Create a DistributedSampler for the dataset
-    # train_sampler = DistributedSampler(train_dataset, num_replicas=accelerator.num_processes, rank=accelerator.process_index)
-    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_sampler, pin_memory=True, shuffle=False)
+    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_sampler, pin_memory=True,
+                                  shuffle=False)
 
     val_dataset = wrap_dataset(non_rephrased_dataset["validation"])
-    # val_dataset = \
-    #     CustomDataset.load(args.dataset_dir / 'nl_fl.csv', split='validation',
-    #                        overfitting=args.overfitting, nrows=args.nrows_nonrephrased)
     val_rephrased_dat = wrap_dataset(rephrased_dataset["validation"])
-    # val_rephrased_dat = \
-    #     CustomDataset.load(
-    #         args.dataset_dir / 'rephrased-nl_fl_dataset_all.jsonl',
-    #         split='validation', overfitting=args.overfitting, nrows=args.nrows_rephrased)
 
-    # Validation dataset (can use a different or similar sampler depending on the setup)
-    # valid_sampler = DistributedSampler(val_dataset, num_replicas=accelerator.num_processes,
-    #                                    rank=accelerator.process_index)
     valid_sampler = None # not needed, handled by accelerate
-    # val_rephrased_samp = DistributedSampler(val_rephrased_dat, num_replicas=accelerator.num_processes,
-    #                                    rank=accelerator.process_index)
     val_rephrased_samp = None
-    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, sampler=valid_sampler, pin_memory=True, shuffle=False)
+    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, sampler=valid_sampler, pin_memory=True,
+                                shuffle=False)
     val_rephrased_dataloader = DataLoader(val_rephrased_dat, batch_size=args.batch_size, sampler=val_rephrased_samp)
 
     # Optimizers
-    # auto_enc_opt = AdamW(list(encoder.parameters()) + list(decoder.parameters()), lr=2e-5)
     optimizer = AdamW(ae_model.parameters(), lr=2e-5 * 4)
     
     # Learning rate scheduler
@@ -115,12 +93,9 @@ def main(args):
     ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader = accelerator.prepare(
         ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader
     )
-    # encoder, tokenizer, auto_enc_opt, lr_scheduler, train_dataloader = \
-    #     accelerator.prepare([encoder, tokenizer, auto_enc_opt, lr_scheduler, train_dataloader])
 
     # Training loop
     ae_model.train()
-    enc_loss = recon_loss = "N/A"
     val_update_str = f'val_update: N/A'
     for epoch in range(args.num_epochs):
         pbar = ProgressBar(train_dataloader, accelerator)
@@ -134,33 +109,10 @@ def main(args):
             )
 
             ae_model.train()
-            model_outputs, _ = ae_model(formal_inputs=formal_inputs, natural_inputs=natural_inputs, wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id)
+            model_outputs, _ = ae_model(formal_inputs=formal_inputs, natural_inputs=natural_inputs,
+                                        wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id)
             total_loss = model_outputs.total_loss(enc_loss_weight=args.enc_loss_weight)
-            
-            # # perform padding according to training mode
-            # ae_inputs, encoder_target, ae_target = prepare_inputs(
-            #     encoder_only=(args.use_encoder and not args.use_decoder),
-            #     decoder_only=(args.use_decoder and not args.use_encoder), formal_lang=formal_inputs,
-            #     natural_lang=natural_inputs, wait_id=wait_id, pad_token_id=tokenizer.pad_token_id)
 
-            # # import ipdb;ipdb.set_trace()
-            # # encode and decode
-            # enc_outputs, rec_outputs, log_perplexity_loss, _ = \
-            #     ae_model(**ae_inputs, output_hidden_states=True, encoder_target=encoder_target,
-            #              recon_target=ae_target)
-
-            # # Total loss. This unfortunately can't be initialized to 0 and all others added! It complains about double
-            # # backwardpass
-            # total_loss = 0
-            # if rec_outputs is not None:
-            #     recon_loss = rec_outputs.loss
-            #     total_loss = recon_loss
-            # if enc_outputs is not None:
-            #     total_loss += args.enc_loss_weight * enc_outputs.loss
-            #     enc_loss = enc_outputs.loss.item()
-
-            # total_loss += log_perplexity_loss
-            # Backpropagation
             accelerator.backward(total_loss)
             # import ipdb; ipdb.set_trace()
             optimizer.step()
@@ -183,17 +135,14 @@ def main(args):
                     model_kwargs=as_dict(wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id),
                     max_num_batches=args.valid_for_batches,
                 )
-                # val_metrics = compute_validation(accelerator, ae_model, args, epoch * len(train_dataloader) + batch_idx,
-                #                                 epoch, tokenizer, val_dataloader, val_rephrased_dataloader,
-                #                                 valid_recon_save_path, wait_id, args.chkpt_bst_mdl_every, checkpointer)
-                
                 val_update_str = "val_update: " + create_val_metrics_string(val_metrics)
                 accelerator.log(
                     {f"val/{k}": v for k, v in val_metrics.items()}
                     |
                     {f"train/{k}": v for k, v in train_metrics.items()}
                     |
-                    {f"epoch": epoch + batch_idx / len(train_dataloader), "step": epoch * len(train_dataloader) + batch_idx}
+                    {f"epoch": epoch + batch_idx / len(train_dataloader),
+                     "step": epoch * len(train_dataloader) + batch_idx}
                 )
                 
                 ae_model.train()
@@ -215,9 +164,12 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('--num_epochs', type=int, default=10)
-    parser.add_argument('--validate_every', type=int, default=100, help='Validate every these many training steps (reset per epoch)')
+    parser.add_argument('--validate_every', type=int, default=100, help='Validate every these many training steps '
+                                                                        '(reset per epoch)')
     parser.add_argument('--valid_for_batches', type=int, default=10, help='Validate for these many batches')
-    parser.add_argument('--batch_size', type=int, default=32, help='Batch size per GPU! when deepspeed is enabled (for model pipelining), it is divided by the number of gpus for microbatching')
+    parser.add_argument('--batch_size', type=int, default=32, help='Batch size per GPU! when deepspeed is enabled '
+                                                                   '(for model pipelining), it is divided by the number'
+                                                                   ' of gpus for microbatching')
     parser.add_argument('--dataset_dir', type=Path, default=None, help='Path to dataset directory')
     parser.add_argument('--chkpt_bst_mdl_every', type=int, default=10,
                         help='Checkpoint model every these many validation (!) steps if validation result improved. '
@@ -225,33 +177,41 @@ if __name__ == "__main__":
     parser.add_argument('--output_path', type=str,
                         default=None,
                         help='path to save training stats and models')
-    parser.add_argument('--grounding_prob', type=float, default=0.5, help='introduce encoder NL labels every ceil(1/x) batches')
+    parser.add_argument('--grounding_prob', type=float, default=0.5, help='introduce encoder NL labels every ceil(1/x)'
+                                                                          ' batches')
     parser.add_argument('--enc_loss_weight', type=float, default=2, help='scale encoder loss by this factor')
     parser.add_argument('--model_name', type=str, default='meta-llama/Llama-2-7b-hf',
                         help="Model name to load, e.g., 'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl',"
                                                        "'meta-llama/Meta-Llama-3.1-8B', "
                                                        "'meta-llama/Llama-2-7b-hf'")
-    parser.add_argument('--overfitting', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False, help="whether to overfit on a single batch (same across all GPUs)")
+    parser.add_argument('--overfitting', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False,
+                        help="whether to overfit on a single batch (same across all GPUs)")
     parser.add_argument('--is_pretrained', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
     parser.add_argument('--use_decoder', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
     parser.add_argument('--use_encoder', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
     parser.add_argument('--use_perplexity_loss',
                         type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
-    parser.add_argument('--nrows_nonrephrased', type=int, default=None, help='Number of rows to load from the non-rephrased dataset before splitting into train/val/test, defaults to all')
-    parser.add_argument('--nrows_rephrased', type=int, default=None, help='Number of rows to load from the rephrased dataset before splitting into train/val/test, defaults to all')
+    parser.add_argument('--nrows_nonrephrased', type=int, default=None,
+                        help='Number of rows to load from the non-rephrased dataset before splitting into '
+                             'train/val/test, defaults to all')
+    parser.add_argument('--nrows_rephrased', type=int, default=None,
+                        help='Number of rows to load from the rephrased dataset before splitting into '
+                             'train/val/test, defaults to all')
     parser.add_argument('--rephrased_ratio', type=float, default=0, help='Ratio of picking from rephrased dataset')
 
     print(f"Unparsed arguments: {get_comma_separated_strings(sys.argv)}")
     args = parser.parse_args()
     
     if args.output_path is None:
-        args.output_path = os.environ.get("ALPHA_GEOM_OUTPUT_PATH", '/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/')
+        args.output_path = os.environ.get("ALPHA_GEOM_OUTPUT_PATH",
+                                          '/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/')
         if get_username() == "mmordig":
             args.output_path = "runs/"
         print(f"Output path not provided, using {args.output_path}")
 
     if args.dataset_dir is None:
-        args.dataset_dir = Path(os.environ.get("ALPHA_GEOM_DATASET", '/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/'))
+        args.dataset_dir = Path(os.environ.get("ALPHA_GEOM_DATASET",
+                                               '/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/'))
     
     assert 0 <= args.rephrased_ratio, f"got invalid {args.rephrased_ratio=}"
     

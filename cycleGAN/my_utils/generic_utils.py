@@ -31,7 +31,7 @@ class ProgressBar:
             self.pbar.set_description(desc)
 
 
-def get_projrct_out_dir(args):
+def get_projrct_out_dir(args, is_main_process):
     mdl_dir = args.model_name
     if args.use_decoder and not args.use_encoder:
         mdl_dir += '_dec_only'
@@ -52,6 +52,10 @@ def get_projrct_out_dir(args):
             mdl_dir_with_count = mdl_dir + f'_{count}'
         else:
             break
+
+    if is_main_process:
+        os.makedirs(valid_recon_save_path, exist_ok=True)
+        os.makedirs(chkpt_dir, exist_ok=True)
 
     return valid_recon_save_path, chkpt_dir
 
