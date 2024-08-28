@@ -79,3 +79,12 @@ xx = combine_handling_none(xx, 2.0); xx
 xx = combine_handling_none(xx, 2.1); xx
 
 # np.array([2]).shape
+
+#%%
+from my_utils.hf_wrapper import debug_on_error
+
+@debug_on_error
+def f():
+    return 1/0
+f()
+# %%

@@ -13,6 +13,26 @@
             "args": ["--model_name=gpt2", "--rephrased_ratio", "2", "--valid_for_batches=10", "--batch_size=8", "--validate_every=2", "--grounding_prob=1", "--use_perplexity_loss=False", "--use_decoder=True", "--use_encoder=True"],
             "console": "integratedTerminal",
             "justMyCode": false,
+        },
+
+        // attach
+        {
+            "name": "Attach debugger",
+            "type": "debugpy",
+            "request": "attach",
+            // "port": 5678, // old
+            "port": 5680,
+            // "port": 53920,
+            "host": "localhost",
+            "justMyCode": false,
+            "pathMappings": [
+                {
+                    "localRoot": "/home/mmordig",
+                    "remoteRoot": "/lustre/home/mmordig",
+                }
+            ],
+
+            "logToFile": true,
         }
     ]
 }
