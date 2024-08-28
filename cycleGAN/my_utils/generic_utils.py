@@ -3,6 +3,7 @@ import os
 import tqdm
 import re
 import pandas as pd
+import json
 
 
 class ProgressBar:
@@ -28,6 +29,31 @@ class ProgressBar:
     def set_description(self, desc):
         if self.local_rank == 0:
             self.pbar.set_description(desc)
+
+
+def get_projrct_out_dir(args):
+    mdl_dir = args.model_name
+    if args.use_decoder and not args.use_encoder:
+        mdl_dir += '_dec_only'
+    elif args.use_encoder and not args.use_decoder:
+        mdl_dir += '_enc_only'
+    else:
+        mdl_dir += '_full_ae'
+    if args.use_perplexity_loss:
+        mdl_dir += '+perplexity'
+
+    mdl_dir_with_count = mdl_dir
+
+    for count in range(999):
+        mdl_output_home = os.path.join(args.output_path, mdl_dir_with_count)
+        valid_recon_save_path = os.path.join(mdl_output_home, 'validation_outputs')
+        chkpt_dir = os.path.join(mdl_output_home, 'checkpoints')
+        if os.path.exists(mdl_output_home):
+            mdl_dir_with_count = mdl_dir + f'_{count}'
+        else:
+            break
+
+    return valid_recon_save_path, chkpt_dir
 
 
 def compress_text_forwaiting_and_eot_tokens(input_text, wait_token='<w>', eot_token='<|endoftext|>'):

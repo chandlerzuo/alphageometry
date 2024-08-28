@@ -3,6 +3,8 @@ import torch
 import pandas as pd
 import os
 import torch.nn.functional as F
+import json
+
 try:
     from .generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe
 except ImportError:
@@ -11,11 +13,18 @@ except ImportError:
 
 class Checkpointer:
     """Save model, but only if it is better than the previous best model"""
-    def __init__(self, output_dir):
+    def __init__(self, output_dir, args):
         self.prev_validation_loss = 9999999999
         self.output_dir = output_dir
+        self.args_dict = vars(args)
 
     def checkpoint(self, accelerator, model, validation_loss):
+        if accelerator.is_main_process:
+            if self.args_dict is not None:
+                with open('cmd_args.json', 'w') as json_file:
+                    json.dump(self.args_dict, json_file, indent=4)
+                self.args_dict = None
+                
         unwrapped_model = accelerator.unwrap_model(model)
         # Saves the whole/unpartitioned fp16 model when in ZeRO Stage-3 to the output directory if
         # `stage3_gather_16bit_weights_on_model_save` is True in DeepSpeed Config file or

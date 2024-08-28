@@ -12,7 +12,7 @@ from transformers import get_scheduler
 from torch.optim import AdamW
 from torch.utils.data.distributed import DistributedSampler
 from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, print_model_device_distribution, \
-    ProgressBar
+    ProgressBar, get_projrct_out_dir
 from my_utils.training_utils import compute_validation, create_metrics_string, Checkpointer, prepare_inputs
 import accelerate
 
@@ -24,20 +24,9 @@ from utils import get_comma_separated_strings, get_hostname, get_username
 
 def main(args):
     wait_token = '<w>'
-    mdl_dir = args.model_name
-    if args.use_decoder and not args.use_encoder:
-        mdl_dir += '_dec_only'
-    elif args.use_encoder and not args.use_decoder:
-        mdl_dir += '_enc_only'
-    else:
-        mdl_dir += '_full_ae'
-    if args.use_perplexity_loss:
-        mdl_dir += '+perplexity'
-    mdl_output_home = os.path.join(args.output_path, mdl_dir)
-    valid_recon_save_path = os.path.join(mdl_output_home, 'validation_outputs')
-    chkpt_dir = os.path.join(mdl_output_home, 'checkpoints')
 
-    checkpointer = Checkpointer(chkpt_dir)
+    valid_recon_save_path, chkpt_dir = get_projrct_out_dir(args)
+    checkpointer = Checkpointer(chkpt_dir, args)
 
     # Initialize Accelerator
     accelerator = Accelerator(log_with="all")
