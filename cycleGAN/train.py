@@ -13,7 +13,7 @@ from torch.optim import AdamW
 from torch.utils.data.distributed import DistributedSampler
 from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, print_model_device_distribution, \
     ProgressBar
-from my_utils.training_utils import compute_validation, create_metrics_string, Checkpointer, prepare_inputs
+from my_utils.training_utils import as_dict, create_val_metrics_string, Checkpointer, prepare_formal_natural_inputs, run_validation
 import accelerate
 
 import wandb
@@ -41,7 +41,9 @@ def main(args):
 
     # Initialize Accelerator
     accelerator = Accelerator(log_with="all")
-    # accelerator.init_trackers("alphageom_autoencoder", config=vars(args))
+    if get_username() == "mmordig":
+        # accelerator.init_trackers("alphageom_autoencoder", config=vars(args))
+        pass
     seed = 42
     accelerate.utils.set_seed(seed)
     if accelerator.is_main_process:
@@ -116,86 +118,95 @@ def main(args):
 
     # Optimizers
     # auto_enc_opt = AdamW(list(encoder.parameters()) + list(decoder.parameters()), lr=2e-5)
-    auto_enc_opt = AdamW(ae_model.parameters(), lr=2e-5 * 4)
+    optimizer = AdamW(ae_model.parameters(), lr=2e-5 * 4)
     
     # Learning rate scheduler
     num_training_steps = args.num_epochs * len(train_dataloader)
     lr_scheduler = get_scheduler(
         # name="linear",
         name="cosine",
-        optimizer=auto_enc_opt,
+        optimizer=optimizer,
         num_warmup_steps=0,
         num_training_steps=num_training_steps,
     )
 
     # import ipdb; ipdb.set_trace()
-    ae_model, auto_enc_opt, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader = accelerator.prepare(
-        ae_model, auto_enc_opt, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader
+    ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader = accelerator.prepare(
+        ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader
     )
     # encoder, tokenizer, auto_enc_opt, lr_scheduler, train_dataloader = \
     #     accelerator.prepare([encoder, tokenizer, auto_enc_opt, lr_scheduler, train_dataloader])
 
     # Training loop
     ae_model.train()
-    enc_loss = recon_loss = 0
-    val_update_str = f'val_update: None'
+    enc_loss = recon_loss = "N/A"
+    val_update_str = f'val_update: N/A'
     for epoch in range(args.num_epochs):
         pbar = ProgressBar(train_dataloader, accelerator)
         for batch_idx, batch in enumerate(pbar):
             formal_texts = batch['formal']
             natural_texts = batch['natural']  # perhaps sometimes we should use it for grounding
-            # Encode formal to natural
-            enc_inputs = tokenizer(formal_texts, return_tensors='pt', padding=True, truncation=True, max_length=512)
-            enc_inputs = {k: v.to(accelerator.device) for k, v in
-                          enc_inputs.items()}  # Ensure inputs are on the right device
+            
+            formal_inputs, natural_inputs = prepare_formal_natural_inputs(
+                formal_texts, natural_texts, tokenizer=tokenizer,
+                return_natural_inputs=batch_idx % math.ceil(1/(args.grounding_prob + 1e-7)) == 0
+            )
 
-            # This has to be deterministic else some process will wait for the others!
-            if batch_idx % math.ceil(1/(args.grounding_prob + 1e-7)) == 0:
-                enc_label = tokenizer(natural_texts, return_tensors='pt', padding=True, truncation=True, max_length=512)
-                enc_label = {k: v.to(accelerator.device) for k, v in
-                              enc_label.items()}  # Ensure inputs are on the right device
-            else:
-                enc_label = None
+            ae_model.train()
+            model_outputs, _ = ae_model(formal_inputs=formal_inputs, natural_inputs=natural_inputs, wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id)
+            total_loss = model_outputs.total_loss(enc_loss_weight=args.enc_loss_weight)
+            
+            # # perform padding according to training mode
+            # ae_inputs, encoder_target, ae_target = prepare_inputs(
+            #     encoder_only=(args.use_encoder and not args.use_decoder),
+            #     decoder_only=(args.use_decoder and not args.use_encoder), formal_lang=formal_inputs,
+            #     natural_lang=natural_inputs, wait_id=wait_id, pad_token_id=tokenizer.pad_token_id)
 
-            # perform padding according to training mode
-            ae_inputs, encoder_target, ae_target = prepare_inputs(
-                encoder_only=(args.use_encoder and not args.use_decoder),
-                decoder_only=(args.use_decoder and not args.use_encoder), formal_lang=enc_inputs,
-                natural_lang=enc_label, wait_id=wait_id, pad_token_id=tokenizer.pad_token_id)
+            # # import ipdb;ipdb.set_trace()
+            # # encode and decode
+            # enc_outputs, rec_outputs, log_perplexity_loss, _ = \
+            #     ae_model(**ae_inputs, output_hidden_states=True, encoder_target=encoder_target,
+            #              recon_target=ae_target)
 
-            # import ipdb;ipdb.set_trace()
-            # encode and decode
-            enc_outputs, rec_outputs, log_perplexity_loss, _ = \
-                ae_model(**ae_inputs, output_hidden_states=True, encoder_target=encoder_target,
-                         recon_target=ae_target)
+            # # Total loss. This unfortunately can't be initialized to 0 and all others added! It complains about double
+            # # backwardpass
+            # total_loss = 0
+            # if rec_outputs is not None:
+            #     recon_loss = rec_outputs.loss
+            #     total_loss = recon_loss
+            # if enc_outputs is not None:
+            #     total_loss += args.enc_loss_weight * enc_outputs.loss
+            #     enc_loss = enc_outputs.loss.item()
 
-            # Total loss. This unfortunately can't be initialized to 0 and all others added! It complains about double
-            # backwardpass
-            total_loss = 0
-            if rec_outputs is not None:
-                recon_loss = rec_outputs.loss
-                total_loss = recon_loss
-            if enc_outputs is not None:
-                total_loss += args.enc_loss_weight * enc_outputs.loss
-                enc_loss = enc_outputs.loss.item()
-
-            total_loss += log_perplexity_loss
+            # total_loss += log_perplexity_loss
             # Backpropagation
             accelerator.backward(total_loss)
             # import ipdb; ipdb.set_trace()
-            auto_enc_opt.step()
+            optimizer.step()
             lr_scheduler.step()
-            auto_enc_opt.zero_grad()
+            optimizer.zero_grad()
+            
+            train_metrics = {
+                "log_perp_loss": model_outputs.log_perplexity_loss or 0, 
+                "recon_loss": model_outputs.decoder_loss(), 
+                "enc_loss": model_outputs.encoder_loss(),
+            }
 
             if batch_idx % args.validate_every == args.validate_every - 1:
-                val_metrics = compute_validation(accelerator, ae_model, args, epoch * len(train_dataloader) + batch_idx,
-                                                epoch, tokenizer, val_dataloader, val_rephrased_dataloader,
-                                                valid_recon_save_path, wait_id, args.chkpt_bst_mdl_every, checkpointer)
                 
-                val_update_str = create_metrics_string(val_metrics)
-                train_metrics = {
-                    "log_perp_loss": log_perplexity_loss, "recon_loss": recon_loss, "enc_loss": enc_loss
-                }
+                df_filename = os.path.join(valid_recon_save_path, f'{epoch}_{batch_idx}_fl_fl.csv')
+                val_metrics = run_validation(
+                    model=ae_model, accelerator=accelerator, tokenizer=tokenizer, 
+                    non_rephrased_dataloader=val_dataloader, rephrased_dataloader=val_rephrased_dataloader,
+                    df_filename=df_filename,
+                    model_kwargs=as_dict(wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id),
+                    max_num_batches=args.valid_for_batches,
+                )
+                # val_metrics = compute_validation(accelerator, ae_model, args, epoch * len(train_dataloader) + batch_idx,
+                #                                 epoch, tokenizer, val_dataloader, val_rephrased_dataloader,
+                #                                 valid_recon_save_path, wait_id, args.chkpt_bst_mdl_every, checkpointer)
+                
+                val_update_str = "val_update: " + create_val_metrics_string(val_metrics)
                 accelerator.log(
                     {f"val/{k}": v for k, v in val_metrics.items()}
                     |
@@ -203,8 +214,14 @@ def main(args):
                     |
                     {f"epoch": epoch + batch_idx / len(train_dataloader), "step": epoch * len(train_dataloader) + batch_idx}
                 )
-            pbar.set_description(f'Epoch {epoch+1}/{args.num_epochs}: {val_update_str} log_perp_loss:{log_perplexity_loss:.3f}, '
-                                 f'recon_loss:{recon_loss:.3f}, enc_loss:{enc_loss:.3f}')
+                
+                ae_model.train()
+                if (batch_idx + 1) % args.chkpt_bst_mdl_every == 0:
+                    loss_for_saving = val_metrics["enc_loss"] + val_metrics["recon_loss"]
+                    checkpointer.checkpoint(accelerator, ae_model, loss_for_saving)
+                
+            train_update_str = " ".join([f"{k}:{v:.3f}" for k, v in train_metrics.items()])
+            pbar.set_description(f'Epoch {epoch+1}/{args.num_epochs}: {val_update_str} {train_update_str}')
 
     accelerator.end_training()
     print(f"Training completed. A total of {epoch+1} epoch(s)")
