@@ -31,7 +31,7 @@ class ProgressBar:
             self.pbar.set_description(desc)
 
 
-def get_projrct_out_dir(args, is_main_process):
+def get_project_out_dir(args, is_main_process):
     mdl_dir = args.model_name
     if args.use_decoder and not args.use_encoder:
         mdl_dir += '_dec_only'
@@ -123,6 +123,16 @@ def get_process_cuda_memory_info():
 
     return memory_info
 
+def numpify(t):
+    # handles bfloat16 issue
+    # see transformers.trainer_pt_utils.nested_numpify
+    t = t.cpu()
+    if t.dtype == torch.bfloat16:
+        # As of Numpy 1.21.4, NumPy does not support bfloat16 (see
+        # https://github.com/numpy/numpy/blob/a47ecdea856986cd60eabbd53265c2ca5916ad5d/doc/source/user/basics.types.rst ).
+        # Until Numpy adds bfloat16, we must convert float32.
+        t = t.to(torch.float32)
+    return t.numpy()
 
 def print_proc0(msg):
     """print only on process 0"""

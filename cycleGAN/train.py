@@ -10,7 +10,7 @@ from model_preparation import load_model
 from transformers import get_scheduler
 from torch.optim import AdamW
 from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, print_model_device_distribution, \
-    ProgressBar, get_projrct_out_dir
+    ProgressBar, get_project_out_dir
 
 from my_utils.training_utils import as_dict, create_val_metrics_string, Checkpointer, prepare_formal_natural_inputs,\
     run_validation
@@ -22,14 +22,19 @@ os.environ.setdefault("WANDB_PROJECT", "alphageom_new")
 wandb.require("core")
 
 from utils import get_comma_separated_strings, get_hostname, get_username
+from my_utils.hf_wrapper import debug_on_error
 
-
+@debug_on_error
 def main(args):
     wait_token = '<w>'
 
     # Initialize Accelerator
     accelerator = Accelerator(log_with="all")
-    valid_recon_save_path, chkpt_dir = get_projrct_out_dir(args, accelerator.is_main_process)
+    if get_username() == "mmordig":
+        accelerator.init_trackers("alphageom_autoencoder", config=vars(args))
+        # pass
+    valid_recon_save_path, chkpt_dir = get_project_out_dir(args, accelerator.is_main_process)
+    print(f"Outputting to dirs {valid_recon_save_path} and {chkpt_dir}")
     checkpointer = Checkpointer(chkpt_dir, args)
 
     seed = 42

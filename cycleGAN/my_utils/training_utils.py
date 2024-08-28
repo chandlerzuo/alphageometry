@@ -9,6 +9,7 @@ import json
 from accelerate import PartialState, Accelerator
 
 from model_preparation import AutoEncoderLLM
+from my_utils.generic_utils import numpify
 try:
     from .generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe
 except ImportError:
@@ -26,7 +27,7 @@ class Checkpointer:
         if accelerator.is_main_process:
             if self.args_dict is not None:
                 with open('cmd_args.json', 'w') as json_file:
-                    json.dump(self.args_dict, json_file, indent=4)
+                    json.dump({k: str(v) for k, v in self.args_dict.items()}, json_file, indent=4)
                 self.args_dict = None
                 
         unwrapped_model = accelerator.unwrap_model(model)
@@ -236,13 +237,13 @@ def compute_loss_and_df(model: AutoEncoderLLM, accelerator: Accelerator, tokeniz
 
             model_outputs, model_inputs = model(formal_inputs=formal_inputs, natural_inputs=natural_inputs, **model_kwargs, return_inputs=is_first_batch)
             if model_outputs.log_perplexity_loss is not None:
-                perplexity_loss = accelerator.gather(model_outputs.log_perplexity_loss).cpu().numpy()
+                perplexity_loss = numpify(accelerator.gather(model_outputs.log_perplexity_loss))
                 perplexity_losses = combine_handling_none(perplexity_losses, perplexity_loss)
             if model_outputs.encoder_outputs is not None:
-                encoder_loss = accelerator.gather(model_outputs.encoder_outputs.loss).cpu().numpy()
+                encoder_loss = numpify(accelerator.gather(model_outputs.encoder_outputs.loss))
                 encoder_losses = combine_handling_none(encoder_losses, encoder_loss)
             if model_outputs.decoder_outputs is not None:
-                decoder_loss = accelerator.gather(model_outputs.decoder_outputs.loss).cpu().numpy()
+                decoder_loss = numpify(accelerator.gather(model_outputs.decoder_outputs.loss))
                 decoder_losses = combine_handling_none(decoder_losses, decoder_loss)
             # not working as of now
             # ones_for_batch = torch.ones(len(formal_texts), device=formal_inputs["input_ids"].device)
