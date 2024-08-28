@@ -4,6 +4,7 @@ import tqdm
 import re
 import pandas as pd
 import json
+from pathlib import Path
 
 
 class ProgressBar:
@@ -31,6 +32,22 @@ class ProgressBar:
             self.pbar.set_description(desc)
 
 
+class CustomJSONserializer(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Path):
+            # Convert Path object to its absolute path string representation
+            return str(obj.absolute())
+        else:
+            try:
+                return super().default(obj)
+            except TypeError:
+                # Fallback to string representation for unserializable objects
+                print(f"WARNING: Object of type {type(obj).__name__} is not serializable. "
+                      f"Replacing with its string representation.")
+
+                return str(obj)
+
+
 def get_projrct_out_dir(args, is_main_process):
     mdl_dir = args.model_name
     if args.use_decoder and not args.use_encoder:
@@ -56,6 +73,9 @@ def get_projrct_out_dir(args, is_main_process):
     if is_main_process:
         os.makedirs(valid_recon_save_path, exist_ok=True)
         os.makedirs(chkpt_dir, exist_ok=True)
+
+    args.valid_recon_save_path = valid_recon_save_path
+    args.chkpt_dir = chkpt_dir
 
     return valid_recon_save_path, chkpt_dir
 

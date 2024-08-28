@@ -5,14 +5,17 @@ import numpy as np
 import torch
 import pandas as pd
 import json
+import os
 
 from accelerate import PartialState, Accelerator
 
 from model_preparation import AutoEncoderLLM
 try:
-    from .generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe
+    from .generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe, \
+        CustomJSONserializer
 except ImportError:
-    from my_utils.generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe
+    from my_utils.generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe, \
+        CustomJSONserializer
 
 
 class Checkpointer:
@@ -25,8 +28,8 @@ class Checkpointer:
     def checkpoint(self, accelerator, model, validation_loss):
         if accelerator.is_main_process:
             if self.args_dict is not None:
-                with open('cmd_args.json', 'w') as json_file:
-                    json.dump(self.args_dict, json_file, indent=4)
+                with open(os.path.join(self.output_dir, 'cmd_args.json'), 'w') as json_file:
+                    json.dump(self.args_dict, json_file, indent=4, sort_keys=True, cls=CustomJSONserializer)
                 self.args_dict = None
                 
         unwrapped_model = accelerator.unwrap_model(model)
