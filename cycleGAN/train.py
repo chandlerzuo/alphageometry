@@ -115,7 +115,8 @@ def main(args):
 
             ae_model.train()
             model_outputs, _ = ae_model(formal_inputs=formal_inputs, natural_inputs=natural_inputs,
-                                        wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id)
+                                        wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id,
+                                        padding_type=args.padding_type)
             total_loss = model_outputs.total_loss(enc_loss_weight=args.enc_loss_weight)
 
             accelerator.backward(total_loss)
@@ -138,8 +139,7 @@ def main(args):
                     non_rephrased_dataloader=val_dataloader, rephrased_dataloader=val_rephrased_dataloader,
                     df_filename=df_filename,
                     model_kwargs=as_dict(wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id),
-                    max_num_batches=args.valid_for_batches,
-                )
+                    max_num_batches=args.valid_for_batches, padding_type=args.padding_type)
                 val_update_str = "val_update: " + create_val_metrics_string(val_metrics)
                 accelerator.log(
                     {f"val/{k}": v for k, v in val_metrics.items()}
@@ -203,6 +203,9 @@ if __name__ == "__main__":
                         help='Number of rows to load from the rephrased dataset before splitting into '
                              'train/val/test, defaults to all')
     parser.add_argument('--rephrased_ratio', type=float, default=0, help='Ratio of picking from rephrased dataset')
+    parser.add_argument('--padding_type', type=str,
+                        default='copy_target',
+                        help='Padding mode to use. Either "copy_target" or "pad_tok" as possible')
 
     print(f"Unparsed arguments: {get_comma_separated_strings(sys.argv)}")
     args = parser.parse_args()
