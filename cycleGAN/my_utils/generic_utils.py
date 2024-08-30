@@ -5,6 +5,7 @@ import re
 import pandas as pd
 import json
 from pathlib import Path
+import accelerate
 
 
 class ProgressBar:
@@ -49,30 +50,34 @@ class CustomJSONserializer(json.JSONEncoder):
 
 
 def get_project_out_dir(args, is_main_process):
-    mdl_dir = args.model_name
-    if args.use_decoder and not args.use_encoder:
-        mdl_dir += '_dec_only'
-    elif args.use_encoder and not args.use_decoder:
-        mdl_dir += '_enc_only'
-    else:
-        mdl_dir += '_full_ae'
-    if args.use_perplexity_loss:
-        mdl_dir += '+perplexity'
-
-    mdl_dir_with_count = mdl_dir
-
-    for count in range(999):
-        mdl_output_home = os.path.join(args.output_path, mdl_dir_with_count)
-        valid_recon_save_path = os.path.join(mdl_output_home, 'validation_outputs')
-        chkpt_dir = os.path.join(mdl_output_home, 'checkpoints')
-        if os.path.exists(mdl_output_home):
-            mdl_dir_with_count = mdl_dir + f'_{count}'
-        else:
-            break
-
+    chkpt_paths = ['', '']
     if is_main_process:
+        mdl_dir = args.model_name
+        if args.use_decoder and not args.use_encoder:
+            mdl_dir += '_dec_only'
+        elif args.use_encoder and not args.use_decoder:
+            mdl_dir += '_enc_only'
+        else:
+            mdl_dir += '_full_ae'
+        if args.use_perplexity_loss:
+            mdl_dir += '+perplexity'
+
+        mdl_dir_with_count = mdl_dir
+
+        for count in range(999):
+            mdl_output_home = os.path.join(args.output_path, mdl_dir_with_count)
+            valid_recon_save_path = os.path.join(mdl_output_home, 'validation_outputs')
+            chkpt_dir = os.path.join(mdl_output_home, 'checkpoints')
+            if os.path.exists(mdl_output_home):
+                mdl_dir_with_count = mdl_dir + f'_{count}'
+            else:
+                break
+
         os.makedirs(valid_recon_save_path, exist_ok=True)
         os.makedirs(chkpt_dir, exist_ok=True)
+        chkpt_paths = [str(valid_recon_save_path), str(chkpt_dir)]
+
+    valid_recon_save_path, chkpt_dir = accelerate.utils.broadcast_object_list(chkpt_paths, from_process=0)
 
     args.valid_recon_save_path = valid_recon_save_path
     args.chkpt_dir = chkpt_dir
@@ -143,6 +148,7 @@ def get_process_cuda_memory_info():
 
     return memory_info
 
+
 def numpify(t):
     # handles bfloat16 issue
     # see transformers.trainer_pt_utils.nested_numpify
@@ -153,6 +159,7 @@ def numpify(t):
         # Until Numpy adds bfloat16, we must convert float32.
         t = t.to(torch.float32)
     return t.numpy()
+
 
 def print_proc0(msg):
     """print only on process 0"""

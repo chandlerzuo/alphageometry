@@ -6,6 +6,7 @@ import torch
 import pandas as pd
 import json
 import os
+import accelerate
 
 from accelerate import PartialState, Accelerator
 
@@ -32,15 +33,15 @@ class Checkpointer:
                 with open(os.path.join(self.output_dir, 'cmd_args.json'), 'w') as json_file:
                     json.dump(self.args_dict, json_file, indent=4, sort_keys=True, cls=CustomJSONserializer)
                 self.args_dict = None
-                
-        unwrapped_model = accelerator.unwrap_model(model)
-        # Saves the whole/unpartitioned fp16 model when in ZeRO Stage-3 to the output directory if
-        # `stage3_gather_16bit_weights_on_model_save` is True in DeepSpeed Config file or
-        # `zero3_save_16bit_model` is True in DeepSpeed Plugin.
-        # For Zero Stages 1 and 2, models are saved as usual in the output directory.
-        # The model name saved is `pytorch_model.bin`
+
         if validation_loss < self.prev_validation_loss:
             self.prev_validation_loss = validation_loss
+            unwrapped_model = accelerator.unwrap_model(model)
+            # Saves the whole/unpartitioned fp16 model when in ZeRO Stage-3 to the output directory if
+            # `stage3_gather_16bit_weights_on_model_save` is True in DeepSpeed Config file or
+            # `zero3_save_16bit_model` is True in DeepSpeed Plugin.
+            # For Zero Stages 1 and 2, models are saved as usual in the output directory.
+            # The model name saved is `pytorch_model.bin`
 
             unwrapped_model.save_pretrained(
                 self.output_dir,
@@ -49,6 +50,8 @@ class Checkpointer:
                 state_dict=accelerator.get_state_dict(model)
             )
             print(f'Model saved in {self.output_dir}')
+
+        accelerate.utils.wait_for_everyone()
 
 
 def prepare_formal_natural_inputs(formal_texts, natural_texts, tokenizer, return_natural_inputs=True):
