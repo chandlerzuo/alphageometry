@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 import tempfile
 from typing import Optional, Tuple
+from utils import freeze_params
 
-import ipdb
 import torch
 from utils import create_dir, is_frozen, load_pretrained_config_from_scratch, save_model, save_tokenizer
 from frozen_discriminator import PerplexityCalculator
@@ -20,8 +20,9 @@ class AutoEncoderLLMOutput(ModelOutput):
     """Output of the AutoEncoderLLM model"""
     encoder_outputs: Optional[ModelOutput]
     decoder_outputs: Optional[ModelOutput] # outputs of decoder, possibly after feeding in encoder outputs
-    decoder_outputs_from_natural: Optional[ModelOutput] # outputs of decoder, using ground-truth natural inputs, not set for decoder-only model
-    log_perplexity_loss: Optional[torch.Tensor] = None # perplexity loss of encoder output
+    # outputs of decoder, using ground-truth natural inputs, not set for decoder-only model
+    decoder_outputs_from_natural: Optional[ModelOutput]
+    log_perplexity_loss: Optional[torch.Tensor] = None  # perplexity loss of encoder output
     
     def __post_init__(self):
         if self.log_perplexity_loss is not None:
@@ -50,6 +51,9 @@ class AutoEncoderLLMOutput(ModelOutput):
     
     def decoder_logits(self):
         return self.decoder_outputs.logits if self.decoder_outputs is not None else None
+
+    def decoder_loss_on_nat_lang_input(self):
+        return self.decoder_outputs_from_natural.loss if self.decoder_outputs_from_natural is not None else 0
     
     def decoder_logits_from_natural(self):
         return self.decoder_outputs_from_natural.logits if self.decoder_outputs_from_natural is not None else None
@@ -145,9 +149,16 @@ class AutoEncoderLLM(PreTrainedModel):
         self.padding_token_id = padding_token_id
         
         assert encoder is not None or decoder is not None, "At least one of encoder or decoder should be present"
-        
+
+        #TODO: For watever reason the first parameter is staying trainable! Even if we se it to false. When using
+        # Accelerate! Not when we launch with simple python. However since we do not add the parameters to the
+        # optimizer they should stay unchanged!
+        # if self.perplexity_calculator is not None:
+        #     assert is_frozen(self.perplexity_calculator)
+
+    def freeze_perplexity_model(self):
         if self.perplexity_calculator is not None:
-            assert is_frozen(self.perplexity_calculator.model)
+            freeze_params(self.perplexity_calculator)
         
     def _encode(self, **enc_inputs):
         assert self.encoder is not None
@@ -233,13 +244,14 @@ class AutoEncoderLLM(PreTrainedModel):
                 "attention_mask": encoder_inputs["attention_mask"],
             }, formal_inputs_with_embed, **kwargs)
             decoder_outputs = self.decoder(**decoder_inputs, labels=decoder_targets)
-            
-            if also_decode_natural:
+
+            # only makes sense for the full AE model
+            if also_decode_natural and self.decoder is not None and self.encoder is not None:
                 decoder_inputs, decoder_targets = introduce_waiting_tokens(natural_inputs, formal_inputs, **kwargs)
-                decoder_outputs_from_natural = self._decode(**natural_inputs, labels=decoder_targets)
+                decoder_outputs_from_natural = self._decode(**decoder_inputs, labels=decoder_targets)
             
         if self.perplexity_calculator is not None:
-            perplexity_loss = self.perplexity_calculator(inputs_embeds=encoder_outputs.logits)
+            perplexity_loss = self.perplexity_calculator(input_logits=encoder_outputs.logits)
             
         return AutoEncoderLLMOutput(
             encoder_outputs=encoder_outputs, 

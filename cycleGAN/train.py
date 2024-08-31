@@ -98,6 +98,7 @@ def main(args):
     ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader = accelerator.prepare(
         ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader
     )
+    ae_model.freeze_perplexity_model()
 
     # Training loop
     ae_model.train()
@@ -116,7 +117,7 @@ def main(args):
             ae_model.train()
             model_outputs, _ = ae_model(formal_inputs=formal_inputs, natural_inputs=natural_inputs,
                                         wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id,
-                                        padding_type=args.padding_type)
+                                        padding_type=args.padding_type, also_decode_natural=True)
             total_loss = model_outputs.total_loss(enc_loss_weight=args.enc_loss_weight)
 
             accelerator.backward(total_loss)
@@ -126,9 +127,10 @@ def main(args):
             optimizer.zero_grad()
             
             train_metrics = {
-                "log_perp_loss": model_outputs.log_perplexity_loss or 0, 
-                "recon_loss": model_outputs.decoder_loss(), 
-                "enc_loss": model_outputs.encoder_loss(),
+                "lg_perp_l": model_outputs.log_perplexity_loss or 0,
+                "recon_l": model_outputs.decoder_loss(),
+                "enc_l": model_outputs.encoder_loss(),
+                "dec_nat_l": model_outputs.decoder_loss_on_nat_lang_input()
             }
 
             if batch_idx % args.validate_every == args.validate_every - 1:

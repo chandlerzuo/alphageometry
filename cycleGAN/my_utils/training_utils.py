@@ -76,8 +76,9 @@ def prepare_formal_natural_inputs(formal_texts, natural_texts, tokenizer, return
 
 def create_val_metrics_string(metrics):
     return f'val_rec_l/rf: {metrics["recon_loss"]:.3f}/ {metrics["rf_recon_loss"]:.3f}, ' \
-            f'val_enc_l/rf: {metrics["enc_loss"]:.3f}/ {metrics["rf_enc_loss"]:.3f}, ' \
-            f'val_perp_l/rf: {metrics["log_perplexity_loss"]:.3f}/ {metrics["rf_log_perplexity_loss"]:.3f}'
+           f'val_enc_l/rf: {metrics["enc_loss"]:.3f}/ {metrics["rf_enc_loss"]:.3f}, ' \
+           f'val_perp_l/rf: {metrics["log_perplexity_loss"]:.3f}/ {metrics["rf_log_perplexity_loss"]:.3f} ' \
+           f'val_dec_l_nat/rf: {metrics["dec_los_on_nat"]:.3f}/ {metrics["rf_dec_los_on_nat"]:.3f}'
 
 
 def run_validation(
@@ -87,10 +88,10 @@ def run_validation(
     model_kwargs: Optional[Dict] = None, max_num_batches=None,
     padding_type=''
 ):
-    non_rf_avg_encoder_loss, non_rf_avg_perplexity_loss, non_rf_avg_decoder_loss, non_rf_df = \
+    non_rf_avg_encoder_loss, non_rf_avg_perplexity_loss, non_rf_avg_decoder_loss, non_rf_avg_dec_los_on_nat, non_rf_df = \
         compute_loss_and_df(model, accelerator, tokenizer, data_loader=non_rephrased_dataloader,
                             model_kwargs=model_kwargs, max_num_batches=max_num_batches, padding_type=padding_type)
-    rf_avg_encoder_loss, rf_avg_perplexity_loss, rf_avg_decoder_loss, rf_df = \
+    rf_avg_encoder_loss, rf_avg_perplexity_loss, rf_avg_decoder_loss, rf_avg_dec_los_on_nat, rf_df = \
         compute_loss_and_df(model, accelerator, tokenizer, data_loader=rephrased_dataloader, model_kwargs=model_kwargs,
                             max_num_batches=max_num_batches, padding_type=padding_type)
         
@@ -98,7 +99,8 @@ def run_validation(
         "recon_loss": non_rf_avg_decoder_loss, "enc_loss": non_rf_avg_encoder_loss,
         "log_perplexity_loss": non_rf_avg_perplexity_loss,
         "rf_recon_loss": rf_avg_decoder_loss, "rf_enc_loss": rf_avg_encoder_loss,
-        "rf_log_perplexity_loss": rf_avg_perplexity_loss,
+        "rf_log_perplexity_loss": rf_avg_perplexity_loss, 'dec_los_on_nat': non_rf_avg_dec_los_on_nat,
+        'rf_dec_los_on_nat': rf_avg_dec_los_on_nat
     }
 
     if PartialState().is_main_process:    
@@ -156,6 +158,7 @@ def compute_loss_and_df(model: AutoEncoderLLM, accelerator: Accelerator, tokeniz
     perplexity_losses = None
     encoder_losses = None
     decoder_losses = None
+    decoder_losses_from_natural = None
     sizes = None
     
     def combine_handling_none(x, val):
@@ -176,7 +179,8 @@ def compute_loss_and_df(model: AutoEncoderLLM, accelerator: Accelerator, tokeniz
             )
 
             model_outputs, model_inputs = model(formal_inputs=formal_inputs, natural_inputs=natural_inputs,
-                                                **model_kwargs, return_inputs=is_first_batch, padding_type=padding_type)
+                                                **model_kwargs, return_inputs=is_first_batch, padding_type=padding_type,
+                                                also_decode_natural=True)
             if model_outputs.log_perplexity_loss is not None:
                 perplexity_loss = numpify(accelerator.gather(model_outputs.log_perplexity_loss))
                 perplexity_losses = combine_handling_none(perplexity_losses, perplexity_loss)
@@ -186,6 +190,10 @@ def compute_loss_and_df(model: AutoEncoderLLM, accelerator: Accelerator, tokeniz
             if model_outputs.decoder_outputs is not None:
                 decoder_loss = numpify(accelerator.gather(model_outputs.decoder_outputs.loss))
                 decoder_losses = combine_handling_none(decoder_losses, decoder_loss)
+            if model_outputs.decoder_outputs_from_natural is not None:
+                decoder_loss_from_natural = numpify(accelerator.gather(model_outputs.decoder_outputs_from_natural.loss))
+                decoder_losses_from_natural = combine_handling_none(decoder_losses_from_natural,
+                                                                    decoder_loss_from_natural)
             # not working as of now
             # ones_for_batch = torch.ones(len(formal_texts), device=formal_inputs["input_ids"].device)
             # sizes = combine_handling_none(sizes, accelerator.gather_for_metrics(ones_for_batch).cpu().numpy())
@@ -211,7 +219,9 @@ def compute_loss_and_df(model: AutoEncoderLLM, accelerator: Accelerator, tokeniz
     avg_perplexity_loss = np.average(perplexity_losses, weights=sizes) if perplexity_losses is not None else 0
     avg_encoder_loss = np.average(encoder_losses, weights=sizes) if encoder_losses is not None else 0
     avg_decoder_loss = np.average(decoder_losses, weights=sizes) if decoder_losses is not None else 0
-    
+    decoder_losses_from_natural = np.average(decoder_losses_from_natural, weights=sizes)\
+        if decoder_losses_from_natural is not None else 0
+
     df = make_pandas_dataframe(**{
         'encoder_input': encoder_inputs_decoded,
         'encoder_target': encoder_targets_decoded,
@@ -224,7 +234,8 @@ def compute_loss_and_df(model: AutoEncoderLLM, accelerator: Accelerator, tokeniz
         
         'avg_encoder_loss': avg_encoder_loss,
         'avg_perplexity_loss': avg_perplexity_loss,
-        'avg_decoder_loss': avg_decoder_loss
+        'avg_decoder_loss': avg_decoder_loss,
+        'decoder_losses_from_natural': decoder_losses_from_natural
     })
 
-    return avg_encoder_loss, avg_perplexity_loss, avg_decoder_loss, df
+    return avg_encoder_loss, avg_perplexity_loss, avg_decoder_loss, decoder_losses_from_natural, df

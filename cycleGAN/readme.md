@@ -12,6 +12,8 @@ formal -> encoder -> natural -> decoder -> formal_recon
 
 example input and target for the Encode only setup
 
+### Example input and target for the Encode only setup
+
 **Mode copy_target**
 
 `f f f t t t t` : Encoder input
@@ -24,8 +26,23 @@ example input and target for the Encode only setup
 
 `w w w t t t t` : Encoder target
 
+### Example input and target for the Decode only setup
 
-example input and target for the AE setup
+**Mode copy_target**
+
+`n n n t t t t` : Decoder input
+
+`w w w t t t t` : Decoder target
+
+**Mode pad_tok**
+
+`n n n p p p p` : Decoder input
+
+`w w w t t t t` : Decoder target
+
+
+
+### Example input and target for the AE setup
 
 `f f f t t t t p p p` : Encoder input
 
