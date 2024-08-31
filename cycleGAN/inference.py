@@ -4,6 +4,7 @@ from accelerate import Accelerator
 import torch
 from transformers import PretrainedConfig
 from my_utils.training_utils import prepare_formal_natural_inputs, decode_logits_or_inputs
+from transformers.modeling_utils import load_sharded_checkpoint
 import json
 from model_preparation import load_model
 
@@ -13,12 +14,19 @@ def load_model_for_inference(checkpoint_path, wait_token='<w>'):
     with open(train_cmdlargs_path, 'r') as file:
         data = json.load(file)
 
+    print(f'initializing model. This make a bit ...')
     ae_model, tokenizer, wait_id = load_model(data['model_name'], wait_token=wait_token, use_pretrained=False,
                                               use_perplexity_loss=False, use_decoder=data['use_decoder'],
                                               use_encoder=data['use_encoder'])
-    ae_model.from_pretrained(checkpoint_path, config=PretrainedConfig(), encoder=ae_model.encoder,
-                             decoder=ae_model.decoder, perplexity_calculator=ae_model.perplexity_calculator,
-                             padding_token_id=ae_model.padding_token_id)
+    model_config = os.path.join(checkpoint_path, 'config.json')
+    # ae_model.from_pretrained(checkpoint_path, config=PretrainedConfig.from_json_file(model_config), encoder=ae_model.encoder,
+    #                          decoder=ae_model.decoder, perplexity_calculator=ae_model.perplexity_calculator,
+    #                          padding_token_id=ae_model.padding_token_id)
+    print(f'Loading model ...')
+    load_sharded_checkpoint(ae_model, checkpoint_path)
+
+    print('=================Done=================')
+
     return ae_model, tokenizer, wait_id
 
 
