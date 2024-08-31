@@ -9,12 +9,13 @@ import json
 from model_preparation import load_model
 
 
-def load_model_for_inference(checkpoint_path, wait_token='<w>'):
+def load_model_for_inference(checkpoint_path):
     train_cmdlargs_path = os.path.join(checkpoint_path, 'cmd_args.json')
     with open(train_cmdlargs_path, 'r') as file:
         data = json.load(file)
 
-    print(f'initializing model. This make a bit ...')
+    wait_token = data.get('wait_tok', '<w>')
+    print(f'initializing model. This may take a bit ...')
     ae_model, tokenizer, wait_id = load_model(data['model_name'], wait_token=wait_token, use_pretrained=False,
                                               use_perplexity_loss=False, use_decoder=data['use_decoder'],
                                               use_encoder=data['use_encoder'])
@@ -22,7 +23,7 @@ def load_model_for_inference(checkpoint_path, wait_token='<w>'):
     # ae_model.from_pretrained(checkpoint_path, config=PretrainedConfig.from_json_file(model_config), encoder=ae_model.encoder,
     #                          decoder=ae_model.decoder, perplexity_calculator=ae_model.perplexity_calculator,
     #                          padding_token_id=ae_model.padding_token_id)
-    print(f'Loading model ...')
+    print(f'Loading model. Also takes a bit ...')
     load_sharded_checkpoint(ae_model, checkpoint_path)
 
     print('=================Done=================')
@@ -72,9 +73,18 @@ def main():
     parser = argparse.ArgumentParser(description="Generate text from a pretrained model")
     parser.add_argument("-ckpt", "--checkpoint_path", type=str, required=True,
                         help="Path to the DeepSpeed model checkpoint directory")
-    parser.add_argument("--input_text", type=str, default='This is a dummy test',
-                        help="Input text to generate text from")
-    parser.add_argument("--max_length", type=int, default=50, help="Maximum length of the generated text")
+    # parser.add_argument("--input_text", type=str,
+    #                     default='X is a point. BCDE is a trapezoid. Let G, H, F, I be points such that the diagonals '
+    #                             'of quadrilateral FGHI are equal. J is a points such that J is on line DA.',
+    #                     help="Input text to generate text from")
+    parser.add_argument("--input_text", type=str,
+                        default='Two circles G1 and G2 intersect at two points M and N. Let AB be the line tangent to '
+                                'these circles at A and B, respectively, so that M lies closer to AB than N. Let CD be '
+                                'the line parallel to AB and passing through the point M, with C on G1 and D on G2. '
+                                'Lines AC and BD meet at E; lines AN and CD meet at P; lines BN and CD meet at Q. '
+                                'Show that EP = EQ.',
+                        help="Natural language input to be formalized")
+    parser.add_argument("--max_length", type=int, default=512, help="Maximum length of the generated text")
     parser.add_argument("--num_beams", type=int, default=1, help="Number of beams for beam search")
     parser.add_argument("--do_sample", action='store_true', help="Enable sampling for generation")
     parser.add_argument("--top_k", type=int, default=0, help="Top-K sampling")

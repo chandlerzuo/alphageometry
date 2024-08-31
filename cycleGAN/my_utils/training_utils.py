@@ -14,10 +14,10 @@ from model_preparation import AutoEncoderLLM
 from my_utils.generic_utils import numpify
 try:
     from .generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe, \
-        CustomJSONserializer
+        CustomJSONserializer, apply_start_end_tags
 except ImportError:
     from my_utils.generic_utils import batch_compress_text_forwaiting_and_eot_tokens, make_pandas_dataframe, \
-        CustomJSONserializer
+        CustomJSONserializer, apply_start_end_tags
 
 
 class Checkpointer:
@@ -86,14 +86,18 @@ def run_validation(
     non_rephrased_dataloader, rephrased_dataloader, 
     df_filename,
     model_kwargs: Optional[Dict] = None, max_num_batches=None,
-    padding_type=''
+    padding_type='',
+    fl_init_end_toks=('', ''),
+    nl_init_end_toks=('', '')
 ):
     non_rf_avg_encoder_loss, non_rf_avg_perplexity_loss, non_rf_avg_decoder_loss, non_rf_avg_dec_los_on_nat, non_rf_df = \
         compute_loss_and_df(model, accelerator, tokenizer, data_loader=non_rephrased_dataloader,
-                            model_kwargs=model_kwargs, max_num_batches=max_num_batches, padding_type=padding_type)
+                            model_kwargs=model_kwargs, max_num_batches=max_num_batches, padding_type=padding_type,
+                            fl_init_end_toks=fl_init_end_toks, nl_init_end_toks=nl_init_end_toks)
     rf_avg_encoder_loss, rf_avg_perplexity_loss, rf_avg_decoder_loss, rf_avg_dec_los_on_nat, rf_df = \
         compute_loss_and_df(model, accelerator, tokenizer, data_loader=rephrased_dataloader, model_kwargs=model_kwargs,
-                            max_num_batches=max_num_batches, padding_type=padding_type)
+                            max_num_batches=max_num_batches, padding_type=padding_type,
+                            fl_init_end_toks=fl_init_end_toks, nl_init_end_toks=nl_init_end_toks)
         
     metrics = {
         "recon_loss": non_rf_avg_decoder_loss, "enc_loss": non_rf_avg_encoder_loss,
@@ -143,7 +147,8 @@ def decode_logits_or_inputs(tokenizer, logits_or_inputs, compress):
 
 
 def compute_loss_and_df(model: AutoEncoderLLM, accelerator: Accelerator, tokenizer, data_loader,
-                        model_kwargs: Optional[Dict] = None, max_num_batches=None, padding_type=''):
+                        model_kwargs: Optional[Dict] = None, max_num_batches=None, padding_type='',
+                        fl_init_end_toks=None, nl_init_end_toks=None):
     """
     Compute loss on given dataloader
     
@@ -171,8 +176,8 @@ def compute_loss_and_df(model: AutoEncoderLLM, accelerator: Accelerator, tokeniz
     with torch.no_grad():
         is_first_batch = True
         for batch in itertools.islice(data_loader, max_num_batches):
-            formal_texts = batch['formal']
-            natural_texts = batch['natural']  # perhaps sometimes we should use it for grounding
+            formal_texts, natural_texts = apply_start_end_tags(
+                batch['formal'], batch['natural'], fl_init_end_toks, nl_init_end_toks)
             
             formal_inputs, natural_inputs = prepare_formal_natural_inputs(
                 formal_texts, natural_texts, tokenizer=tokenizer,

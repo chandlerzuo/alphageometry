@@ -48,6 +48,13 @@ class CustomJSONserializer(json.JSONEncoder):
 
                 return str(obj)
 
+def apply_start_end_tags(fl_text_list, nl_text_list, fl_init_end_toks, nl_init_end_toks):
+    assert len(fl_text_list) == len(nl_text_list)
+    for i, fl_txt in enumerate(fl_text_list):
+        fl_text_list[i] = f'{fl_init_end_toks[0]}{fl_txt}{fl_init_end_toks[1]}'
+        nl_text_list[i] = f'{nl_init_end_toks[0]}{nl_text_list[i]}{nl_init_end_toks[1]}'
+
+    return fl_text_list, nl_text_list
 
 def get_project_out_dir(args, is_main_process):
     chkpt_paths = ['', '']

@@ -10,7 +10,7 @@ from model_preparation import load_model
 from transformers import get_scheduler
 from torch.optim import AdamW
 from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, print_model_device_distribution, \
-    ProgressBar, get_project_out_dir
+    ProgressBar, get_project_out_dir, apply_start_end_tags
 
 from my_utils.training_utils import as_dict, create_val_metrics_string, Checkpointer, prepare_formal_natural_inputs,\
     run_validation
@@ -26,8 +26,6 @@ from my_utils.hf_wrapper import debug_on_error
 
 @debug_on_error
 def main(args):
-    wait_token = '<w>'
-
     # Initialize Accelerator
     accelerator = Accelerator(log_with="all")
     if get_username() == "mmordig":
@@ -41,7 +39,8 @@ def main(args):
     accelerate.utils.set_seed(seed)
 
     # Load tokenizer and models
-    ae_model, tokenizer, wait_id = load_model(args.model_name, wait_token=wait_token, use_pretrained=args.is_pretrained,
+    ae_model, tokenizer, wait_id = load_model(args.model_name, wait_token=args.wait_tok,
+                                              use_pretrained=args.is_pretrained,
                                               use_perplexity_loss=args.use_perplexity_loss,
                                               use_decoder=args.use_decoder, use_encoder=args.use_encoder)
 
@@ -106,8 +105,10 @@ def main(args):
     for epoch in range(args.num_epochs):
         pbar = ProgressBar(train_dataloader, accelerator)
         for batch_idx, batch in enumerate(pbar):
-            formal_texts = batch['formal'] # A list of variable length of string. So is natural texts
-            natural_texts = batch['natural']  # perhaps sometimes we should use it for grounding
+            # A list of variable length of string. So is natural texts
+            formal_texts, natural_texts = apply_start_end_tags(
+                batch['formal'], batch['natural'],[args.formal_init_tok, args.formal_end_tok],
+                [args.natural_init_tok, args.natural_end_tok])
 
             formal_inputs, natural_inputs = prepare_formal_natural_inputs(
                 formal_texts, natural_texts, tokenizer=tokenizer,
@@ -141,7 +142,9 @@ def main(args):
                     non_rephrased_dataloader=val_dataloader, rephrased_dataloader=val_rephrased_dataloader,
                     df_filename=df_filename,
                     model_kwargs=as_dict(wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id),
-                    max_num_batches=args.valid_for_batches, padding_type=args.padding_type)
+                    max_num_batches=args.valid_for_batches, padding_type=args.padding_type,
+                    fl_init_end_toks=[args.formal_init_tok, args.formal_end_tok],
+                    nl_init_end_toks=[args.natural_init_tok, args.natural_end_tok])
                 val_update_str = "val_update: " + create_val_metrics_string(val_metrics)
                 accelerator.log(
                     {f"val/{k}": v for k, v in val_metrics.items()}
@@ -154,7 +157,10 @@ def main(args):
                 
                 ae_model.train()
                 if (batch_idx + 1) % args.chkpt_bst_mdl_every == 0:
-                    loss_for_saving = val_metrics["enc_loss"] + val_metrics["recon_loss"]
+                    loss_for_saving = val_metrics['rf_dec_los_on_nat']
+                    if loss_for_saving == 0:
+                        loss_for_saving = val_metrics["enc_loss"] + val_metrics["recon_loss"]
+
                     checkpointer.checkpoint(accelerator, ae_model, loss_for_saving)
                 
             train_update_str = " ".join([f"{k}:{v:.3f}" for k, v in train_metrics.items()])
@@ -171,6 +177,11 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('--num_epochs', type=int, default=10)
+    parser.add_argument('--wait_tok', type=str, default='<w>')
+    parser.add_argument('--formal_init_tok', type=str, default='<fl>')
+    parser.add_argument('--formal_end_tok', type=str, default='</fl>')
+    parser.add_argument('--natural_init_tok', type=str, default='<nl>')
+    parser.add_argument('--natural_end_tok', type=str, default='</nl>')
     parser.add_argument('--validate_every', type=int, default=100, help='Validate every these many training steps '
                                                                         '(reset per epoch)')
     parser.add_argument('--valid_for_batches', type=int, default=10, help='Validate for these many batches')
