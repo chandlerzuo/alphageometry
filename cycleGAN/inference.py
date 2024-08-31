@@ -2,8 +2,8 @@ import os
 import argparse
 from accelerate import Accelerator
 import torch
-from transformers import AutoTokenizer
-import deepspeed
+from transformers import PretrainedConfig
+from my_utils.training_utils import prepare_formal_natural_inputs, decode_logits_or_inputs
 import json
 from model_preparation import load_model
 
@@ -13,14 +13,16 @@ def load_model_for_inference(checkpoint_path, wait_token='<w>'):
     with open(train_cmdlargs_path, 'r') as file:
         data = json.load(file)
 
-    ae_model, tokenizer, wait_id = load_model(data.model_name, wait_token=wait_token, use_pretrained=False,
-                                              use_perplexity_loss=False, use_decoder=data.use_decoder,
-                                              use_encoder=data.use_encoder)
-    ae_model.from_pretrained(checkpoint_path)
-    return ae_model
+    ae_model, tokenizer, wait_id = load_model(data['model_name'], wait_token=wait_token, use_pretrained=False,
+                                              use_perplexity_loss=False, use_decoder=data['use_decoder'],
+                                              use_encoder=data['use_encoder'])
+    ae_model.from_pretrained(checkpoint_path, config=PretrainedConfig(), encoder=ae_model.encoder,
+                             decoder=ae_model.decoder, perplexity_calculator=ae_model.perplexity_calculator,
+                             padding_token_id=ae_model.padding_token_id)
+    return ae_model, tokenizer, wait_id
 
 
-def generate_text(model, tokenizer, input_text, max_length, num_beams, do_sample, top_k, top_p):
+def generate_text(model, tokenizer, wait_id, natural_texts, max_length, num_beams, do_sample, top_k, top_p):
     # Configure generation parameters
     generation_args = {
         'max_length': max_length,
@@ -32,21 +34,29 @@ def generate_text(model, tokenizer, input_text, max_length, num_beams, do_sample
     }
 
     # Encode input text
-    inputs = tokenizer(input_text, return_tensors='pt', max_length=1024, truncation=True).to(model.device)
+    fake_formal_texts = ['a'*512, ]
+    natural_texts = [natural_texts, ]
+    formal_inputs, natural_inputs = prepare_formal_natural_inputs(fake_formal_texts, natural_texts, tokenizer=tokenizer,
+                                                                  return_natural_inputs=True)
 
     # Generate output using specified strategy
     with torch.no_grad():
-        output = model.generate(**inputs, **generation_args)
+        # model not yet compatible with generate
+        # output = model.generate(**inputs, **generation_args)
+        output, _ = model(formal_inputs=formal_inputs, natural_inputs=natural_inputs, padding_type='pad_tok',
+                       wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id)
+        text = decode_logits_or_inputs(tokenizer, logits_or_inputs=output.decoder_outputs.logits, compress=True)
 
     # Decode and return output text
-    return tokenizer.decode(output[0], skip_special_tokens=True)
+    return text
 
 
 def main():
     parser = argparse.ArgumentParser(description="Generate text from a pretrained model")
-    parser.add_argument("--checkpoint_path", type=str, required=True,
+    parser.add_argument("-ckpt", "--checkpoint_path", type=str, required=True,
                         help="Path to the DeepSpeed model checkpoint directory")
-    parser.add_argument("--input_text", type=str, required=True, help="Input text to generate text from")
+    parser.add_argument("--input_text", type=str, default='This is a dummy test',
+                        help="Input text to generate text from")
     parser.add_argument("--max_length", type=int, default=50, help="Maximum length of the generated text")
     parser.add_argument("--num_beams", type=int, default=1, help="Number of beams for beam search")
     parser.add_argument("--do_sample", action='store_true', help="Enable sampling for generation")
@@ -58,14 +68,12 @@ def main():
     # Initialize Accelerator
     accelerator = Accelerator()
 
-    # Load tokenizer
-    tokenizer = AutoTokenizer.from_pretrained("allenai/llama")
-
     # Load model
-    model = load_model_for_inference(checkpoint_path=args.checkpoint_path)
+    model, tokenizer, wait_id = load_model_for_inference(checkpoint_path=args.checkpoint_path)
+    model, tokenizer = accelerator.prepare(model, tokenizer)
 
     # Generate text
-    generated_text = generate_text(model, tokenizer, args.input_text, args.max_length, args.num_beams, args.do_sample,
+    generated_text = generate_text(model, tokenizer, wait_id, args.input_text, args.max_length, args.num_beams, args.do_sample,
                                    args.top_k, args.top_p)
     print(generated_text)
 

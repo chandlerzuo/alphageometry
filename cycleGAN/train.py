@@ -106,9 +106,9 @@ def main(args):
     for epoch in range(args.num_epochs):
         pbar = ProgressBar(train_dataloader, accelerator)
         for batch_idx, batch in enumerate(pbar):
-            formal_texts = batch['formal']
+            formal_texts = batch['formal'] # A list of variable length of string. So is natural texts
             natural_texts = batch['natural']  # perhaps sometimes we should use it for grounding
-            
+
             formal_inputs, natural_inputs = prepare_formal_natural_inputs(
                 formal_texts, natural_texts, tokenizer=tokenizer,
                 return_natural_inputs=batch_idx % math.ceil(1/(args.grounding_prob + 1e-7)) == 0

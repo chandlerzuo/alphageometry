@@ -90,15 +90,15 @@ def introduce_waiting_tokens(inputs, labels, wait_token_id, pad_token_id, paddin
         inputs dict (with keys input_ids, attention_mask) and labels (input_ids).
     """
     padding_type = padding_type.lower()
-    assert(padding_type in ['pad_tok', 'copy_target'], f'don\'t understand padding type. possible [\'pad_tok\','
-                                                       f' \'copy_target\']')
+    assert padding_type in ['pad_tok', 'copy_target'], (f'don\'t understand padding type. possible '
+                                                        f'[\'pad_tok\', \'copy_target\']')
     inp_type = "input_ids" if "input_ids" in inputs else "inputs_embeds"
     input_ids_or_embds = inputs[inp_type]
     inputs_attention_mask = inputs["attention_mask"]
     label_input_ids, label_attention_mask = labels["input_ids"], labels["attention_mask"]
     bs = input_ids_or_embds.shape[0]
     device = input_ids_or_embds.device
-    
+
     inputs_lens = inputs_attention_mask.sum(dim=1)
     label_lens = label_attention_mask.sum(dim=1)
     total_lens = inputs_lens + label_lens
@@ -147,10 +147,11 @@ class AutoEncoderLLM(PreTrainedModel):
         self.decoder = decoder
         self.perplexity_calculator = perplexity_calculator
         self.padding_token_id = padding_token_id
+        self.inference_mode = False
         
         assert encoder is not None or decoder is not None, "At least one of encoder or decoder should be present"
 
-        #TODO: For watever reason the first parameter is staying trainable! Even if we se it to false. When using
+        #TODO: For whatever reason the first parameter is staying trainable! Even if we se it to false. When using
         # Accelerate! Not when we launch with simple python. However since we do not add the parameters to the
         # optimizer they should stay unchanged!
         # if self.perplexity_calculator is not None:
@@ -163,7 +164,7 @@ class AutoEncoderLLM(PreTrainedModel):
     def _encode(self, **enc_inputs):
         assert self.encoder is not None
         return self.encoder(**enc_inputs)
-    
+
     def same_archs(self, other: 'AutoEncoderLLM'):
         """check for equal classes for encoder, decoder, perplexity_calculator"""
         return self.model_name == other.model_name and self.encoder.__class__ == other.encoder.__class__ and \
@@ -252,17 +253,17 @@ class AutoEncoderLLM(PreTrainedModel):
             
         if self.perplexity_calculator is not None:
             perplexity_loss = self.perplexity_calculator(input_logits=encoder_outputs.logits)
-            
+
         return AutoEncoderLLMOutput(
-            encoder_outputs=encoder_outputs, 
-            decoder_outputs=decoder_outputs, 
+            encoder_outputs=encoder_outputs,
+            decoder_outputs=decoder_outputs,
             decoder_outputs_from_natural=decoder_outputs_from_natural,
             log_perplexity_loss=perplexity_loss,
         ), AutoEncoderLLMInputs(encoder_inputs, encoder_targets, decoder_inputs, decoder_targets) \
             if return_inputs else None
 
 
-    # @classmethod
+            # @classmethod
     # def from_pretrained(cls, output_dir) ->PreTrainedModel:
     #     output_dir = Path(output_dir)
     #
