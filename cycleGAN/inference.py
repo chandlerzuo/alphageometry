@@ -16,22 +16,22 @@ def load_model_for_inference(checkpoint_path):
 
     wait_token = data.get('wait_tok', '<w>')
     print(f'initializing model. This may take a bit ...')
+    nl_init_end_toks = [data['natural_init_tok'], data['natural_end_tok']]
+    fl_init_end_toks = [data['formal_init_tok'], data['formal_end_tok']]
     ae_model, tokenizer, wait_id = load_model(data['model_name'], wait_token=wait_token, use_pretrained=False,
                                               use_perplexity_loss=False, use_decoder=data['use_decoder'],
-                                              use_encoder=data['use_encoder'])
-    model_config = os.path.join(checkpoint_path, 'config.json')
-    # ae_model.from_pretrained(checkpoint_path, config=PretrainedConfig.from_json_file(model_config), encoder=ae_model.encoder,
-    #                          decoder=ae_model.decoder, perplexity_calculator=ae_model.perplexity_calculator,
-    #                          padding_token_id=ae_model.padding_token_id)
+                                              use_encoder=data['use_encoder'], fl_init_end_toks=fl_init_end_toks,
+                                              nl_init_end_toks=nl_init_end_toks)
     print(f'Loading model. Also takes a bit ...')
     load_sharded_checkpoint(ae_model, checkpoint_path)
 
     print('=================Done=================')
 
-    return ae_model, tokenizer, wait_id
+    return ae_model, tokenizer, wait_id, fl_init_end_toks, nl_init_end_toks
 
 
-def generate_text(model, tokenizer, wait_id, natural_texts, max_length, num_beams, do_sample, top_k, top_p):
+def generate_text(model, tokenizer, fl_init_end_toks, nl_init_end_toks,
+                  natural_texts, max_length, num_beams, do_sample, top_k, top_p):
     # Configure generation parameters
     generation_args = {
         'max_length': max_length,
@@ -42,6 +42,7 @@ def generate_text(model, tokenizer, wait_id, natural_texts, max_length, num_beam
         'early_stopping': True if num_beams > 1 else False
     }
 
+    natural_texts = nl_init_end_toks[0] + natural_texts + nl_init_end_toks[1] + fl_init_end_toks[0]
     inputs = tokenizer(natural_texts, return_tensors='pt', max_length=1024, truncation=True).to(model.device)
 
     # Generate output using specified strategy
@@ -50,23 +51,6 @@ def generate_text(model, tokenizer, wait_id, natural_texts, max_length, num_beam
 
     # Decode and return output text
     return tokenizer.decode(output[0], skip_special_tokens=True)
-
-    # # Encode input text
-    # fake_formal_texts = ['a'*512, ]
-    # natural_texts = [natural_texts, ]
-    # formal_inputs, natural_inputs = prepare_formal_natural_inputs(fake_formal_texts, natural_texts, tokenizer=tokenizer,
-    #                                                               return_natural_inputs=True)
-    #
-    # # Generate output using specified strategy
-    # with torch.no_grad():
-    #     # model not yet compatible with generate
-    #     # output = model.generate(**inputs, **generation_args)
-    #     output, _ = model(formal_inputs=formal_inputs, natural_inputs=natural_inputs, padding_type='pad_tok',
-    #                      wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id)
-    #     text = decode_logits_or_inputs(tokenizer, logits_or_inputs=output.decoder_outputs.logits, compress=True)
-
-    # # Decode and return output text
-    # return text
 
 
 def main():
@@ -96,11 +80,13 @@ def main():
     accelerator = Accelerator()
 
     # Load model
-    model, tokenizer, wait_id = load_model_for_inference(checkpoint_path=args.checkpoint_path)
+    model, tokenizer, wait_id, fl_init_end_toks, nl_init_end_toks = (
+        load_model_for_inference(checkpoint_path=args.checkpoint_path))
     model, tokenizer = accelerator.prepare(model.decoder, tokenizer)
 
     # Generate text
-    generated_text = generate_text(model, tokenizer, wait_id, args.input_text, args.max_length, args.num_beams, args.do_sample,
+    generated_text = generate_text(model, tokenizer, fl_init_end_toks, nl_init_end_toks,
+                                   args.input_text, args.max_length, args.num_beams, args.do_sample,
                                    args.top_k, args.top_p)
     print(generated_text)
 
