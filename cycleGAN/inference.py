@@ -33,22 +33,31 @@ def generate_text(model, tokenizer, wait_id, natural_texts, max_length, num_beam
         'early_stopping': True if num_beams > 1 else False
     }
 
-    # Encode input text
-    fake_formal_texts = ['a'*512, ]
-    natural_texts = [natural_texts, ]
-    formal_inputs, natural_inputs = prepare_formal_natural_inputs(fake_formal_texts, natural_texts, tokenizer=tokenizer,
-                                                                  return_natural_inputs=True)
+    inputs = tokenizer(natural_texts, return_tensors='pt', max_length=1024, truncation=True).to(model.device)
 
     # Generate output using specified strategy
     with torch.no_grad():
-        # model not yet compatible with generate
-        # output = model.generate(**inputs, **generation_args)
-        output, _ = model(formal_inputs=formal_inputs, natural_inputs=natural_inputs, padding_type='pad_tok',
-                       wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id)
-        text = decode_logits_or_inputs(tokenizer, logits_or_inputs=output.decoder_outputs.logits, compress=True)
+        output = model.generate(**inputs, **generation_args)
 
     # Decode and return output text
-    return text
+    return tokenizer.decode(output[0], skip_special_tokens=True)
+
+    # # Encode input text
+    # fake_formal_texts = ['a'*512, ]
+    # natural_texts = [natural_texts, ]
+    # formal_inputs, natural_inputs = prepare_formal_natural_inputs(fake_formal_texts, natural_texts, tokenizer=tokenizer,
+    #                                                               return_natural_inputs=True)
+    #
+    # # Generate output using specified strategy
+    # with torch.no_grad():
+    #     # model not yet compatible with generate
+    #     # output = model.generate(**inputs, **generation_args)
+    #     output, _ = model(formal_inputs=formal_inputs, natural_inputs=natural_inputs, padding_type='pad_tok',
+    #                      wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id)
+    #     text = decode_logits_or_inputs(tokenizer, logits_or_inputs=output.decoder_outputs.logits, compress=True)
+
+    # # Decode and return output text
+    # return text
 
 
 def main():
@@ -70,7 +79,7 @@ def main():
 
     # Load model
     model, tokenizer, wait_id = load_model_for_inference(checkpoint_path=args.checkpoint_path)
-    model, tokenizer = accelerator.prepare(model, tokenizer)
+    model, tokenizer = accelerator.prepare(model.decoder, tokenizer)
 
     # Generate text
     generated_text = generate_text(model, tokenizer, wait_id, args.input_text, args.max_length, args.num_beams, args.do_sample,
