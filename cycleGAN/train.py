@@ -42,7 +42,9 @@ def main(args):
     ae_model, tokenizer, wait_id = load_model(args.model_name, wait_token=args.wait_tok,
                                               use_pretrained=args.is_pretrained,
                                               use_perplexity_loss=args.use_perplexity_loss,
-                                              use_decoder=args.use_decoder, use_encoder=args.use_encoder)
+                                              use_decoder=args.use_decoder, use_encoder=args.use_encoder,
+                                              fl_init_end_toks=[args.formal_init_tok, args.formal_end_tok],
+                                              nl_init_end_toks=[args.natural_init_tok, args.natural_end_tok])
 
     wrap_dataset = AlwaysSameElementDataset if args.overfitting else lambda x: x
     # Prepare dataset and dataloader

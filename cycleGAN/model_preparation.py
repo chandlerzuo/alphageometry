@@ -290,7 +290,7 @@ def get_perplexity_calculator(model_name):
 
 
 def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity_loss=True, use_encoder=False,
-               use_decoder=False):
+               use_decoder=False, fl_init_end_toks=('', ''), nl_init_end_toks=('', '')):
     """
     Load a model with the option to initialize with pretrained weights or randomly.
 
@@ -330,7 +330,8 @@ def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.add_tokens([wait_token])  # add a special wait token
+    # add a special wait token and formal begin,end and natural begin end tokens
+    tokenizer.add_tokens([wait_token] + fl_init_end_toks + nl_init_end_toks)
     wait_id = tokenizer.convert_tokens_to_ids(wait_token)
 
     if encoder is not None:
