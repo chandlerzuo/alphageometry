@@ -250,25 +250,25 @@ class AutoEncoderLLM(PreTrainedModel):
             if return_inputs else None
 
 
-    @classmethod
-    def from_pretrained(cls, output_dir):
-        output_dir = Path(output_dir)
-        
-        extra_args = torch.load(os.path.join(output_dir, "extra_args.json"))
-        model_name = extra_args["model_name"]
-        padding_token_id = extra_args["padding_token_id"]
-        uses_perplexity_loss = extra_args["uses_perplexity_loss"]
-        
-        # AutoModel.from_pretrained loads wrong model if it is AutoModelForCausalLM, so we load this class as well
-        encoder = AutoModelForCausalLM.from_pretrained(output_dir / "encoder") \
-            if (output_dir / "encoder").exists() else None
-        decoder = AutoModelForCausalLM.from_pretrained(output_dir / "decoder") \
-            if (output_dir / "encoder").exists() else None
-        # tokenizer = AutoTokenizer.from_pretrained(output_dir / "tokenizer")
-        perplexity_calculator = get_perplexity_calculator(model_name) if uses_perplexity_loss else None
-        
-        return cls(model_name=model_name, encoder=encoder, decoder=decoder,
-                   perplexity_calculator=perplexity_calculator, padding_token_id=padding_token_id)
+    # @classmethod
+    # def from_pretrained(cls, output_dir) ->PreTrainedModel:
+    #     output_dir = Path(output_dir)
+    #
+    #     extra_args = torch.load(os.path.join(output_dir, "extra_args.json"))
+    #     model_name = extra_args["model_name"]
+    #     padding_token_id = extra_args["padding_token_id"]
+    #     uses_perplexity_loss = extra_args["uses_perplexity_loss"]
+    #
+    #     # AutoModel.from_pretrained loads wrong model if it is AutoModelForCausalLM, so we load this class as well
+    #     encoder = AutoModelForCausalLM.from_pretrained(output_dir / "encoder") \
+    #         if (output_dir / "encoder").exists() else None
+    #     decoder = AutoModelForCausalLM.from_pretrained(output_dir / "decoder") \
+    #         if (output_dir / "encoder").exists() else None
+    #     # tokenizer = AutoTokenizer.from_pretrained(output_dir / "tokenizer")
+    #     perplexity_calculator = get_perplexity_calculator(model_name) if uses_perplexity_loss else None
+    #
+    #     return cls(model_name=model_name, encoder=encoder, decoder=decoder,
+    #                perplexity_calculator=perplexity_calculator, padding_token_id=padding_token_id)
 
 
 def get_perplexity_calculator(model_name):
