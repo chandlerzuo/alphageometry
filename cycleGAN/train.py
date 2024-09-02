@@ -109,7 +109,7 @@ def main(args):
         for batch_idx, batch in enumerate(pbar):
             # A list of variable length of string. So is natural texts
             formal_texts, natural_texts = apply_start_end_tags(
-                batch['formal'], batch['natural'],[args.formal_init_tok, args.formal_end_tok],
+                batch['formal'], batch['natural'], [args.formal_init_tok, args.formal_end_tok],
                 [args.natural_init_tok, args.natural_end_tok])
 
             formal_inputs, natural_inputs = prepare_formal_natural_inputs(
