@@ -10,7 +10,7 @@ from model_preparation import load_model
 from transformers import get_scheduler
 from torch.optim import AdamW
 from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, print_model_device_distribution, \
-    ProgressBar, get_project_out_dir, apply_start_end_tags
+    ProgressBar, get_project_out_dir, apply_start_end_tags, get_cmd_args
 
 from my_utils.training_utils import as_dict, create_val_metrics_string, Checkpointer, prepare_formal_natural_inputs,\
     run_validation
@@ -21,7 +21,7 @@ import wandb
 os.environ.setdefault("WANDB_PROJECT", "alphageom_new")
 wandb.require("core")
 
-from utils import get_comma_separated_strings, get_hostname, get_username
+from utils import get_username
 from my_utils.hf_wrapper import debug_on_error
 
 @debug_on_error
@@ -55,6 +55,7 @@ def main(args):
         args.dataset_dir / 'rephrased-nl_fl_dataset_all.jsonl', seed=seed, nrows=args.nrows_rephrased, 
         colnames={"formal": "fl_statement", "natural": "rephrase"}
     )
+    rephrased_dataset = rephrased_dataset.filter(lambda x: x["total_token_lens"] < 1500)
     
     if args.rephrased_ratio > 0:
         print(f"Using {args.rephrased_ratio} rephrased data")
@@ -173,78 +174,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    if get_hostname() == "mikado":
-        os.environ["ALPHA_GEOM_DATASET"] = "/home/mmordig/reinforcement/alphageometry/cycleGAN/runs/datasets/arithmetic"
-
-    from argparse import ArgumentParser
-    parser = ArgumentParser()
-    parser.add_argument('--num_epochs', type=int, default=10)
-    parser.add_argument('--wait_tok', type=str, default='<w>')
-    parser.add_argument('--formal_init_tok', type=str, default='<fl>')
-    parser.add_argument('--formal_end_tok', type=str, default='</fl>')
-    parser.add_argument('--natural_init_tok', type=str, default='<nl>')
-    parser.add_argument('--natural_end_tok', type=str, default='</nl>')
-    parser.add_argument('--validate_every', type=int, default=100, help='Validate every these many training steps '
-                                                                        '(reset per epoch)')
-    parser.add_argument('--valid_for_batches', type=int, default=10, help='Validate for these many batches')
-    parser.add_argument('--batch_size', type=int, default=32, help='Batch size per GPU! when deepspeed is enabled '
-                                                                   '(for model pipelining), it is divided by the number'
-                                                                   ' of gpus for microbatching')
-    parser.add_argument('--dataset_dir', type=Path, default=None, help='Path to dataset directory')
-    parser.add_argument('--chkpt_bst_mdl_every', type=int, default=10,
-                        help='Checkpoint model every these many validation (!) steps if validation result improved. '
-                             'Negative value skips this')
-    parser.add_argument('--output_path', type=str,
-                        default=None,
-                        help='path to save training stats and models')
-    parser.add_argument('--grounding_prob', type=float, default=0.5, help='introduce encoder NL labels every ceil(1/x)'
-                                                                          ' batches')
-    parser.add_argument('--enc_loss_weight', type=float, default=2, help='scale encoder loss by this factor')
-    parser.add_argument('--model_name', type=str, default='meta-llama/Llama-2-7b-hf',
-                        help="Model name to load, e.g., 'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl',"
-                                                       "'meta-llama/Meta-Llama-3.1-8B', "
-                                                       "'meta-llama/Llama-2-7b-hf'")
-    parser.add_argument('--overfitting', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False,
-                        help="whether to overfit on a single batch (same across all GPUs)")
-    parser.add_argument('--is_pretrained', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
-    parser.add_argument('--use_decoder', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
-    parser.add_argument('--use_encoder', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
-    parser.add_argument('--use_perplexity_loss',
-                        type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
-    parser.add_argument('--nrows_nonrephrased', type=int, default=None,
-                        help='Number of rows to load from the non-rephrased dataset before splitting into '
-                             'train/val/test, defaults to all')
-    parser.add_argument('--nrows_rephrased', type=int, default=None,
-                        help='Number of rows to load from the rephrased dataset before splitting into '
-                             'train/val/test, defaults to all')
-    parser.add_argument('--rephrased_ratio', type=float, default=0, help='Ratio of picking from rephrased dataset')
-    parser.add_argument('--padding_type', type=str,
-                        default='copy_target',
-                        help='Padding mode to use. Either "copy_target" or "pad_tok" as possible')
-
-    print(f"Unparsed arguments: {get_comma_separated_strings(sys.argv)}")
-    args = parser.parse_args()
-    
-    if args.output_path is None:
-        args.output_path = os.environ.get("ALPHA_GEOM_OUTPUT_PATH",
-                                          '/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/')
-        if get_username() == "mmordig":
-            args.output_path = "runs/"
-        print(f"Output path not provided, using {args.output_path}")
-
-    if args.dataset_dir is None:
-        args.dataset_dir = Path(os.environ.get("ALPHA_GEOM_DATASET",
-                                               '/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/'))
-    
-    assert 0 <= args.rephrased_ratio, f"got invalid {args.rephrased_ratio=}"
-    
-    args.chkpt_bst_mdl_every *= args.validate_every
-    if args.use_decoder and not args.use_encoder:
-        assert not args.use_perplexity_loss
-        assert args.grounding_prob >= 1  # you need the grounding always as these are the inputs
-
-    if args.use_encoder and not args.use_decoder:
-        assert args.grounding_prob >= 1, f'We need the natural language targets when using encoder only model.'
-
-    print_proc0(f"Got arguments: {args}")
+    args = get_cmd_args()
     main(args)

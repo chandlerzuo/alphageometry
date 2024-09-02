@@ -119,30 +119,37 @@ class MixedDatasetSampler(torch.utils.data.WeightedRandomSampler):
         yield from super().__iter__()
         self.set_epoch(self.epoch + 1)
 
-#%%
 
 if __name__ == "__main__":
-    filename = "runs/datasets/arithmetic/nl_fl.csv"
-    seed = 42
-    test_size = 0.1
-    
-    ds = prepare_data(filename, test_size, seed)
-    print(ds)
-    print(ds["train"][0])
-    
-    
-    ds1 = Dataset.from_dict({"a": list(range(-20, 0))})
-    ds2 = Dataset.from_dict({"a": list(range(1, 3))})
-    combined_ds = CombinedDataset(ds1, ds2)
-    # combined_ds
-    # sampler = MixedDatasetSampler((len(ds1), len(ds2)), ratio=1.0)
-    len_ds1 = 20
-    ratio = 2.0
-    sampler = MixedDatasetSampler((len_ds1, 3), ratio=ratio, num_samples=1000)
-    indices = list(sampler)
-    fraction = len([idx for idx in indices if idx >= len_ds1]) / len(indices)
-    print(f"Fraction {fraction}, expected {ratio/(1+ratio):.2f}")
-    
-    
-    
+    # filename = "runs/datasets/arithmetic/nl_fl.csv"
+    # seed = 42
+    # test_size = 0.1
+    #
+    # ds = prepare_data(filename, test_size, seed)
+    # print(ds)
+    # print(ds["train"][0])
+    #
+    #
+    # ds1 = Dataset.from_dict({"a": list(range(-20, 0))})
+    # ds2 = Dataset.from_dict({"a": list(range(1, 3))})
+    # combined_ds = CombinedDataset(ds1, ds2)
+    # # combined_ds
+    # # sampler = MixedDatasetSampler((len(ds1), len(ds2)), ratio=1.0)
+    # len_ds1 = 20
+    # ratio = 2.0
+    # sampler = MixedDatasetSampler((len_ds1, 3), ratio=ratio, num_samples=1000)
+    # indices = list(sampler)
+    # fraction = len([idx for idx in indices if idx >= len_ds1]) / len(indices)
+    # print(f"Fraction {fraction}, expected {ratio/(1+ratio):.2f}")
+    #
+
+    ds = Dataset.from_dict({
+        "formal": ["Hello how are you", "I am fine", "What are you doing?"],
+        "natural": ["What are you doing?", "I am fine", "Hello how are you"],
+        "total_token_lens": [1510, 339, 45],
+    })
+    rephrased_dataset = DatasetDict({"train": ds, "validation": ds, "test": ds})
+    print(f"Rephrased dataset before filtering: {rephrased_dataset}")
+    rephrased_dataset = rephrased_dataset.filter(lambda x: x["total_token_lens"] <= 1500)
+    print(f"Rephrased dataset after filtering: {rephrased_dataset}")
 # %%
