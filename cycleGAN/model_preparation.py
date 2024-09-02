@@ -330,8 +330,12 @@ def load_model(model_name, wait_token='<w>', use_pretrained=True, use_perplexity
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     tokenizer.pad_token = tokenizer.eos_token
-    # add a special wait token and formal begin,end and natural begin end tokens
-    tokenizer.add_tokens([wait_token] + fl_init_end_toks + nl_init_end_toks)
+    # add a special wait token and formal begin, end and natural begin end tokens
+    # tokenizer.add_tokens([wait_token] + fl_init_end_toks + nl_init_end_toks, )
+    special_tokens_dict = {
+        'additional_special_tokens': [wait_token] + fl_init_end_toks + nl_init_end_toks
+    }
+    tokenizer.add_special_tokens(special_tokens_dict)
     wait_id = tokenizer.convert_tokens_to_ids(wait_token)
 
     if encoder is not None:
