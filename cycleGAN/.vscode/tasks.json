@@ -1,0 +1,23 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "rsync to mpi",
+			"command": [
+                // --exclude /deepsim_reimplemented/runs/model_training
+				"rsync -avzh --filter=':- .gitignore' --progress --delete /home/mmordig/reinforcement/alphageometry/cycleGAN mpi:/home/mmordig/reinforcement/alphageometry/ &&",
+				"echo Current time: $(date)"
+			],
+			"problemMatcher": [],
+            
+			// in keybindings.json
+			// {
+			// 	"key": "cmd+m cmd+p",
+			// 	"command": "workbench.action.tasks.runTask",
+			// 	"args": "rsync to mpi"
+			// }
+		}
+        
+	]
+}

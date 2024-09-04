@@ -1,0 +1,38 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            // "program": "${file}",
+            "program": "${workspaceFolder}/train.py",
+            "args": ["--model_name=gpt2", "--rephrased_ratio", "2", "--valid_for_batches=10", "--batch_size=8", "--validate_every=2", "--grounding_prob=1", "--use_perplexity_loss=False", "--use_decoder=True", "--use_encoder=True"],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+
+        // attach
+        {
+            "name": "Attach debugger",
+            "type": "debugpy",
+            "request": "attach",
+            // "port": 5678, // old
+            "port": 5680,
+            // "port": 53920,
+            "host": "localhost",
+            "justMyCode": false,
+            "pathMappings": [
+                {
+                    "localRoot": "/home/mmordig",
+                    "remoteRoot": "/lustre/home/mmordig",
+                }
+            ],
+
+            "logToFile": true,
+        }
+    ]
+}

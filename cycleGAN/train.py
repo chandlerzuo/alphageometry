@@ -1,165 +1,178 @@
 import os
-import torch
-import tqdm
-import pandas as pd
+import math
+from pathlib import Path
+import sys
 from torch.utils.data import DataLoader
 
 from accelerate import Accelerator
-from data_loader.csv_loader import NLFLDatasetFromCSV
-from frozen_discriminator import PerplexityCalculator
-from model_preperation import load_model
-from transformers import AdamW, get_scheduler
-from torch.utils.data.distributed import DistributedSampler
-from my_utils import get_process_cuda_memory_info, prit_proc0, print_model_device_distribution
+from hf_dataset import AlwaysSameElementDataset, CombinedDataset, MixedDatasetSampler, prepare_data
+from model_preparation import load_model
+from transformers import get_scheduler
+from torch.optim import AdamW
+from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, print_model_device_distribution, \
+    ProgressBar, get_project_out_dir, apply_start_end_tags, get_cmd_args
 
-from torch.distributed.device_mesh import init_device_mesh
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP, ShardingStrategy
+from my_utils.training_utils import as_dict, create_val_metrics_string, Checkpointer, prepare_formal_natural_inputs,\
+    run_validation
 
+import accelerate
 
+import wandb
+os.environ.setdefault("WANDB_PROJECT", "alphageom_new")
+wandb.require("core")
 
+from utils import get_username
+from my_utils.hf_wrapper import debug_on_error
+
+@debug_on_error
 def main(args):
-    valid_recon_save_path = '/is/cluster/fast/pghosh/ouputs/alpha_geo/cycle_gan/geometry/'
-
     # Initialize Accelerator
-    accelerator = Accelerator()
+    accelerator = Accelerator(log_with="all")
+    if get_username() == "mmordig":
+        accelerator.init_trackers("alphageom_autoencoder", config=vars(args))
+        # pass
+    valid_recon_save_path, chkpt_dir = get_project_out_dir(args, accelerator.is_main_process)
+    print(f"Outputting to dirs {valid_recon_save_path} and {chkpt_dir}")
+    checkpointer = Checkpointer(chkpt_dir, args)
 
-    perplexity_calculator = PerplexityCalculator()
+    seed = 42
+    accelerate.utils.set_seed(seed)
 
     # Load tokenizer and models
-    tokenizer, encoder, decoder = load_model(args.model_name, use_pretrained=args.is_pretrained)
+    ae_model, tokenizer, wait_id = load_model(args.model_name, wait_token=args.wait_tok,
+                                              use_pretrained=args.is_pretrained,
+                                              use_perplexity_loss=args.use_perplexity_loss,
+                                              use_decoder=args.use_decoder, use_encoder=args.use_encoder,
+                                              fl_init_end_toks=[args.formal_init_tok, args.formal_end_tok],
+                                              nl_init_end_toks=[args.natural_init_tok, args.natural_end_tok])
 
-    # Move models to device
-    encoder, decoder, tokenizer, perplexity_calculator = \
-        accelerator.prepare(encoder, decoder, tokenizer, perplexity_calculator)
-
+    wrap_dataset = AlwaysSameElementDataset if args.overfitting else lambda x: x
     # Prepare dataset and dataloader
-    dataset = \
-        NLFLDatasetFromCSV('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='train',
-                           overfitting=args.overfitting)
-    # Create a DistributedSampler for the dataset
-    train_sampler = DistributedSampler(dataset, num_replicas=accelerator.num_processes, rank=accelerator.process_index)
-    train_dataloader = DataLoader(dataset, batch_size=args.batch_size, sampler=train_sampler)
+    non_rephrased_dataset = prepare_data(
+        args.dataset_dir / 'nl_fl.csv', seed=seed, nrows=args.nrows_nonrephrased
+    )
+    rephrased_dataset = prepare_data(
+        args.dataset_dir / 'rephrased-nl_fl_dataset_all.jsonl', seed=seed, nrows=args.nrows_rephrased, 
+        colnames={"formal": "fl_statement", "natural": "rephrase"}
+    )
+    rephrased_dataset = rephrased_dataset.filter(lambda x: x["total_token_lens"] < 1500)
+    
+    if args.rephrased_ratio > 0:
+        print(f"Using {args.rephrased_ratio} rephrased data")
+        train_datasets = [non_rephrased_dataset["train"], rephrased_dataset["train"]]
+        assert set(train_datasets[0].column_names) == set(train_datasets[1].column_names)
+        train_dataset = CombinedDataset(*train_datasets)
+        train_sampler = MixedDatasetSampler(
+            [len(x) for x in train_datasets], args.rephrased_ratio
+        )
+        del train_datasets
+    else:
+        train_dataset = non_rephrased_dataset["train"]
+        train_sampler = None
+    train_dataset = wrap_dataset(train_dataset)
+    
+    train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_sampler, pin_memory=True,
+                                  shuffle=False)
 
-    valid_dataset = \
-        NLFLDatasetFromCSV('/is/cluster/fast/scratch/pghosh/dataset/alpha_geo/geometry/nl_fl.csv', split='validation',
-                           overfitting=args.overfitting)
+    val_dataset = wrap_dataset(non_rephrased_dataset["validation"])
+    val_rephrased_dat = wrap_dataset(rephrased_dataset["validation"])
 
-    # Validation dataset (can use a different or similar sampler depending on the setup)
-    valid_sampler = DistributedSampler(valid_dataset, num_replicas=accelerator.num_processes,
-                                       rank=accelerator.process_index)
-    valid_dataloader = DataLoader(valid_dataset, batch_size=args.batch_size, sampler=valid_sampler)
+    valid_sampler = None # not needed, handled by accelerate
+    val_rephrased_samp = None
+    val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, sampler=valid_sampler, pin_memory=True,
+                                shuffle=False)
+    val_rephrased_dataloader = DataLoader(val_rephrased_dat, batch_size=args.batch_size, sampler=val_rephrased_samp)
 
     # Optimizers
-    auto_enc_opt = AdamW(list(encoder.parameters()) + list(decoder.parameters()), lr=2e-5)
-
+    optimizer = AdamW(ae_model.parameters(), lr=2e-5 * 4)
+    
     # Learning rate scheduler
     num_training_steps = args.num_epochs * len(train_dataloader)
     lr_scheduler = get_scheduler(
-        name="linear",
-        optimizer=auto_enc_opt,
+        # name="linear",
+        name="cosine",
+        optimizer=optimizer,
         num_warmup_steps=0,
         num_training_steps=num_training_steps,
     )
 
+    # import ipdb; ipdb.set_trace()
+    ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader = accelerator.prepare(
+        ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader
+    )
+    ae_model.freeze_perplexity_model()
+
     # Training loop
-    encoder.train()
-    decoder.train()
+    ae_model.train()
+    val_update_str = f'val_update: N/A'
     for epoch in range(args.num_epochs):
-        pbar = tqdm.tqdm(train_dataloader)
+        pbar = ProgressBar(train_dataloader, accelerator)
         for batch_idx, batch in enumerate(pbar):
-            formal_texts = batch['formal']
-            natural_texts = batch['natural']  # perhaps sometimes we should use it for grounding
+            # A list of variable length of string. So is natural texts
+            formal_texts, natural_texts = apply_start_end_tags(
+                batch['formal'], batch['natural'], [args.formal_init_tok, args.formal_end_tok],
+                [args.natural_init_tok, args.natural_end_tok])
 
-            # Encode formal to natural
-            enc_inputs = tokenizer(formal_texts, return_tensors='pt', padding=True, truncation=True, max_length=512)
+            formal_inputs, natural_inputs = prepare_formal_natural_inputs(
+                formal_texts, natural_texts, tokenizer=tokenizer,
+                return_natural_inputs=batch_idx % math.ceil(1/(args.grounding_prob + 1e-7)) == 0
+            )
 
-            enc_outputs = encoder(**enc_inputs, output_hidden_states=True)
+            ae_model.train()
+            model_outputs, _ = ae_model(formal_inputs=formal_inputs, natural_inputs=natural_inputs,
+                                        wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id,
+                                        padding_type=args.padding_type, also_decode_natural=True)
+            total_loss = model_outputs.total_loss(enc_loss_weight=args.enc_loss_weight)
 
-            print_model_device_distribution(accelerator, encoder, 'encoder')
-            # exit(-1)
-
-            # Decode natural to formal
-            rec_outputs = decoder(inputs_embeds=enc_outputs.hidden_states[-1], labels=enc_inputs['input_ids'])
-            recon_loss = rec_outputs.loss
-
-            log_perplexity_loss = perplexity_calculator(enc_outputs.logits)
-
-            # Total loss
-            total_loss = recon_loss + 0 * log_perplexity_loss
-
-            # Backpropagation
             accelerator.backward(total_loss)
-            auto_enc_opt.step()
+            # import ipdb; ipdb.set_trace()
+            optimizer.step()
             lr_scheduler.step()
-            auto_enc_opt.zero_grad()
+            optimizer.zero_grad()
+            
+            train_metrics = {
+                "lg_perp_l": model_outputs.log_perplexity_loss or 0,
+                "recon_l": model_outputs.decoder_loss(),
+                "enc_l": model_outputs.encoder_loss(),
+                "dec_nat_l": model_outputs.decoder_loss_on_nat_lang_input()
+            }
 
-            if batch_idx % args.validate_every == 0:
-                # Validation
-                encoder.eval()
-                decoder.eval()
-                with torch.no_grad():
-                    valid_iterator = iter(valid_dataloader)
-                    val_recon_loss = 0
-                    val_log_perplexity_loss = 0
-                    for i, val_batch in enumerate(valid_iterator):
-                        if i > args.valid_for_batches:
-                            break
-                        val_formal_texts = val_batch['formal']
-                        val_natural_texts = val_batch['natural']
+            if batch_idx % args.validate_every == args.validate_every - 1:
+                
+                df_filename = os.path.join(valid_recon_save_path, f'{epoch}_{batch_idx}_fl_fl.csv')
+                val_metrics = run_validation(
+                    model=ae_model, accelerator=accelerator, tokenizer=tokenizer, 
+                    non_rephrased_dataloader=val_dataloader, rephrased_dataloader=val_rephrased_dataloader,
+                    df_filename=df_filename,
+                    model_kwargs=as_dict(wait_token_id=wait_id, pad_token_id=tokenizer.pad_token_id),
+                    max_num_batches=args.valid_for_batches, padding_type=args.padding_type,
+                    fl_init_end_toks=[args.formal_init_tok, args.formal_end_tok],
+                    nl_init_end_toks=[args.natural_init_tok, args.natural_end_tok])
+                val_update_str = "val_update: " + create_val_metrics_string(val_metrics)
+                accelerator.log(
+                    {f"val/{k}": v for k, v in val_metrics.items()}
+                    |
+                    {f"train/{k}": v for k, v in train_metrics.items()}
+                    |
+                    {f"epoch": epoch + batch_idx / len(train_dataloader),
+                     "step": epoch * len(train_dataloader) + batch_idx}
+                )
+                
+                ae_model.train()
+                if (batch_idx + 1) % args.chkpt_bst_mdl_every == 0:
+                    loss_for_saving = val_metrics['rf_dec_los_on_nat']
+                    if loss_for_saving == 0:
+                        loss_for_saving = val_metrics["enc_loss"] + val_metrics["recon_loss"]
 
-                        # Encode formal to natural
-                        val_enc_inputs = tokenizer(val_formal_texts, return_tensors='pt', padding=True, truncation=True,
-                                                   max_length=512)
-                        val_enc_inputs = {k: v.to(accelerator.device) for k, v in val_enc_inputs.items()}
-                        val_enc_outputs = encoder(**val_enc_inputs, output_hidden_states=True)
+                    checkpointer.checkpoint(accelerator, ae_model, loss_for_saving)
+                
+            train_update_str = " ".join([f"{k}:{v:.3f}" for k, v in train_metrics.items()])
+            pbar.set_description(f'Epoch {epoch+1}/{args.num_epochs}: {val_update_str} {train_update_str}')
 
-                        # Decode natural to formal
-                        val_rec_outputs = decoder(inputs_embeds=val_enc_outputs.hidden_states[-1],
-                                                  labels=val_enc_inputs['input_ids'])
-                        val_recon_loss += val_rec_outputs.loss
-
-                        val_log_perplexity_loss += perplexity_calculator(val_enc_outputs.logits)
-
-                        if i == 0:
-                            # print(get_process_cuda_memory_info())
-                            # Convert logits to predicted token IDs
-                            recon_token_ids = torch.argmax(val_rec_outputs.logits, dim=-1)
-                            # import ipdb; ipdb.set_trace()
-                            # Convert token IDs to text
-                            recon_texts = tokenizer.batch_decode(recon_token_ids, skip_special_tokens=False)
-                            df = pd.DataFrame({
-                                'original': val_formal_texts,
-                                'reconstructed': recon_texts
-                            })
-                            # Save the DataFrame to a CSV file
-                            file_name = f'{epoch}_{batch_idx}_fl_fl.csv'
-                            df.to_csv(os.path.join(valid_recon_save_path, file_name), index=False, encoding='utf-8')
-
-                val_update = f'Average val_rec_l: {val_recon_loss / args.valid_for_batches:.3f}, ' \
-                             f'Average val_log_perp_l: {val_log_perplexity_loss / args.valid_for_batches:.3f}'
-
-            pbar.set_description(f'{val_update} log_perplexity_loss:{log_perplexity_loss:.3f}, recon_loss:{recon_loss:.3f}')
-            encoder.train()
-            decoder.train()
-
-    print(f"Training completed. A total of {epoch} epoch(s)")
+    accelerator.end_training()
+    print(f"Training completed. A total of {epoch+1} epoch(s)")
 
 
 if __name__ == "__main__":
-    from argparse import ArgumentParser
-    parser = ArgumentParser()
-    parser.add_argument('--num_epochs', type=int, default=10)
-    parser.add_argument('--validate_every', type=int, default=100)
-    parser.add_argument('--valid_for_batches', type=int, default=10)
-    parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--model_name', type=str, default='meta-llama/Llama-2-7b-hf',
-                        help="Model name to load, e.g., 'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl',"
-                                                       "'meta-llama/Meta-Llama-3.1-8B', "
-                                                       "'meta-llama/Llama-2-7b-hf'")
-    parser.add_argument('--use_FSDP', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
-    parser.add_argument('--overfitting', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
-    parser.add_argument('--is_pretrained', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
-
-    args = parser.parse_args()
-    prit_proc0(args)
+    args = get_cmd_args()
     main(args)

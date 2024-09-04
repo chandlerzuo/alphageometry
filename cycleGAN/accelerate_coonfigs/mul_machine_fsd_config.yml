@@ -9,19 +9,19 @@ fsdp_config:
   fsdp_forward_prefetch: false
   fsdp_offload_params: false  # Be careful with this. It can slow the hell down!!!
   # Unfortunately HYBRID_SHARD in not available in Accelerate yet! as of Aug 13, 2024
-  fsdp_sharding_strategy: FULL_SHARD # HYBRID_SHARD shards in GPUS in same node and DP across nodes
+  fsdp_sharding_strategy: HYBRID_SHARD #FULL_SHARD # HYBRID_SHARD shards in GPUS in same node and DP across nodes
   fsdp_state_dict_type: FULL_STATE_DICT
   fsdp_sync_module_states: true
 #  fsdp_transformer_layer_cls_to_wrap: 'transformers.models.gpt2.modeling_gpt2.GPT2Block'
   fsdp_use_orig_params: true
 machine_rank: 0
-main_process_ip: 172.22.2.130 #0.0.0.0
+main_process_ip: 0.0.0.0
 main_process_port: 3630
 main_training_function: main
 mixed_precision: 'no'
 #mixed_precision: fp16
 num_machines: 1
-num_processes: 4  # Total number of processes! Not per node! = GPUS_PER_NODE * NODES!
+num_processes: 8  # Total number of processes! Not per node! = GPUS_PER_NODE * NODES!
 rdzv_backend: static
 same_network: true
 tpu_env: []
