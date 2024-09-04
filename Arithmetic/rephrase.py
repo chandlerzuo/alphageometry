@@ -21,6 +21,26 @@ def load_existing_codes(path: Path) -> set[str]:
         return {code for code in existing if code is not None}
     return set()
 
+@fig.script('count-rephrases')
+def count_rephrases(cfg: fig.Configuration):
+    path = cfg.pull('path')
+    path = Path(path)
+
+    completed_paths = list(path.glob('rephrased-*.jsonl'))
+    available_paths = list(path.glob('*.csv')) + list(path.glob('*.CSV'))
+
+    completed = 0
+    available = 0
+
+    for path in tqdm(available_paths):
+        available += len(pd.read_csv(path))
+    for path in tqdm(completed_paths):
+        completed += sum(1 for _ in path.open('r'))
+        
+    print(f'Completed: {completed} items')
+    print(f'Available: {available} items')
+
+
 @fig.script('rephrase')
 def rephrase(cfg: fig.Configuration):
 
