@@ -34,7 +34,10 @@ def prepare_data(filename, test_size=0.1, seed=None, colnames=None, **kwargs) ->
     if colnames is None:
         colnames = {"formal": "fl_statement", "natural": "nl_statement"}
     dataset = dataset.rename_columns(({colnames["formal"]: "formal", colnames["natural"]: "natural"}))
-    dataset = dataset.select_columns(["formal", "natural"])
+    if 'total_token_lens' in colnames:
+        dataset = dataset.select_columns(["formal", "natural", "total_token_lens"])
+    else:
+        dataset = dataset.select_columns(["formal", "natural"])
     dataset = dataset.with_format("torch")
 
     generator = np.random.default_rng(seed)
@@ -121,6 +124,7 @@ class MixedDatasetSampler(torch.utils.data.WeightedRandomSampler):
 
 
 if __name__ == "__main__":
+    import re
     # filename = "runs/datasets/arithmetic/nl_fl.csv"
     # seed = 42
     # test_size = 0.1
@@ -144,12 +148,27 @@ if __name__ == "__main__":
     #
 
     ds = Dataset.from_dict({
-        "formal": ["Hello how are you", "I am fine", "What are you doing?"],
-        "natural": ["What are you doing?", "I am fine", "Hello how are you"],
+        "nl_statement": ["Hello how are you", "I am \n \r fine", "What are you doing?"],
+        "fl_statement": ["What are you doing?", "I am fine", "Hello how are you"],
+        "rephrase": ["What are you doing?", "I am fine", "Hello how are you"],
         "total_token_lens": [1510, 339, 45],
     })
-    rephrased_dataset = DatasetDict({"train": ds, "validation": ds, "test": ds})
+
+    colnames = {"formal": "fl_statement", "natural": "rephrase", "total_token_lens": "total_token_lens"}
+
+    dataset = ds.rename_columns(({colnames["formal"]: "formal", colnames["natural"]: "natural"}))
+    if 'total_token_lens' in colnames:
+        dataset = dataset.select_columns(["formal", "natural", "total_token_lens"])
+    else:
+        dataset = dataset.select_columns(["formal", "natural"])
+    dataset = dataset.with_format("torch")
+
+    rephrased_dataset = DatasetDict({"train": dataset, "validation": dataset, "test": dataset})
     print(f"Rephrased dataset before filtering: {rephrased_dataset}")
     rephrased_dataset = rephrased_dataset.filter(lambda x: x["total_token_lens"] <= 1500)
+    rephrased_dataset = rephrased_dataset.map(
+        lambda x: {"natural": [re.sub(r'\r\n|\r|\n', '', text) for text in x["natural"]]},
+        batched=True,
+    )
     print(f"Rephrased dataset after filtering: {rephrased_dataset}")
 # %%
