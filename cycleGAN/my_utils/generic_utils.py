@@ -250,9 +250,11 @@ def get_cmd_args():
     parser.add_argument('--chkpt_bst_mdl_every', type=int, default=10,
                         help='Checkpoint model every these many validation (!) steps if validation result improved. '
                              'Negative value skips this')
-    parser.add_argument('--output_path', type=str,
-                        default=None,
-                        help='path to save training stats and models')
+    parser.add_argument('--output_path', type=str, default=None, help='path to save training stats and models')
+    parser.add_argument('--enc_resume_path', type=str, default=None, help='path to load encoder weights from. '
+                                                                          'e.g., a previous run')
+    parser.add_argument('--dec_resume_path', type=str, default=None, help='path to load decoder weights from. '
+                                                                          'e.g., a previous run')
     parser.add_argument('--grounding_prob', type=float, default=0.5, help='introduce encoder NL labels every ceil(1/x)'
                                                                           ' batches')
     parser.add_argument('--enc_loss_weight', type=float, default=2, help='scale encoder loss by this factor')

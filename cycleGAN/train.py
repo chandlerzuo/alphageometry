@@ -109,7 +109,9 @@ def main(args):
     ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader = accelerator.prepare(
         ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader
     )
-    ae_model.freeze_perplexity_model()
+    # All processes should do the following! don't wrap the if main process condition above!
+    accelerator.unwrap_model(ae_model).load_weights(args.enc_resume_path, args.dec_resume_path)
+    accelerator.unwrap_model(ae_model).freeze_perplexity_model()
 
     # Training loop
     ae_model.train()
