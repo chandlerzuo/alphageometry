@@ -14,6 +14,7 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config, AutoTokeniz
     PreTrainedModel, PretrainedConfig
 import textwrap
 from transformers.utils import ModelOutput
+from transformers.modeling_utils import load_sharded_checkpoint
 
 @dataclass
 class AutoEncoderLLMOutput(ModelOutput):
@@ -262,26 +263,22 @@ class AutoEncoderLLM(PreTrainedModel):
         ), AutoEncoderLLMInputs(encoder_inputs, encoder_targets, decoder_inputs, decoder_targets) \
             if return_inputs else None
 
+    def load_weights(self, enc_resume_path, dec_resume_path):
+        if enc_resume_path is not None:
+            assert self.encoder is not None
+            decoder = self.decoder
+            self.decoder = None
+            load_sharded_checkpoint(self, enc_resume_path)
+            self.decoder = decoder
+            print(f'Encoder resumed from: {enc_resume_path}')
 
-            # @classmethod
-    # def from_pretrained(cls, output_dir) ->PreTrainedModel:
-    #     output_dir = Path(output_dir)
-    #
-    #     extra_args = torch.load(os.path.join(output_dir, "extra_args.json"))
-    #     model_name = extra_args["model_name"]
-    #     padding_token_id = extra_args["padding_token_id"]
-    #     uses_perplexity_loss = extra_args["uses_perplexity_loss"]
-    #
-    #     # AutoModel.from_pretrained loads wrong model if it is AutoModelForCausalLM, so we load this class as well
-    #     encoder = AutoModelForCausalLM.from_pretrained(output_dir / "encoder") \
-    #         if (output_dir / "encoder").exists() else None
-    #     decoder = AutoModelForCausalLM.from_pretrained(output_dir / "decoder") \
-    #         if (output_dir / "encoder").exists() else None
-    #     # tokenizer = AutoTokenizer.from_pretrained(output_dir / "tokenizer")
-    #     perplexity_calculator = get_perplexity_calculator(model_name) if uses_perplexity_loss else None
-    #
-    #     return cls(model_name=model_name, encoder=encoder, decoder=decoder,
-    #                perplexity_calculator=perplexity_calculator, padding_token_id=padding_token_id)
+        if dec_resume_path is not None:
+            assert self.decoder is not None
+            encoder = self.encoder
+            self.encoder = None
+            load_sharded_checkpoint(self, dec_resume_path)
+            self.encoder = encoder
+            print(f'Decoder resumed from: {dec_resume_path}')
 
 
 def get_perplexity_calculator(model_name):

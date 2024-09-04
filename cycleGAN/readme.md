@@ -1,8 +1,18 @@
 # Launch command
 ```
-accelerate launch --config_file=configs/cycleGAN.yaml --machine_rank=1 train.py
-```
+accelerate launch --config_file=accelerate_configs/multi_machine_config.yml --main_process_ip=0.0.0.0 \
+--num_processes=1 train.py --use_encoder=False --use_decoder=True --batch_size=1 --grounding_prob=1 \
+--model_name=gpt2
 
+```
+### Restore encoder and decoder and run AE training
+```
+accelerate launch --config_file=accelerate_configs/multi_machine_config.yml --main_process_ip=0.0.0.0 \
+--num_processes=1 train.py --use_encoder=True --use_decoder=True --batch_size=1 --grounding_prob=1 \
+--model_name=gpt2 --validate_every=1 --chkpt_bst_mdl_every=1 --use_perplexity_loss=False \
+--enc_resume_path=<root>/gpt2_enc_only/checkpoints/ \
+--dec_resume_path=<root>/gpt2_dec_only/checkpoints/
+```
 ### Padding
 Two modes 
 1. copy_target: Copy the target in the input

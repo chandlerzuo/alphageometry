@@ -1,7 +1,6 @@
 import os
 import math
-from pathlib import Path
-import sys
+import re
 from torch.utils.data import DataLoader
 
 from accelerate import Accelerator
@@ -48,15 +47,25 @@ def main(args):
 
     wrap_dataset = AlwaysSameElementDataset if args.overfitting else lambda x: x
     # Prepare dataset and dataloader
+    # synthetic_nl_fl_file = 'nl_fl.csv'
+    synthetic_nl_fl_file = 'nl_fl_long.csv'
     non_rephrased_dataset = prepare_data(
-        args.dataset_dir / 'nl_fl.csv', seed=seed, nrows=args.nrows_nonrephrased
+        os.path.join(args.dataset_dir, synthetic_nl_fl_file) , seed=seed, nrows=args.nrows_nonrephrased
     )
+    # rephrased_file_name = 'rephrased-nl_fl_dataset_all.jsonl'
+    rephrased_file_name = 'all_rephrased_chunks.csv'
     rephrased_dataset = prepare_data(
-        args.dataset_dir / 'rephrased-nl_fl_dataset_all.jsonl', seed=seed, nrows=args.nrows_rephrased, 
-        colnames={"formal": "fl_statement", "natural": "rephrase"}
+        os.path.join(args.dataset_dir, rephrased_file_name), seed=seed, nrows=args.nrows_rephrased,
+        colnames={"formal": "fl_statement", "natural": "rephrase", "total_token_lens": "total_token_lens"}
     )
-    rephrased_dataset = rephrased_dataset.filter(lambda x: x["total_token_lens"] < 1500)
-    
+    rephrased_dataset = rephrased_dataset.filter(lambda x: x["total_token_lens"] < 1500 and x["natural"])
+    # import ipdb; ipdb.set_trace()
+    rephrased_dataset = rephrased_dataset.map(
+        lambda x: {"natural": [re.sub(r'\r\n|\r|\n', '', text) for text in x["natural"]]},
+        batched=True,
+    )
+    rephrased_dataset = rephrased_dataset.select_columns(["formal", "natural"])
+
     if args.rephrased_ratio > 0:
         print(f"Using {args.rephrased_ratio} rephrased data")
         train_datasets = [non_rephrased_dataset["train"], rephrased_dataset["train"]]
@@ -100,7 +109,9 @@ def main(args):
     ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader = accelerator.prepare(
         ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader
     )
-    ae_model.freeze_perplexity_model()
+    # All processes should do the following! don't wrap the if main process condition above!
+    accelerator.unwrap_model(ae_model).load_weights(args.enc_resume_path, args.dec_resume_path)
+    accelerator.unwrap_model(ae_model).freeze_perplexity_model()
 
     # Training loop
     ae_model.train()

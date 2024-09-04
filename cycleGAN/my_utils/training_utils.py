@@ -47,7 +47,9 @@ class Checkpointer:
                 self.output_dir,
                 is_main_process=accelerator.is_main_process,
                 save_function=accelerator.save,
-                state_dict=accelerator.get_state_dict(model)
+                state_dict=accelerator.get_state_dict(model),
+                # max_shard_size="50MB", # set to a low value to debug with sharded GPT2. Normally keep it commented
+                safe_serialization=False
             )
             print(f'Model saved in {self.output_dir}')
 
