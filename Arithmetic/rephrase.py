@@ -151,6 +151,10 @@ def rephrase(cfg: fig.Configuration):
                 )
                 rephrased = response.choices[0].message.content
 
+            if not rephrased:
+                print(response)
+                raise ValueError('No response from the API')
+
             item['rephrase'] = rephrased.replace('\n', ' ')
 
             item['md5_item_code'] = code
