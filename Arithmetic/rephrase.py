@@ -153,7 +153,7 @@ def rephrase(cfg: fig.Configuration):
 
             if not rephrased:
                 if response.choices[0].finish_reason == 'content_filter':
-                    print(f'Skipped due to content filter: {response.choices[0].content_filter_results} and {response.choices[0].prompt_filter_results}')
+                    print(f'Skipped due to content filter: {response.choices[0].content_filter_results}')#and {response.choices[0].prompt_filter_results}')
                     continue
                 print(response)
                 raise ValueError('No response from the API')
