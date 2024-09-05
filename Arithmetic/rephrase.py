@@ -76,7 +76,7 @@ def rephrase(cfg: fig.Configuration):
 
     # pbar = cfg.pull('pbar', not cfg.pull('no-pbar', False, silent=True), silent=True)
 
-    max_tokens = cfg.pull('max-tokens', 1500)
+    max_tokens = cfg.pull('max-tokens', 2000)
 
     root = cfg.pull('path')
     root = Path(root)
