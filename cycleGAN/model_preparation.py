@@ -1,8 +1,6 @@
 #%%
 from dataclasses import dataclass
 import functools
-import os
-from pathlib import Path
 import tempfile
 from typing import Optional, Tuple
 from utils import freeze_params
@@ -264,11 +262,16 @@ class AutoEncoderLLM(PreTrainedModel):
             if return_inputs else None
 
     def load_weights(self, enc_resume_path, dec_resume_path):
+        perplexity_calculator = self.perplexity_calculator
+        self.perplexity_calculator = None
         if enc_resume_path is not None:
             assert self.encoder is not None
             decoder = self.decoder
             self.decoder = None
-            load_sharded_checkpoint(self, enc_resume_path)
+            # load_sharded_checkpoint(self, enc_resume_path)
+            self.from_pretrained(enc_resume_path, config=PretrainedConfig(), encoder=self.encoder, decoder=self.decoder,
+                                 perplexity_calculator=self.perplexity_calculator,
+                                 padding_token_id=self.padding_token_id, ignore_mismatched_sizes=False)
             self.decoder = decoder
             print(f'Encoder resumed from: {enc_resume_path}')
 
@@ -276,9 +279,13 @@ class AutoEncoderLLM(PreTrainedModel):
             assert self.decoder is not None
             encoder = self.encoder
             self.encoder = None
-            load_sharded_checkpoint(self, dec_resume_path)
+            self.from_pretrained(dec_resume_path, config=PretrainedConfig(), encoder=self.encoder, decoder=self.decoder,
+                                 perplexity_calculator=self.perplexity_calculator,
+                                 padding_token_id=self.padding_token_id, ignore_mismatched_sizes=False)
             self.encoder = encoder
             print(f'Decoder resumed from: {dec_resume_path}')
+
+        self.perplexity_calculator = perplexity_calculator
 
 
 def get_perplexity_calculator(model_name):

@@ -13,6 +13,11 @@ accelerate launch --config_file=accelerate_configs/multi_machine_config.yml --ma
 --enc_resume_path=<root>/gpt2_enc_only/checkpoints/ \
 --dec_resume_path=<root>/gpt2_dec_only/checkpoints/
 ```
+
+## Inferance
+```commandline
+python inference.py --ckpt <ckpt_root>/meta-llama/Meta-Llama-3.1-8B_dec_only_4/checkpoints/
+```
 ### Padding
 Two modes 
 1. copy_target: Copy the target in the input

@@ -105,12 +105,15 @@ def main(args):
         num_training_steps=num_training_steps,
     )
 
+    # ae_model.load_weights(args.enc_resume_path, args.dec_resume_path)
+
     # import ipdb; ipdb.set_trace()
     ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader = accelerator.prepare(
         ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader
     )
     # All processes should do the following! don't wrap the if main process condition above!
-    accelerator.unwrap_model(ae_model).load_weights(args.enc_resume_path, args.dec_resume_path)
+    # import ipdb; ipdb.set_trace()
+    ae_model.load_weights(args.enc_resume_path, args.dec_resume_path)
     accelerator.unwrap_model(ae_model).freeze_perplexity_model()
 
     # Training loop
