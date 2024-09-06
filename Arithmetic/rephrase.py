@@ -21,6 +21,26 @@ def load_existing_codes(path: Path) -> set[str]:
         return {code for code in existing if code is not None}
     return set()
 
+@fig.script('count-rephrases')
+def count_rephrases(cfg: fig.Configuration):
+    path = cfg.pull('path')
+    path = Path(path)
+
+    completed_paths = list(path.glob('rephrased-*.jsonl'))
+    available_paths = list(path.glob('*.csv')) + list(path.glob('*.CSV'))
+
+    completed = 0
+    available = 0
+
+    for path in tqdm(available_paths):
+        available += len(pd.read_csv(path))
+    for path in tqdm(completed_paths):
+        completed += sum(1 for _ in path.open('r'))
+        
+    print(f'Completed: {completed} items')
+    print(f'Available: {available} items')
+
+
 @fig.script('rephrase')
 def rephrase(cfg: fig.Configuration):
 
@@ -56,7 +76,7 @@ def rephrase(cfg: fig.Configuration):
 
     # pbar = cfg.pull('pbar', not cfg.pull('no-pbar', False, silent=True), silent=True)
 
-    max_tokens = cfg.pull('max-tokens', 1500)
+    max_tokens = cfg.pull('max-tokens', 2000)
 
     root = cfg.pull('path')
     root = Path(root)
@@ -130,6 +150,13 @@ def rephrase(cfg: fig.Configuration):
                     max_tokens=max_tokens,
                 )
                 rephrased = response.choices[0].message.content
+
+            if not rephrased:
+                if response.choices[0].finish_reason == 'content_filter':
+                    print(f'Skipped due to content filter: {response.choices[0].content_filter_results}')#and {response.choices[0].prompt_filter_results}')
+                    continue
+                print(response)
+                raise ValueError('No response from the API')
 
             item['rephrase'] = rephrased.replace('\n', ' ')
 
