@@ -297,6 +297,10 @@ def get_cmd_args():
         assert args.grounding_prob >= 1  # you need the grounding always as these are the inputs
     if args.use_encoder and not args.use_decoder:
         assert args.grounding_prob >= 1, f'We need the natural language targets when using encoder only model.'
+
+    if args.enc_resume_path is not None and args.dec_resume_path is not None:
+        # The tokenizer is pretrained anyway!
+        args.is_pretrained = False  # no point loading language model pretraining as we will load checkpoint anyway
     print_proc0(f"Got arguments: {args}")
     return args
 

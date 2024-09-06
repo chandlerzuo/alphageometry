@@ -1,4 +1,9 @@
+## Caveat
+If you are getting tensor size missmatch error, while sending in `enc_resume_path` and/or `dec_resume_path`, then you 
+have both `model.safetensors` and `model-00001-of-00004.safetensors` inside the checkpoint directory. Simply delete the
+`model.safetensors`. Check though the model is indeed saved in several parts.
 # Launch command
+
 ```
 accelerate launch --config_file=accelerate_configs/multi_machine_config.yml --main_process_ip=0.0.0.0 \
 --num_processes=1 train.py --use_encoder=False --use_decoder=True --batch_size=1 --grounding_prob=1 \
