@@ -13,6 +13,7 @@ from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, pr
 
 from my_utils.training_utils import as_dict, create_val_metrics_string, Checkpointer, prepare_formal_natural_inputs,\
     run_validation
+from utils import freeze_params
 
 import accelerate
 
@@ -93,7 +94,12 @@ def main(args):
     val_rephrased_dataloader = DataLoader(val_rephrased_dat, batch_size=args.batch_size, sampler=val_rephrased_samp)
 
     # Optimizers
-    optimizer = AdamW(ae_model.parameters(), lr=2e-5 * 4)
+    if args.enc_is_trainable and args.dec_is_trainable:
+        optimizer = AdamW(ae_model.parameters(), lr=2e-5 * 4)
+    elif args.enc_is_trainable:
+        optimizer = AdamW(ae_model.encoder.parameters(), lr=2e-5 * 4)
+    elif args.dec_is_trainable:
+        optimizer = AdamW(ae_model.decoder.parameters(), lr=2e-5 * 4)
     
     # Learning rate scheduler
     num_training_steps = args.num_epochs * len(train_dataloader)
@@ -114,7 +120,11 @@ def main(args):
     # All processes should do the following! don't wrap the if main process condition above!
     # import ipdb; ipdb.set_trace()
     ae_model.load_weights(args.enc_resume_path, args.dec_resume_path)
-    accelerator.unwrap_model(ae_model).freeze_perplexity_model()
+    ae_model.freeze_perplexity_model()
+    if not args.enc_is_trainable:
+        freeze_params(ae_model.encoder)
+    if not args.dec_is_trainable:
+        freeze_params(ae_model.decoder)
 
     # Training loop
     ae_model.train()
