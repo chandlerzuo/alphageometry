@@ -19,9 +19,10 @@ import csv
 
 
 def main(run_id, interactive):
-    dataset_length = 2000
+    dataset_length = 20_000
     # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
-    filename = f'/is/cluster/fast/pghosh/datasets/alpha_geo/nl_fl_dataset_{run_id}.csv'
+    filename = (f'/is/cluster/scratch/pghosh/dataset/alpha_geo/geometry_long/'
+                f'nl_fl_dataset_{run_id}.csv')
     # filename = '../data/nl_fl_dataset_2.csv'
     random.seed(run_id)
     defs_path = '../defs.txt'
@@ -31,7 +32,7 @@ def main(run_id, interactive):
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
 
     # field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'goal_nl', 'goal_fl', 'rnd_states']
-    field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement', 'goal_nl', 'goal_fl']
+    field_names = ['sl_n', 'num_clauses', 'nl_statement', 'fl_statement']
 
     # Write data to the CSV file
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
@@ -40,12 +41,16 @@ def main(run_id, interactive):
         writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
         writer.writeheader()
         serial_num = run_id * dataset_length
-        cc_gen = CompoundClauseGen(definitions, 2, 3, 2)
+        cc_gen = CompoundClauseGen(definitions, max_comma_sep_clause=3, max_single_clause=7, max_sets=2, seed=run_id)
         verbalizer = IndependentStatementVerbalization(None)
 
         for i in range(dataset_length):
-            num_clauses = random.randint(3, 10)
             fl_statement = cc_gen.generate_clauses()
+            num_clauses = 0
+            for clause in fl_statement.split(';'):
+                num_clauses += len(clause.split(','))
+            if num_clauses < 5:
+                continue
 
             if interactive: print(fl_statement)
 
@@ -66,7 +71,7 @@ def main(run_id, interactive):
                 # Disable the alarm
                 signal.alarm(0)
             except TimeoutException as e:
-                print("Graph couldn't be create in reasonable time. Perhaps problem with the premises. Continuing ...")
+                print("Graph couldn't be created in reasonable time. Perhaps problem with the premises. Continuing ...")
                 continue
             except KeyError:
                 print("Key error while building graph. Continuing ...")
@@ -96,8 +101,8 @@ def main(run_id, interactive):
                     pretty_goal = pretty_nl(goal_fl[0], goal_fl[1:])
                     if pretty_goal is None:
                         raise ValueError(f'Could not pretty print goal: {goal_fl}')
-                    goal_nl = translate_step(pretty_goal)
-                    goal_fl = ' '.join(goal_fl)
+                    goal_nl = ' Prove that ' + translate_step(pretty_goal)
+                    goal_fl = ' ? ' + ' '.join(goal_fl)
                 # Now we know that the generated premises are not contradictory
                 # nl_prob = get_nl_problem_statement(fl_statement)
                 nl_prob = verbalizer.problem_fl_2_nl(fl_statement)
@@ -105,10 +110,10 @@ def main(run_id, interactive):
                 row = {
                     'sl_n': serial_num,
                     'num_clauses': num_clauses,
-                    'nl_statement': nl_prob,
-                    'fl_statement': fl_statement,
-                    'goal_nl': goal_nl,
-                    'goal_fl': goal_fl
+                    'nl_statement': nl_prob + goal_nl,
+                    'fl_statement': fl_statement + goal_fl,
+                    # 'goal_nl': goal_nl,
+                    # 'goal_fl': goal_fl
                 }
                 writer.writerow(row)
                 serial_num += 1

@@ -36,7 +36,7 @@ def main():
     # Load definitions and rules
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
-    cc_gen = CompoundClauseGen(definitions, 2, 3, 2)
+    cc_gen = CompoundClauseGen(definitions, 2, 3, 2, 42)
     txt = cc_gen.generate_clauses()
     # Let P be an interior point of triangle ABC and AP, BP, CP meet the sides BC, CA, AB in D, E, F respectively. Show that AP/PD = AF/FB + AE/EC
     txt = 'A B C = triangle A B C; D = on_line B C; E = on_line C A; P = on_line A D, on_line B E; F = on_line C P, on_line A B'

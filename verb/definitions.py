@@ -119,7 +119,7 @@ class StatementVerbalization(ToolKit):
 
 
 	@tool('statement')
-	def verbalize_clauses(self, clause_contexts: list[Controller], *, clause_joiner: str = 'and'):
+	def verbalize_clauses(self, clause_contexts: list[Controller], *, clause_joiner: str = ' and '):
 		statement = clause_joiner.join(ctx['clause'] for ctx in clause_contexts)
 		if not len(statement):
 			return ''
