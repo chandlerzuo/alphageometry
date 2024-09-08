@@ -1,0 +1,107 @@
+I have some geometry problems that need to be formalized using a very specific YAML based format. Here is a description of all the possible constructions that may be used in the problems (with the number of points/arguments each construction takes):
+
+2l1c (8): A configuration where two lines are tangents to a circle.
+3peq (6): A configuration involving a triangle where one line is equal to two others.
+angle_bisector (4): A line or segment that divides an angle into two equal parts.
+angle_mirror (4): A point or line that is symmetrically placed across the bisector of an angle.
+cc_tangent (8): A pair of lines that are tangents to two circles at specific points.
+centroid (7): The point where the medians of a triangle intersect, dividing each median in a 2:1 ratio.
+circle (4): A set of points equidistant from a given center point.
+circumcenter (4): The point where the perpendicular bisectors of a triangle's sides meet, which is equidistant from all vertices.
+eq_quadrangle (4): A quadrilateral where two opposite sides are equal in length.
+eq_trapezoid (4): A trapezoid where the two non-parallel sides are equal in length.
+eq_triangle (3): A triangle where all three sides are equal in length.
+eqangle2 (4): A pair of angles that are equal.
+eqangle3 (6): A configuration of three equal angles.
+eqdia_quadrangle (4): A quadrilateral where the two diagonals are equal in length.
+eqdistance (4): A condition where two or more distances (lines) are equal in length.
+excenter (4): The point where the external angle bisectors of a triangle meet, forming the center of the excircle.
+excenter2 (7): The excenter of a triangle along with the points where the excircle touches the triangle's sides.
+foot (4): The point where a perpendicular dropped from one point meets a given line.
+free (1): A defined point in a geometric space with no additional conditions.
+ieq_triangle (3): An equilateral triangle, where all sides and angles are equal.
+incenter (4): The point where the angle bisectors of a triangle meet, equidistant from all sides.
+incenter2 (7): The incenter of a triangle along with the touchpoints where the incircle touches each side.
+intersection_cc (4): The points where two circles intersect.
+intersection_lc (4): The points where a line meets a circle.
+intersection_ll (5): The point where two lines intersect.
+intersection_lp (6): The point where a line intersects a parallel line.
+intersection_lt (6): The point where a line intersects a perpendicular line.
+intersection_pp (7): The point where two parallel lines meet.
+intersection_tt (7): The point where two perpendicular lines intersect.
+iso_triangle (3): A triangle with two equal sides and two equal angles.
+isquare (4): A square defined by its four vertices.
+lc_tangent (3): A line that touches a circle at exactly one point.
+midpoint (3): The point that divides a line segment into two equal parts.
+mirror (3): A point symmetrically placed on the opposite side of a given line.
+ninepoints (7): The center of the nine-point circle, which passes through key points of a triangle.
+nsquare (3): A square defined by three consecutive vertices.
+on_aline (6): A point defined by its alignment with a given angle.
+on_bline (3): A point on the perpendicular bisector of a line.
+on_circle (3): A point that lies on the circumference of a circle.
+on_circum (4): A point on the circumcircle of a triangle, which passes through its vertices.
+on_dia (3): A point on the circumference of a circle, where the diameter of the circle is a reference.
+on_line (3): A point that lies on a given straight line.
+on_opline (3): A point on the extended line of a given segment.
+on_pline (4): A point that lies on a line parallel to another given line.
+on_tline (4): A point that lies on a line perpendicular to another given line.
+orthocenter (4): The point where the altitudes of a triangle meet.
+parallelogram (4): A quadrilateral with opposite sides that are parallel and equal in length.
+pentagon (5): A polygon with five sides and five angles.
+psquare (3): A square defined by three consecutive vertices.
+quadrangle (4): A four-sided polygon, also known as a quadrilateral.
+r_trapezoid (4): A trapezoid where one of the angles is a right angle.
+r_triangle (3): A triangle that has one right angle.
+rectangle (4): A quadrilateral with four right angles.
+reflect (4): The image of a point or shape across a line, producing a mirror reflection.
+risos (3): A right-angled isosceles triangle with the right angle at one vertex.
+s_angle (4): An angle with a measure of 90 degrees.
+segment (2): A part of a line between two points.
+shift (4): A transformation where a line is moved parallel to its original position.
+square (4): A quadrilateral with four equal sides and four right angles.
+tangent (5): A line that touches a circle at exactly one point.
+trapezoid (4): A quadrilateral with at least one pair of parallel sides.
+triangle (3): A three-sided polygon.
+triangle12 (3): A triangle where one side is half the length of another.
+trisect (5): The division of an angle into three equal parts.
+trisegment (4): The division of a line segment into three equal parts.
+
+Here are some examples of the formalization with the YAML format:
+Example 1: A, C, B are point such that triangle ABC is an equilateral triangle. D is the mirror image of B across line AC. Let G, E, F be points such that EFG is a right triangle, with EF perpendicular to EG. H is a points such that H is a point where line CF is the same as line HBandH is on perpendicular bisector of line DF.
+```
+- - args: [A, B, C]
+    let: [A, B, C]
+    symbol: ieq_triangle
+- - args: [D, B, A, C]
+    let: [D]
+    symbol: angle_mirror
+- - args: [E, F, G]
+    let: [E, F, G]
+    symbol: r_triangle
+- - args: [H, B, C, F]
+    let: [H]
+    symbol: eqdistance
+  - args: [H, D, F]
+    symbol: on_bline
+```
+Example 2: Points A, B, & C are defined such that triangle ABC is an equilateral triangle. D is a points such that D is on the circumference of circle centered at A with radius AC.
+```
+- - args: [A, B, C]
+    let: [A, B, C]
+    symbol: ieq_triangle
+- - args: [D, C, A]
+    let: [D]
+    symbol: on_circle
+```
+Example 3: Define points C, A, and B such that C, A, & B is a right angle isosceles triangle with the right angle at A. Points D, G, F, and E are defined such that G & F are constructed such that DEFG forms a square.
+```
+- - args: [A, B, C]
+    let: [A, B, C]
+    symbol: risos
+- - args: [D, E, F, G]
+    let: [D, E, F, G]
+    symbol: isquare
+```
+
+Now formalize the following geometry problem and answer only with the formalized YAML format:
+B, A, C are defined such that ABC is a triangle ABC, such that B and C is double in length to that of A and B. D is a points such that D is on a line through B and parallel to line CA.
