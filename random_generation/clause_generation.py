@@ -22,15 +22,18 @@ def get_wrapped_points(all_points, start, num_points):
 
 
 class ClauseGenerator:
-    def __init__(self, defs, clause_relations, is_comma_sep):
+    def __init__(self, defs, clause_relations, is_comma_sep, seed):
         self.defs = defs
         self.defined_points = []
         self.is_comma_sep = is_comma_sep
-        self.clause_relations = clause_relations  # list(defs.keys()) or graph.INTERSECT # this is the full set we can't deal with it yet
+        self.clause_relations = clause_relations
         # To limit to a few concepts uncomment the following line
         # self.clause_relations = ['triangle', 'parallelogram',]
         self.point_counter = 0  # Start from 0
         self.max_points = 26 * 10  # 26 letters, 10 cycles (0 to 9, inclusive)
+        self.letter_part = list(string.ascii_uppercase)
+        random.seed(seed)
+        random.shuffle(self.letter_part)
 
     def get_pt_ctr_def_pts(self):
         return self.point_counter, self.defined_points
@@ -49,7 +52,7 @@ class ClauseGenerator:
             raise ValueError("All point names have been exhausted.")
 
         # Calculate the letter and number parts of the name
-        letter_part = string.ascii_uppercase[self.point_counter % 26]
+        letter_part = self.letter_part[self.point_counter % 26]
         number_part = self.point_counter // 26
 
         # Prepare the point name
@@ -173,12 +176,12 @@ class ClauseGenerator:
 
 
 class CompoundClauseGen:
-    def __init__(self, definitions, max_comma_sep_clause, max_single_clause, max_sets):
+    def __init__(self, definitions, max_comma_sep_clause, max_single_clause, max_sets, seed):
         self.max_comma_sep_clause = max_comma_sep_clause
         self.max_single_clause = max_single_clause
         self.max_sets = max_sets
-        self.cg_comma_sep = ClauseGenerator(definitions, INTERSECT, is_comma_sep=True)
-        self.cg_single_clause = ClauseGenerator(definitions, list(definitions.keys()), is_comma_sep=False)
+        self.cg_comma_sep = ClauseGenerator(definitions, INTERSECT, is_comma_sep=True, seed=seed)
+        self.cg_single_clause = ClauseGenerator(definitions, list(definitions.keys()), is_comma_sep=False, seed=seed)
 
     def reset(self):
         self.cg_comma_sep.reset()
@@ -218,7 +221,7 @@ if __name__ == "__main__":
 
     # Load definitions and rules
     definitions, rules = load_definitions_and_rules(defs_path, rules_path)
-    cc_gen = CompoundClauseGen(definitions, 2, 3, 2)
+    cc_gen = CompoundClauseGen(definitions, 2, 3, 2, 42)
 
     for j in range(5):
         clause_text = cc_gen.generate_clauses()

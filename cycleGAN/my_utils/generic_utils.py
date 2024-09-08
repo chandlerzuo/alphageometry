@@ -50,6 +50,7 @@ class CustomJSONserializer(json.JSONEncoder):
 
                 return str(obj)
 
+
 def apply_start_end_tags(fl_text_list, nl_text_list, fl_init_end_toks, nl_init_end_toks):
     assert len(fl_text_list) == len(nl_text_list)
     for i, fl_txt in enumerate(fl_text_list):
@@ -57,6 +58,7 @@ def apply_start_end_tags(fl_text_list, nl_text_list, fl_init_end_toks, nl_init_e
         nl_text_list[i] = f'{nl_init_end_toks[0]}{nl_text_list[i]}{nl_init_end_toks[1]}'
 
     return fl_text_list, nl_text_list
+
 
 def get_project_out_dir(args, is_main_process):
     chkpt_paths = ['', '']
@@ -71,6 +73,11 @@ def get_project_out_dir(args, is_main_process):
         if args.use_perplexity_loss:
             mdl_dir += '+perplexity'
 
+        if not args.enc_is_trainable:
+            mdl_dir += '_frozen_enc'
+
+        if not args.dec_is_trainable:
+            mdl_dir += '_frozen_dec'
         mdl_dir_with_count = mdl_dir
 
         for count in range(999):
@@ -267,6 +274,10 @@ def get_cmd_args():
     parser.add_argument('--is_pretrained', type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
     parser.add_argument('--use_decoder', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
     parser.add_argument('--use_encoder', type=lambda x: True if x.lower() in ['true', '1'] else False, default=False)
+    parser.add_argument('--enc_is_trainable', type=lambda x: True if x.lower() in ['true', '1'] else False,
+                        default=True)
+    parser.add_argument('--dec_is_trainable', type=lambda x: True if x.lower() in ['true', '1'] else False,
+                        default=True)
     parser.add_argument('--use_perplexity_loss',
                         type=lambda x: True if x.lower() in ['true', '1'] else False, default=True)
     parser.add_argument('--nrows_nonrephrased', type=int, default=None,
@@ -297,6 +308,10 @@ def get_cmd_args():
         assert args.grounding_prob >= 1  # you need the grounding always as these are the inputs
     if args.use_encoder and not args.use_decoder:
         assert args.grounding_prob >= 1, f'We need the natural language targets when using encoder only model.'
+
+    if args.enc_resume_path is not None and args.dec_resume_path is not None:
+        # The tokenizer is pretrained anyway!
+        args.is_pretrained = False  # no point loading language model pretraining as we will load checkpoint anyway
     print_proc0(f"Got arguments: {args}")
     return args
 

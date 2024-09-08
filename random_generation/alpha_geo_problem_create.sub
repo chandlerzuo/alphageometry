@@ -1,11 +1,11 @@
-NUM_NODES = 1997
+NUM_NODES = 1950
 
 executable = create_problems.sh
 arguments = $(Process) -alht
 error = logs/test_$(Process).err
 output = logs/test_$(Process).out
 log = logs/test_$(Process).log
-request_memory = 128000
+request_memory = 64000
 request_cpus = 16
 request_disk = 1280M
 getenv = True

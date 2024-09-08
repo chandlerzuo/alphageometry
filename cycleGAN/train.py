@@ -13,6 +13,7 @@ from my_utils.generic_utils import get_process_cuda_memory_info, print_proc0, pr
 
 from my_utils.training_utils import as_dict, create_val_metrics_string, Checkpointer, prepare_formal_natural_inputs,\
     run_validation
+from utils import freeze_params
 
 import accelerate
 
@@ -53,7 +54,8 @@ def main(args):
         os.path.join(args.dataset_dir, synthetic_nl_fl_file) , seed=seed, nrows=args.nrows_nonrephrased
     )
     # rephrased_file_name = 'rephrased-nl_fl_dataset_all.jsonl'
-    rephrased_file_name = 'all_rephrased_chunks.csv'
+    # rephrased_file_name = 'all_rephrased_chunks.csv'
+    rephrased_file_name = 'rephrases-10k.csv'
     rephrased_dataset = prepare_data(
         os.path.join(args.dataset_dir, rephrased_file_name), seed=seed, nrows=args.nrows_rephrased,
         colnames={"formal": "fl_statement", "natural": "rephrase", "total_token_lens": "total_token_lens"}
@@ -93,7 +95,12 @@ def main(args):
     val_rephrased_dataloader = DataLoader(val_rephrased_dat, batch_size=args.batch_size, sampler=val_rephrased_samp)
 
     # Optimizers
-    optimizer = AdamW(ae_model.parameters(), lr=2e-5 * 4)
+    if args.enc_is_trainable and args.dec_is_trainable:
+        optimizer = AdamW(ae_model.parameters(), lr=2e-5 * 4)
+    elif args.enc_is_trainable:
+        optimizer = AdamW(ae_model.encoder.parameters(), lr=2e-5 * 4)
+    elif args.dec_is_trainable:
+        optimizer = AdamW(ae_model.decoder.parameters(), lr=2e-5 * 4)
     
     # Learning rate scheduler
     num_training_steps = args.num_epochs * len(train_dataloader)
@@ -105,13 +112,20 @@ def main(args):
         num_training_steps=num_training_steps,
     )
 
+    # ae_model.load_weights(args.enc_resume_path, args.dec_resume_path)
+
     # import ipdb; ipdb.set_trace()
     ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader = accelerator.prepare(
         ae_model, optimizer, lr_scheduler, train_dataloader, val_dataloader, val_rephrased_dataloader
     )
     # All processes should do the following! don't wrap the if main process condition above!
-    accelerator.unwrap_model(ae_model).load_weights(args.enc_resume_path, args.dec_resume_path)
-    accelerator.unwrap_model(ae_model).freeze_perplexity_model()
+    # import ipdb; ipdb.set_trace()
+    ae_model.load_weights(args.enc_resume_path, args.dec_resume_path)
+    ae_model.freeze_perplexity_model()
+    if not args.enc_is_trainable:
+        freeze_params(ae_model.encoder)
+    if not args.dec_is_trainable:
+        freeze_params(ae_model.decoder)
 
     # Training loop
     ae_model.train()
