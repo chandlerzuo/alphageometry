@@ -54,7 +54,8 @@ def main(args):
         os.path.join(args.dataset_dir, synthetic_nl_fl_file) , seed=seed, nrows=args.nrows_nonrephrased
     )
     # rephrased_file_name = 'rephrased-nl_fl_dataset_all.jsonl'
-    rephrased_file_name = 'all_rephrased_chunks.csv'
+    # rephrased_file_name = 'all_rephrased_chunks.csv'
+    rephrased_file_name = 'rephrases-10k.csv'
     rephrased_dataset = prepare_data(
         os.path.join(args.dataset_dir, rephrased_file_name), seed=seed, nrows=args.nrows_rephrased,
         colnames={"formal": "fl_statement", "natural": "rephrase", "total_token_lens": "total_token_lens"}
