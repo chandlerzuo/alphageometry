@@ -29,16 +29,20 @@ def count_rephrases(cfg: fig.Configuration):
     completed_paths = list(path.glob('rephrased-*.jsonl'))
     available_paths = list(path.glob('*.csv')) + list(path.glob('*.CSV'))
 
+    skip_available = cfg.pull('skip-available', False)
+
     completed = 0
     available = 0
 
-    for path in tqdm(available_paths):
-        available += len(pd.read_csv(path))
+    if not skip_available:
+        for path in tqdm(available_paths):
+            available += len(pd.read_csv(path))
     for path in tqdm(completed_paths):
         completed += sum(1 for _ in path.open('r'))
         
     print(f'Completed: {completed} items')
-    print(f'Available: {available} items')
+    if not skip_available:
+        print(f'Available: {available} items')
 
 
 @fig.script('rephrase')
