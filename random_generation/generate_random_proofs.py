@@ -39,10 +39,11 @@ def main():
     cc_gen = CompoundClauseGen(definitions, 2, 3, 2)
     txt = cc_gen.generate_clauses()
     # Let P be an interior point of triangle ABC and AP, BP, CP meet the sides BC, CA, AB in D, E, F respectively. Show that AP/PD = AF/FB + AE/EC
-    txt = 'A B C = triangle A B C; D = on_line B C; E = on_line C A; P = on_line A D, on_line B E; F = on_line C P, on_line A B'
-
+    # txt = 'A B C = triangle A B C; D = on_line B C; E = on_line C A; P = on_line A D, on_line B E; F = on_line C P, on_line A B'
+    txt = 'A B C = iso_triangle A B C; D = angle_mirror D B C A; E = midpoint E A K ? eqangle P R K P Q L L Q'
     # txt = 'A B C D = quadrangle A B C D; E F G H = incenter2 E F G H B C D; I = on_tline I B A D; J = angle_mirror J G C A, on_opline E G; K L M N = excenter2 K L M N A J G; O P Q R = r_trapezoid O P Q R; S T = on_pline S A C D, angle_bisector T R B G'
 
+    txt = txt.split('?')[0].strip()
     print(txt)
 
     p = pr.Problem.from_txt(txt)
