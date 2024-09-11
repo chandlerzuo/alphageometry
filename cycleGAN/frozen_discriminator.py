@@ -3,6 +3,7 @@ import torch
 
 from utils import freeze_params
 
+
 class PerplexityCalculator(torch.nn.Module):
     def __init__(self, perplex_model):
         super().__init__()
@@ -10,7 +11,7 @@ class PerplexityCalculator(torch.nn.Module):
         
         # prepare perplexity calculator. keep it frozen!
         # Ensure perplexity_calculator remains frozen
-        freeze_params(self.model)
+        freeze_params(self)
         
         self.perplexity_criterion = torch.nn.CrossEntropyLoss()
 
@@ -32,6 +33,7 @@ class PerplexityCalculator(torch.nn.Module):
             torch.argmax(outputs.logits.detach(), dim=-1).view(batch * time_steps,))
 
         return log_perplexity
+
 
 #%%
 if __name__ == '__main__':

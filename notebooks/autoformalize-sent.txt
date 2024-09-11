@@ -1,0 +1,299 @@
+I have some geometry problems that need to be formalized using a very specific YAML based format. Here is a description of all the possible constructions that may be used in the problems (with the number of points/arguments each construction takes):
+
+angle_bisector (4): F is a angle bisector such that ∠DBF = ∠FBE.
+- - args: [F, D, B, E]
+    symbol: angle_bisector
+angle_mirror (4): Point E is defined such that line CD is the bisector of ∠ACE.
+- - args: [E, A, C, D]
+    let: [E]
+    symbol: angle_mirror
+circle (4): E is defined such that E is the center of circle EDCA.
+- - args: [E, D, C, A]
+    let: [E]
+    symbol: circle
+circumcenter (4): Let D be a point such that D is the circumcenter of C, A, B.
+- - args: [D, B, C, A]
+    let: [D]
+    symbol: circumcenter
+eq_quadrangle (4): B, C, A, and D forms a quadrilateral such that line AD = line BC.
+- - args: [A, B, C, D]
+    let: [A, B, C, D]
+    symbol: eq_quadrangle
+eq_trapezoid (4): A, D, C, & B forms a trapezoid with line BC = line AD.
+- - args: [A, B, C, D]
+    let: [A, B, C, D]
+    symbol: eq_trapezoid
+eq_triangle (3): Triangle FAD is an equilateral.
+- - args: [F, A, D]
+    let: [F]
+    symbol: eq_triangle
+eqangle2 (4): E is defined such that E is a point where ∠CAE is congruent to ∠EBC.
+- - args: [E, A, C, B]
+    let: [E]
+    symbol: eqangle2
+eqdia_quadrangle (4): Let A, D, B, C be points such that quadrilateral ABCD has equal diagonals.
+- - args: [A, B, C, D]
+    let: [A, B, C, D]
+    symbol: eqdia_quadrangle
+eqdistance (4): F is defined such that line DC is the same as line FE.
+- - args: [F, E, D, C]
+    let: [F]
+    symbol: eqdistance
+foot (4): K is on line AE and line KF is perpendicular to line AE.
+- - args: [K, F, A, E]
+    let: [K]
+    symbol: foot
+free (1): Let A be a point such that A is a point.
+- - args: [A]
+    let: [A]
+    symbol: free
+incenter (4): Let E be a point such that E is at the incenter of triangle CAB.
+- - args: [E, C, A, B]
+    let: [E]
+    symbol: incenter
+incenter2 (7): Points E, D, F, and G are defined such that G is the incenter of triangle CAB with touchpoints E, F, and D.
+- - args: [D, E, F, G, C, A, B]
+    let: [D, E, F, G]
+    symbol: incenter2
+excenter (4): Let J be a point such that J is located at the excenter of triangle AIB.
+- - args: [J, A, I, B]
+    let: [J]
+    symbol: excenter
+excenter2 (7): Points F, I, H, and G are defined such that I is located at the excenter of A, B, and D with touchpoints H, F, & G.
+- - args: [F, G, H, I, D, A, B]
+    let: [F, G, H, I]
+    symbol: excenter2
+centroid (7): G, F, H, I are defined such that the centroid of triangle ABE is located at I.
+- - args: [F, G, H, I, A, B, E]
+    let: [F, G, H, I]
+    symbol: centroid
+ninepoints (7): Define points M, N, L, and O such that the nine-point center of triangle DHF is O. the circle intersects the sides line HF, line FD, and line DH at L, M, and N respectively.
+- - args: [L, M, N, O, D, H, F]
+    let: [L, M, N, O]
+    symbol: ninepoints
+intersection_cc (4): Define point K such that circle centered at J with radius JD intersects circle centered at E with radius ED at K & D.
+- - args: [K, J, E, D]
+    let: [K]
+    symbol: intersection_cc
+intersection_lc (4): Point D is defined such that line AC meets circle centered at B with radius BC at D, C.
+- - args: [D, A, B, C]
+    let: [D]
+    symbol: intersection_lc
+intersection_ll (5): E is defined such that line CA meets line BD at the point E.
+- - args: [E, C, A, B, D]
+    let: [E]
+    symbol: intersection_ll
+intersection_lp (6): I is a points such that Parallel line BH through F intersects line AG at I.
+- - args: [I, A, G, F, B, H]
+    let: [I]
+    symbol: intersection_lp
+intersection_lt (6): Let F be a point such that line BC not at right angle to line AE. line DF at right angle to line AE intersects line BC at F.
+- - args: [F, B, C, D, A, E]
+    let: [F]
+    symbol: intersection_lt
+intersection_pp (7): K is defined such that line KB || line HD. line FK || line AG. line KB meets line FK at the point K.
+- - args: [K, B, H, D, F, A, G]
+    let: [K]
+    symbol: intersection_pp
+intersection_tt (7): Line FI and line HG are parallel. line CN perpendicular to line FI. line LN and line CN are perpendicular to line HG and line FI respectively. They intersect at N.
+- - args: [N, C, F, I, L, H, G]
+    let: [N]
+    symbol: intersection_tt
+iso_triangle (3): Let B, A, C be points such that triangle ABC is an isosceles triangle with line BC as base.
+- - args: [A, B, C]
+    let: [A, B, C]
+    symbol: iso_triangle
+lc_tangent (3): Define point D such that line DB is tangent to circle centered at C with radius CB at D.
+- - args: [D, B, C]
+    let: [D]
+    symbol: lc_tangent
+midpoint (3): Let E be a point such that E is a point where the distance between E & C congruent the distance between A & E.
+- - args: [E, A, C]
+    let: [E]
+    symbol: midpoint
+mirror (3): G is a points such that G is on line FC such that G, C is congruent to F and C.
+- - args: [G, F, C]
+    let: [G]
+    symbol: mirror
+nsquare (3): Let G be a point such that G, B, D are three consecutive vertices of a square.
+- - args: [G, B, D]
+    let: [G]
+    symbol: nsquare
+on_aline (6): I is such that ∠IHA is congruent to ∠BCG.
+- - args: [I, H, A, B, C, G]
+    let: [I]
+    symbol: on_aline
+on_bline (3): F is defined such that F is on perpendicular bisector of line AB.
+- - args: [F, A, B]
+    let: [F]
+    symbol: on_bline
+on_circle (3): E is defined such that E is on the circumference of circle centered at B with radius BD.
+- - args: [E, D, B]
+    let: [E]
+    symbol: on_circle
+on_line (3): Define point E such that E is on line DC.
+- - args: [E, D, C]
+    let: [E]
+    symbol: on_line
+on_pline (4): E is a points such that E is on a line through B and parallel to line AC.
+- - args: [E, A, C, B]
+    let: [E]
+    symbol: on_pline
+on_tline (4): Define point P such that P is on a line through J and perpendicular to line KF.
+- - args: [P, K, F, J]
+    let: [P]
+    symbol: on_tline
+orthocenter (4): The orthocenter of triangle CEB is H.
+- - args: [H, C, E, B]
+    let: [H]
+    symbol: orthocenter
+parallelogram (4): Define point E such that ACDE is a parallelogram.
+- - args: [A, C, D, E]
+    let: [E]
+    symbol: parallelogram
+pentagon (5): E, G, I, H, & F are defined such that EFGHI is a pentagon.
+- - args: [E, F, G, H, I]
+    let: [E, F, G, H, I]
+    symbol: pentagon
+psquare (3): J, G, A are three consecutive vertices of a square.
+- - args: [J, G, A]
+    let: [J]
+    symbol: psquare
+quadrangle (4): ABCD is a quadrangle.
+- - args: [A, B, C, D]
+    let: [A, B, C, D]
+    symbol: quadrangle
+r_trapezoid (4): Points B, A, D, and C are defined such that ABCD is a right angle trapezoid, with AB âŠ¥ to AD.
+- - args: [A, B, C, D]
+    let: [A, B, C, D]
+    symbol: r_trapezoid
+r_triangle (3): Points C, A, & B are defined such that ABC is a right triangle, with AB perpendicular to AC.
+- - args: [A, B, C]
+    let: [A, B, C]
+    symbol: r_triangle
+rectangle (4): Let A, D, B, C be points such that ABCD is a rectangle.
+- - args: [A, B, C, D]
+    let: [A, B, C, D]
+    symbol: rectangle
+reflect (4): Define point J such that J is the reflection of G over line EB.
+- - args: [J, G, E, B]
+    let: [J]
+    symbol: reflect
+risos (3): A, C, & B are point such that A, C, and B is a right angle isosceles triangle with the right angle at A.
+- - args: [A, B, C]
+    let: [A, B, C]
+    symbol: risos
+s_angle (4): M is such that âˆ EGM is equivalent to 90 degrees.
+- - args: [E, G, M, '90']
+    symbol: s_angle
+segment (2): F and E are point such that E & F is a segment of line EF.
+- - args: [E, F]
+    let: [E, F]
+    symbol: segment
+shift (4): Define point D such that line DB is the result of shifting line AC.
+- - args: [D, B, A, C]
+    let: [D]
+    symbol: shift
+square (4): M, N are point such that M & N are constructed such that AGMN forms a square.
+- - args: [A, G, M, N]
+    let: [M, N]
+    symbol: square
+isquare (4): Define points B, A, D, & C such that given line AB, construct D & C such that ABCD is a square.
+- - args: [A, B, C, D]
+    let: [A, B, C, D]
+    symbol: isquare
+trapezoid (4): B, C, A, and D are point such that ABCD is a trapezoid.
+- - args: [A, B, C, D]
+    let: [A, B, C, D]
+    symbol: trapezoid
+triangle (3): C, A, and B are point such that ABC is a triangle ABC.
+- - args: [A, B, C]
+    let: [A, B, C]
+    symbol: triangle
+triangle12 (3): Let A, C, B be points such that ABC is a triangle ABC, such that B and C is twice in length to that of A, B.
+- - args: [A, B, C]
+    let: [A, B, C]
+    symbol: triangle12
+2l1c (8): E, H, F, & G are point such that line CA and line DA are tangents to a circle centered at B at point E and F respectively. The circle centered at B touches circle centered at B with radius BC at H.
+- - args: [E, F, G, H, C, D, A, B]
+    let: [E, F, G, H]
+    symbol: 2l1c
+3peq (6): Line DI line IC and line CD are sides of triangle DIC. line JK intersects line DI at K, line IC at L and line CD at J such that JK is congruent to KL.
+- - args: [J, K, L, D, I, C]
+    let: [J, K, L]
+    symbol: 3peq
+trisect (5): Let E and F be points such that E and F two points on line BA of triangle BCA such that ∠BCE is 1/3 of ∠BCA and ∠ECF is 1/3 of ∠BCA.
+- - args: [E, F, B, C, A]
+    let: [E, F]
+    symbol: trisect
+trisegment (4): Points E & F are defined such that E and F are such points on line BC that EB is equal to EF is equal to FC.
+- - args: [E, F, B, C]
+    let: [E, F]
+    symbol: trisegment
+on_dia (3): G is a points such that G is on the circumference of the circle that has line DA as diameter.
+- - args: [G, D, A]
+    let: [G]
+    symbol: on_dia
+ieq_triangle (3): Points E, F, and G are defined such that triangle EFG is an equilateral triangle.
+- - args: [E, F, G]
+    let: [E, F, G]
+    symbol: ieq_triangle
+on_opline (3): Point E is defined such that E is on the extended line line BA.
+- - args: [E, B, A]
+    let: [E]
+    symbol: on_opline
+cc_tangent (8): F, H, I, and G are point such that line FG and line HI are common tangents to circle centered at B with radius BA and circle centered at E with radius ED at points F, G and H, I respectively..
+- - args: [F, G, H, I, B, A, E, D]
+    let: [F, G, H, I]
+    symbol: cc_tangent
+eqangle3 (6): ∠GFA is congruent to ∠BDC.
+- - args: [G, F, A, B, D, C]
+    symbol: eqangle3
+tangent (5): Define points F & E such that line EA and line FA are the two tangents to circle centered at D with radius DB at point E and F respectively..
+- - args: [E, F, A, D, B]
+    let: [E, F]
+    symbol: tangent
+on_circum (4): E is a points such that E is on the circumferance of the circle passing through D, C, B.
+- - args: [E, D, C, B]
+    let: [E]
+    symbol: on_circum
+
+Here are some examples of the formalization with the YAML format:
+Example 1: A, C, B are point such that triangle ABC is an equilateral triangle. D is the mirror image of B across line AC. Let G, E, F be points such that EFG is a right triangle, with EF perpendicular to EG. H is a points such that H is a point where line CF is the same as line HBandH is on perpendicular bisector of line DF.
+```
+- - args: [A, B, C]
+    let: [A, B, C]
+    symbol: ieq_triangle
+- - args: [D, B, A, C]
+    let: [D]
+    symbol: angle_mirror
+- - args: [E, F, G]
+    let: [E, F, G]
+    symbol: r_triangle
+- - args: [H, B, C, F]
+    let: [H]
+    symbol: eqdistance
+  - args: [H, D, F]
+    symbol: on_bline
+```
+Example 2: Points A, B, & C are defined such that triangle ABC is an equilateral triangle. D is a points such that D is on the circumference of circle centered at A with radius AC.
+```
+- - args: [A, B, C]
+    let: [A, B, C]
+    symbol: ieq_triangle
+- - args: [D, C, A]
+    let: [D]
+    symbol: on_circle
+```
+Example 3: Define points C, A, and B such that C, A, & B is a right angle isosceles triangle with the right angle at A. Points D, G, F, and E are defined such that G & F are constructed such that DEFG forms a square.
+```
+- - args: [A, B, C]
+    let: [A, B, C]
+    symbol: risos
+- - args: [D, E, F, G]
+    let: [D, E, F, G]
+    symbol: isquare
+```
+
+Now formalize the following geometry problem and answer only with the formalized YAML format:
+B, A, C are defined such that ABC is a triangle ABC, such that B and C is double in length to that of A and B. D is a points such that D is on a line through B and parallel to line CA.
