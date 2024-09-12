@@ -14,16 +14,17 @@ from pretty import pretty_nl
 from prettier_print.prettier_proof_statements import translate_step
 from utils.get_rand_gen_states import get_random_states
 from verb.verbalize import IndependentStatementVerbalization
+from generate_random_proofs import convert_var_names_from_alpha_geo_names
 
 import csv
 
 
 def main(run_id, interactive):
-    dataset_length = 20_000
+    dataset_length = 200
     # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
-    filename = (f'/is/cluster/scratch/pghosh/dataset/alpha_geo/geometry_long/'
-                f'nl_fl_dataset_{run_id}.csv')
-    # filename = '../data/nl_fl_dataset_2.csv'
+    # filename = (f'/is/cluster/scratch/pghosh/dataset/alpha_geo/geometry_long/'
+    #             f'nl_fl_dataset_{run_id}.csv')
+    filename = '../data/nl_fl_dataset_2.csv'
     random.seed(run_id)
     defs_path = '../defs.txt'
     rules_path = '../rules.txt'
@@ -98,6 +99,8 @@ def main(run_id, interactive):
                 else:
                     capitalized_pt_names = [point_name.capitalize() for point_name in goal_fl[1:]]
                     goal_fl[1:] = capitalized_pt_names
+                    var_map = cc_gen.get_varname_2_alpha_geo_var_map()
+                    goal_fl = convert_var_names_from_alpha_geo_names(var_map, goal_fl)
                     pretty_goal = pretty_nl(goal_fl[0], goal_fl[1:])
                     if pretty_goal is None:
                         raise ValueError(f'Could not pretty print goal: {goal_fl}')
