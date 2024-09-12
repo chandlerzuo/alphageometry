@@ -20,11 +20,11 @@ import csv
 
 
 def main(run_id, interactive):
-    dataset_length = 200
+    dataset_length = 20_000
     # filename = f'../../datasets/nl_fl_dataset_{run_id}.csv'
-    # filename = (f'/is/cluster/scratch/pghosh/dataset/alpha_geo/geometry_long/'
-    #             f'nl_fl_dataset_{run_id}.csv')
-    filename = '../data/nl_fl_dataset_2.csv'
+    filename = (f'/is/cluster/scratch/pghosh/dataset/alpha_geo/geometry_long_correct_goal/'
+                f'nl_fl_dataset_{run_id}.csv')
+    # filename = '../data/nl_fl_dataset_2.csv'
     random.seed(run_id)
     defs_path = '../defs.txt'
     rules_path = '../rules.txt'
@@ -38,7 +38,7 @@ def main(run_id, interactive):
     # Write data to the CSV file
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
         # writer = csv.DictWriter(csvfile, fieldnames=field_names,)# delimiter='#')
-        # this is necessary for the inspect to work
+        # this is necessary for inspect to work
         writer = csv.DictWriter(csvfile, fieldnames=field_names, quoting=csv.QUOTE_MINIMAL, quotechar='"')
         writer.writeheader()
         serial_num = run_id * dataset_length
@@ -140,6 +140,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     n_processes = 16
+    offset = 2000 * n_processes
 
     with multiprocessing.Pool(n_processes) as pool:
-        pool.starmap(main, [(args.run_id * n_processes + i, args.interactive) for i in range(n_processes)])
+        pool.starmap(main, [(offset + args.run_id * n_processes + i, args.interactive) for i in range(n_processes)])
