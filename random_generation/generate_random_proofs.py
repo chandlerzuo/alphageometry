@@ -48,19 +48,19 @@ def main():
     cc_gen = CompoundClauseGen(definitions, 2, 3, 2, 42)
     txt = cc_gen.generate_clauses()
     # Let P be an interior point of triangle ABC and AP, BP, CP meet the sides BC, CA, AB in D, E, F respectively. Show that AP/PD = AF/FB + AE/EC
-    txt = 'W P8 T4 Q3 = r_trapezoid W P8 T4 Q3; V7 W6 D3 W8 E0 = pentagon V7 W6 D3 W8 E0; U2 Y = square E0 P8 U2 Y; X5 = eqangle3 X5 Y Q3 D3 T4 E0; A6 P1 U1 Q7 = cc_tangent A6 P1 U1 Q7 Y P8 V7 W; V = nsquare V U1 E0; A0 = nsquare A0 V E0; Z2 = angle_mirror Z2 D3 Y X5; Y7 Z T7 = risos Y7 Z T7; P7 = intersection_lp P7 Q7 U1 U2 V7 Z; I7 = midpoint I7 E0 Y; Z7 = intersection_ll Z7 Q3 W8 Q7 D3 ? eqratio V7 P1 V7 Q7 Y A6 Y U1'
-    # txt = 'A B C = iso_triangle A B C; D = angle_mirror D B C A; E = midpoint E A K ? eqangle P R K P Q L L Q'
+    txt = 'A = free A; B = free B; C = free C; X = circle X A B C; D = on_circle D X A; P = on_line P A C, on_line P B D; Q = on_tline Q P P C, on_line Q B C; C1 = circle C1 A P D; C2 = circle C2 B Q D ? para C1 C2 A D'
+    # txt = 'b c = segment b c; o = midpoint o b c; a = on_circle a o b; d = on_circle d o b, on_bline d a b; e = on_bline e o a, on_circle e o b; f = on_bline f o a, on_circle f o b; j = on_pline j o a d, on_line j a c ? eqangle c e c j c j c f'
     # txt = 'A B C D = quadrangle A B C D; E F G H = incenter2 E F G H B C D; I = on_tline I B A D; J = angle_mirror J G C A, on_opline E G; K L M N = excenter2 K L M N A J G; O P Q R = r_trapezoid O P Q R; S T = on_pline S A C D, angle_bisector T R B G'
 
-    txt = txt.split('?')[0].strip()
-    print(txt)
+    # txt = txt.split('?')[0].strip()
+    # print(txt)
 
     p = pr.Problem.from_txt(txt)
 
     print(f'Problem created, Building graph ...')
     try:
         # Set an alarm for 10 seconds
-        signal.alarm(10)
+        signal.alarm(20)
 
         # Code block to execute with timeout
         g, _ = gh.Graph.build_problem(p, definitions)
