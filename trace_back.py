@@ -284,6 +284,7 @@ def get_logs(
   log, setup, aux_setup, setup_points, _ = separate_dependency_difference(
       query, log
   )
+  print([",".join([x.name] + [xx.name for xx in x.args]) for x in setup])
 
   setup, aux_setup, log = collx_to_coll(setup, aux_setup, log)
 
