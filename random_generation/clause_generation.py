@@ -1,3 +1,4 @@
+import copy
 import random
 import string
 from graph import INTERSECT
@@ -20,6 +21,20 @@ def get_wrapped_points(all_points, start, num_points):
     return wrapped_points
 
 
+def get_apha_geo_solver_var(va_idx):
+    letter_part = string.ascii_uppercase[va_idx % 26]
+    number_part = va_idx // 26
+
+    # Prepare the point name
+    if number_part == 0:
+        # For the first cycle (A-Z), we don't add a number part
+        point_name = letter_part
+    else:
+        # For subsequent cycles, add the number part (reduced by 1 to start from 0)
+        point_name = f"{letter_part}{number_part - 1}"
+
+    return point_name
+
 
 class ClauseGenerator:
     def __init__(self, defs, clause_relations, is_comma_sep, seed):
@@ -31,9 +46,13 @@ class ClauseGenerator:
         # self.clause_relations = ['triangle', 'parallelogram',]
         self.point_counter = 0  # Start from 0
         self.max_points = 26 * 10  # 26 letters, 10 cycles (0 to 9, inclusive)
-        self.letter_part = list(string.ascii_uppercase)
+        self.var_idxs = list(range(self.max_points))
         random.seed(seed)
-        random.shuffle(self.letter_part)
+        random.shuffle(self.var_idxs)
+        self.alpha_geo_solv_var_2_used_var_ = {}
+
+    def get_varname_2_alpha_geo_var_map(self):
+        return copy.deepcopy(self.alpha_geo_solv_var_2_used_var_)
 
     def get_pt_ctr_def_pts(self):
         return self.point_counter, self.defined_points
@@ -44,7 +63,7 @@ class ClauseGenerator:
 
     def generate_point(self):
         """
-        Generate the next point in sequence: A, B, ..., Z, A1, B1, ..., Z9.
+        Generate the next point in sequence: A, B, ..., Z, A0, B0, ..., Z9.
         After Z9, raise an error.
         """
         if self.point_counter >= self.max_points:
@@ -52,16 +71,9 @@ class ClauseGenerator:
             raise ValueError("All point names have been exhausted.")
 
         # Calculate the letter and number parts of the name
-        letter_part = self.letter_part[self.point_counter % 26]
-        number_part = self.point_counter // 26
-
-        # Prepare the point name
-        if number_part == 0:
-            # For the first cycle (A-Z), we don't add a number part
-            point_name = letter_part
-        else:
-            # For subsequent cycles, add the number part (reduced by 1 to start from 0)
-            point_name = f"{letter_part}{number_part - 1}"
+        selected_var_idx = self.var_idxs[self.point_counter]
+        point_name = get_apha_geo_solver_var(selected_var_idx)
+        self.alpha_geo_solv_var_2_used_var_[get_apha_geo_solver_var(self.point_counter)] = point_name
 
         # Increment the counter for the next call
         self.point_counter += 1
@@ -182,6 +194,9 @@ class CompoundClauseGen:
         self.max_sets = max_sets
         self.cg_comma_sep = ClauseGenerator(definitions, INTERSECT, is_comma_sep=True, seed=seed)
         self.cg_single_clause = ClauseGenerator(definitions, list(definitions.keys()), is_comma_sep=False, seed=seed)
+
+    def get_varname_2_alpha_geo_var_map(self):
+        return self.cg_single_clause.get_varname_2_alpha_geo_var_map()
 
     def reset(self):
         self.cg_comma_sep.reset()
