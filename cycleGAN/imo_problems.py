@@ -25,7 +25,7 @@ problems = {
     'imo_2003_p4': 'Let ABCD be a cyclic quadrilateral. Let P, Q and R be the feet of perpendiculars from D to lines '
                    'BC, CA and AB, respectively. Show that P Q = QR if and only if the bisectors of angles ABC and '
                    'ADC meet on segment AC.',
-    'imo_2004_p1': 'Let ABC be an acute-angled triangle with AB 6= AC. The circle with diameter BC intersects the '
+    'imo_2004_p1': 'Let ABC be an acute-angled triangle with AB = AC. The circle with diameter BC intersects the '
                    'sides AB and AC at M and N respectively. Denote by O the midpoint of the side BC. The bisectors of'
                    ' the angles ∠BAC and ∠MON intersect at R. Prove that the circumcircles of the triangles BMR and '
                    'CNR have a common point lying on the side BC.',

@@ -56,8 +56,8 @@ def generate_text(model, tokenizer, fl_init_end_toks, nl_init_end_toks,
 
 def main():
     # from imo_problems import problems
-    from geos_problems import problems
-    # from gpt4_rephrased_problems import problems
+    # from geos_problems import problems
+    from gpt4_rephrased_problems import problems
     parser = argparse.ArgumentParser(description="Generate text from a pretrained model")
     parser.add_argument("-ckpt", "--checkpoint_path", type=str, required=True,
                         help="Path to the DeepSpeed model checkpoint directory")
